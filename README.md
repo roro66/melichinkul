@@ -27,7 +27,7 @@ Sistema de gestión de flotas para contratista de Lipigas (Chile).
    ```
 
 4. **Abrir**
-   - App: http://localhost:8080  
+   - App: http://localhost:8001  
    - Mailpit (correos de prueba): http://localhost:8025  
 
 ---
@@ -56,7 +56,7 @@ git push -u origin main
 
 | Servicio | Puerto | Función        |
 |----------|--------|----------------|
-| nginx    | 8080   | App web        |
+| nginx    | 8001   | App web        |
 | redis    | 6379   | Cache / colas  |
 | mailpit  | 8025, 1025 | Correo en desarrollo |
 

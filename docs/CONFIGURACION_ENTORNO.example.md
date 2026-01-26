@@ -42,7 +42,7 @@ psql -U admin -h localhost -c "CREATE DATABASE melichinkul_db;"
 
 | Servicio  | Puerto (host) | Uso                          |
 |-----------|----------------|------------------------------|
-| nginx     | 8080           | App: http://localhost:8080   |
+| nginx     | 8001           | App: http://localhost:8001   |
 | redis     | 6379           | Cache y colas                |
 | mailpit   | 8025 (web), 1025 (SMTP) | Ver correos de prueba |
 

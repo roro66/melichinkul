@@ -17,7 +17,7 @@
 ## Lo que ya está hecho
 
 ### 1. Infraestructura
-- **Docker:** `Dockerfile`, `docker-compose.yml` (app, nginx:8080, redis, mailpit:8025/1025). PostgreSQL en host.
+- **Docker:** `Dockerfile`, `docker-compose.yml` (app, nginx:8001, redis, mailpit:8025/1025). PostgreSQL en host.
 - **`.env.example`:** PostgreSQL, Mailpit, Redis, `APP_LOCALE=es`.
 - **Docs:** `docs/CONFIGURACION_ENTORNO.md` (Docker, Git, GitHub, Mailpit).
 
@@ -85,7 +85,7 @@ docker compose run --rm app php artisan db:seed --force
 
 # Levantar app (cuando existan rutas/vistas)
 docker compose up -d
-# App: http://localhost:8080   Mailpit: http://localhost:8025
+# App: http://localhost:8001   Mailpit: http://localhost:8025
 ```
 
 ---
