@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# No subir: contiene PAT, contraseña PostgreSQL y otros datos sensibles
+docs/CONFIGURACION_ENTORNO.md
