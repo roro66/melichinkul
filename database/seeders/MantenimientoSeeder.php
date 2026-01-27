@@ -12,23 +12,23 @@ class MantenimientoSeeder extends Seeder
 {
     public function run(): void
     {
-        $vehiculos = Vehiculo::all();
-        $tecnicos = User::whereIn("rol", ["tecnico", "administrador"])->get();
+        $vehicles = Vehiculo::all();
+        $technicians = User::whereIn("rol", ["tecnico", "administrador"])->get();
         
-        if ($vehiculos->isEmpty()) {
+        if ($vehicles->isEmpty()) {
             $this->command->warn("No hay vehículos en la base de datos. Ejecuta primero VehiculoSeeder.");
             return;
         }
 
-        if ($tecnicos->isEmpty()) {
+        if ($technicians->isEmpty()) {
             $this->command->warn("No hay técnicos en la base de datos. Ejecuta primero DatabaseSeeder.");
             return;
         }
 
-        $mantenimientos = [];
+        $maintenances = [];
 
-        foreach ($vehiculos as $vehiculo) {
-            $mantenimientos[] = [
+        foreach ($vehicles as $vehicle) {
+            $maintenances[] = [
                 "vehiculo_id" => $vehiculo->id,
                 "tipo" => "preventivo",
                 "estado" => "programado",
@@ -37,10 +37,10 @@ class MantenimientoSeeder extends Seeder
                 "costo_repuestos" => rand(50000, 150000),
                 "costo_mano_obra" => rand(80000, 120000),
                 "costo_total" => 0,
-                "tecnico_responsable_id" => $tecnicos->random()?->id,
+                "tecnico_responsable_id" => $technicians->random()?->id,
             ];
 
-            $mantenimientos[] = [
+            $maintenances[] = [
                 "vehiculo_id" => $vehiculo->id,
                 "tipo" => "preventivo",
                 "estado" => "completado",
@@ -56,11 +56,11 @@ class MantenimientoSeeder extends Seeder
                 "costo_total" => 0,
                 "horas_trabajadas" => rand(2, 5),
                 "taller_proveedor" => "Taller Interno",
-                "tecnico_responsable_id" => $tecnicos->random()?->id,
+                "tecnico_responsable_id" => $technicians->random()?->id,
             ];
 
             if (rand(0, 1)) {
-                $mantenimientos[] = [
+                $maintenances[] = [
                     "vehiculo_id" => $vehiculo->id,
                     "tipo" => "correctivo",
                     "estado" => "completado",
@@ -77,12 +77,12 @@ class MantenimientoSeeder extends Seeder
                     "costo_total" => 0,
                     "horas_trabajadas" => rand(4, 12),
                     "taller_proveedor" => rand(0, 1) ? "Taller Interno" : "Taller Externo - Servicio Rápido",
-                    "tecnico_responsable_id" => $tecnicos->random()?->id,
+                    "tecnico_responsable_id" => $technicians->random()?->id,
                 ];
             }
 
             if (rand(0, 2) === 0) {
-                $mantenimientos[] = [
+                $maintenances[] = [
                     "vehiculo_id" => $vehiculo->id,
                     "tipo" => rand(0, 1) ? "preventivo" : "correctivo",
                     "estado" => "en_proceso",
@@ -96,14 +96,14 @@ class MantenimientoSeeder extends Seeder
                     "costo_total" => 0,
                     "horas_trabajadas" => rand(1, 3),
                     "taller_proveedor" => "Taller Interno",
-                    "tecnico_responsable_id" => $tecnicos->random()?->id,
+                    "tecnico_responsable_id" => $technicians->random()?->id,
                 ];
             }
         }
 
-        foreach ($mantenimientos as $mantenimiento) {
-            $mantenimiento["costo_total"] = $mantenimiento["costo_repuestos"] + $mantenimiento["costo_mano_obra"];
-            Mantenimiento::create($mantenimiento);
+        foreach ($maintenances as $maintenance) {
+            $maintenance["costo_total"] = $maintenance["costo_repuestos"] + $maintenance["costo_mano_obra"];
+            Mantenimiento::create($maintenance);
         }
     }
 

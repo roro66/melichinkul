@@ -9,8 +9,8 @@
                 <select id="vehiculo_id" wire:model="vehiculo_id" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error(vehiculo_id) border-red-500 dark:border-red-600 @enderror">
                     <option value="">Seleccionar vehículo</option>
-                    @foreach($vehiculos as $vehiculo)
-                        <option value="{{$vehiculo->id}}">{{$vehiculo->patente}} - {{$vehiculo->marca}} {{$vehiculo->modelo}}</option>
+                    @foreach($vehicles as $vehicle)
+                        <option value="{{$vehicle->id}}">{{$vehicle->patente}} - {{$vehicle->marca}} {{$vehicle->modelo}}</option>
                     @endforeach
                 </select>
                 @error(vehiculo_id)
@@ -173,8 +173,8 @@
                 <select id="tecnico_responsable_id" wire:model="tecnico_responsable_id" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Sin asignar</option>
-                    @foreach($tecnicos as $tecnico)
-                        <option value="{{$tecnico->id}}">{{$tecnico->name}} ({{$tecnico->email}})</option>
+                    @foreach($technicians as $technician)
+                        <option value="{{$technician->id}}">{{$technician->name}} ({{$technician->email}})</option>
                     @endforeach
                 </select>
             </div>
@@ -186,8 +186,8 @@
                 <select id="conductor_asignado_id" wire:model="conductor_asignado_id" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Sin asignar</option>
-                    @foreach($conductores as $conductor)
-                        <option value="{{$conductor->id}}">{{$conductor->nombre_completo}} ({{$conductor->rut}})</option>
+                    @foreach($drivers as $driver)
+                        <option value="{{$driver->id}}">{{$driver->nombre_completo}} ({{$driver->rut}})</option>
                     @endforeach
                 </select>
             </div>

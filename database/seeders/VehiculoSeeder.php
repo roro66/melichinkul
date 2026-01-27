@@ -10,15 +10,15 @@ class VehiculoSeeder extends Seeder
 {
     public function run(): void
     {
-        $categorias = CategoriaVehiculo::all()->keyBy("slug");
+        $categories = CategoriaVehiculo::all()->keyBy("slug");
         
-        $vehiculos = [
+        $vehicles = [
             [
                 "patente" => "ABCD12",
                 "marca" => "Fiat",
                 "modelo" => "Ducato",
                 "anio" => 2020,
-                "categoria_id" => $categorias->get("utilitarios")?->id,
+                "categoria_id" => $categories->get("utilitarios")?->id,
                 "tipo_combustible" => "diesel",
                 "estado" => "activo",
                 "kilometraje_actual" => 45000,
@@ -30,7 +30,7 @@ class VehiculoSeeder extends Seeder
                 "marca" => "Peugeot",
                 "modelo" => "Partner",
                 "anio" => 2021,
-                "categoria_id" => $categorias->get("utilitarios")?->id,
+                "categoria_id" => $categories->get("utilitarios")?->id,
                 "tipo_combustible" => "diesel",
                 "estado" => "activo",
                 "kilometraje_actual" => 32000,
@@ -42,7 +42,7 @@ class VehiculoSeeder extends Seeder
                 "marca" => "Renault",
                 "modelo" => "Kangoo",
                 "anio" => 2019,
-                "categoria_id" => $categorias->get("utilitarios")?->id,
+                "categoria_id" => $categories->get("utilitarios")?->id,
                 "tipo_combustible" => "gasolina",
                 "estado" => "activo",
                 "kilometraje_actual" => 68000,
@@ -54,7 +54,7 @@ class VehiculoSeeder extends Seeder
                 "marca" => "Nissan",
                 "modelo" => "Navara",
                 "anio" => 2022,
-                "categoria_id" => $categorias->get("camionetas")?->id,
+                "categoria_id" => $categories->get("camionetas")?->id,
                 "tipo_combustible" => "diesel",
                 "estado" => "activo",
                 "kilometraje_actual" => 25000,
@@ -66,7 +66,7 @@ class VehiculoSeeder extends Seeder
                 "marca" => "Ford",
                 "modelo" => "Ranger",
                 "anio" => 2021,
-                "categoria_id" => $categorias->get("camionetas")?->id,
+                "categoria_id" => $categories->get("camionetas")?->id,
                 "tipo_combustible" => "diesel",
                 "estado" => "activo",
                 "kilometraje_actual" => 38000,
@@ -78,7 +78,7 @@ class VehiculoSeeder extends Seeder
                 "marca" => "Toyota",
                 "modelo" => "Hilux",
                 "anio" => 2020,
-                "categoria_id" => $categorias->get("camionetas")?->id,
+                "categoria_id" => $categories->get("camionetas")?->id,
                 "tipo_combustible" => "diesel",
                 "estado" => "mantenimiento",
                 "kilometraje_actual" => 55000,
@@ -90,7 +90,7 @@ class VehiculoSeeder extends Seeder
                 "marca" => "Iveco",
                 "modelo" => "Daily 50C",
                 "anio" => 2019,
-                "categoria_id" => $categorias->get("camiones-grua")?->id,
+                "categoria_id" => $categories->get("camiones-grua")?->id,
                 "tipo_combustible" => "diesel",
                 "estado" => "activo",
                 "kilometraje_actual" => 72000,
@@ -103,7 +103,7 @@ class VehiculoSeeder extends Seeder
                 "marca" => "Mercedes-Benz",
                 "modelo" => "Atego 1218",
                 "anio" => 2021,
-                "categoria_id" => $categorias->get("camiones-grua")?->id,
+                "categoria_id" => $categories->get("camiones-grua")?->id,
                 "tipo_combustible" => "diesel",
                 "estado" => "activo",
                 "kilometraje_actual" => 42000,
@@ -116,7 +116,7 @@ class VehiculoSeeder extends Seeder
                 "marca" => "Bobcat",
                 "modelo" => "S570",
                 "anio" => 2020,
-                "categoria_id" => $categorias->get("maquinaria")?->id,
+                "categoria_id" => $categories->get("maquinaria")?->id,
                 "tipo_combustible" => "diesel",
                 "estado" => "activo",
                 "kilometraje_actual" => 0,
@@ -129,7 +129,7 @@ class VehiculoSeeder extends Seeder
                 "marca" => "Caterpillar",
                 "modelo" => "302.5",
                 "anio" => 2019,
-                "categoria_id" => $categorias->get("maquinaria")?->id,
+                "categoria_id" => $categories->get("maquinaria")?->id,
                 "tipo_combustible" => "diesel",
                 "estado" => "activo",
                 "kilometraje_actual" => 0,
@@ -139,7 +139,7 @@ class VehiculoSeeder extends Seeder
             ],
         ];
 
-        foreach ($vehiculos as $vehiculo) {
+        foreach ($vehicles as $vehicle) {
             Vehiculo::firstOrCreate(
                 ["patente" => $vehiculo["patente"]],
                 $vehiculo

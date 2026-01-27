@@ -10,8 +10,8 @@ new class extends Component
     use WithPagination;
 
     public $search = "";
-    public $categoriaFilter = "";
-    public $estadoFilter = "";
+    public $categoryFilter = "";
+    public $statusFilter = "";
     public $sortField = "patente";
     public $sortDirection = "asc";
 
@@ -20,12 +20,12 @@ new class extends Component
         $this->resetPage();
     }
 
-    public function updatingCategoriaFilter()
+    public function updatingCategoryFilter()
     {
         $this->resetPage();
     }
 
-    public function updatingEstadoFilter()
+    public function updatingStatusFilter()
     {
         $this->resetPage();
     }
@@ -42,36 +42,36 @@ new class extends Component
 
     public function delete($id)
     {
-        $vehiculo = Vehiculo::findOrFail($id);
-        $vehiculo->delete();
+        $vehicle = Vehiculo::findOrFail($id);
+        $vehicle->delete();
         session()->flash("success", "Vehículo eliminado correctamente.");
     }
 
     public function render()
     {
         $query = Vehiculo::with(["categoria", "conductorActual"])
-            ->where(function ($q) {
-                $q->where("patente", "like", "%" . $this->search . "%")
+            ->where(function ($query) {
+                $query->where("patente", "like", "%" . $this->search . "%")
                     ->orWhere("marca", "like", "%" . $this->search . "%")
                     ->orWhere("modelo", "like", "%" . $this->search . "%");
             });
 
-        if ($this->categoriaFilter) {
-            $query->where("categoria_id", $this->categoriaFilter);
+        if ($this->categoryFilter) {
+            $query->where("categoria_id", $this->categoryFilter);
         }
 
-        if ($this->estadoFilter) {
-            $query->where("estado", $this->estadoFilter);
+        if ($this->statusFilter) {
+            $query->where("estado", $this->statusFilter);
         }
 
-        $vehiculos = $query->orderBy($this->sortField, $this->sortDirection)
+        $vehicles = $query->orderBy($this->sortField, $this->sortDirection)
             ->paginate(10);
 
-        $categorias = CategoriaVehiculo::where("activo", true)->orderBy("nombre")->get();
+        $categories = CategoriaVehiculo::where("activo", true)->orderBy("nombre")->get();
 
         return view("livewire.vehiculos.vehicle-table", [
-            "vehiculos" => $vehiculos,
-            "categorias" => $categorias,
+            "vehicles" => $vehicles,
+            "categories" => $categories,
         ]);
     }
 };

@@ -11,6 +11,8 @@ class Certificacion extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'certificaciones';
+
     protected $fillable = [
         'vehiculo_id',
         'tipo',

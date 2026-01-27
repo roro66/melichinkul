@@ -8,7 +8,7 @@ use Livewire\Component;
 
 new class extends Component
 {
-    public $mantenimientoId = null;
+    public $maintenanceId = null;
     public $vehiculo_id = "";
     public $tipo = "preventivo";
     public $estado = "programado";
@@ -60,41 +60,41 @@ new class extends Component
     public function mount($id = null)
     {
         if ($id) {
-            $mantenimiento = Mantenimiento::findOrFail($id);
-            $this->mantenimientoId = $mantenimiento->id;
-            $this->vehiculo_id = $mantenimiento->vehiculo_id;
-            $this->tipo = $mantenimiento->tipo;
-            $this->estado = $mantenimiento->estado;
-            $this->fecha_programada = $mantenimiento->fecha_programada?->format("Y-m-d");
-            $this->fecha_inicio = $mantenimiento->fecha_inicio?->format("Y-m-d");
-            $this->fecha_fin = $mantenimiento->fecha_fin?->format("Y-m-d");
-            $this->kilometraje_en_mantenimiento = $mantenimiento->kilometraje_en_mantenimiento;
-            $this->horometro_en_mantenimiento = $mantenimiento->horometro_en_mantenimiento;
-            $this->motivo_ingreso = $mantenimiento->motivo_ingreso;
-            $this->descripcion_trabajo = $mantenimiento->descripcion_trabajo;
-            $this->trabajos_realizados = $mantenimiento->trabajos_realizados;
-            $this->costo_repuestos = $mantenimiento->costo_repuestos;
-            $this->costo_mano_obra = $mantenimiento->costo_mano_obra;
-            $this->costo_total = $mantenimiento->costo_total;
-            $this->horas_trabajadas = $mantenimiento->horas_trabajadas;
-            $this->taller_proveedor = $mantenimiento->taller_proveedor;
-            $this->tecnico_responsable_id = $mantenimiento->tecnico_responsable_id;
-            $this->conductor_asignado_id = $mantenimiento->conductor_asignado_id;
-            $this->observaciones = $mantenimiento->observaciones;
+            $maintenance = Mantenimiento::findOrFail($id);
+            $this->maintenanceId = $maintenance->id;
+            $this->vehiculo_id = $maintenance->vehiculo_id;
+            $this->tipo = $maintenance->tipo;
+            $this->estado = $maintenance->estado;
+            $this->fecha_programada = $maintenance->fecha_programada?->format("Y-m-d");
+            $this->fecha_inicio = $maintenance->fecha_inicio?->format("Y-m-d");
+            $this->fecha_fin = $maintenance->fecha_fin?->format("Y-m-d");
+            $this->kilometraje_en_mantenimiento = $maintenance->kilometraje_en_mantenimiento;
+            $this->horometro_en_mantenimiento = $maintenance->horometro_en_mantenimiento;
+            $this->motivo_ingreso = $maintenance->motivo_ingreso;
+            $this->descripcion_trabajo = $maintenance->descripcion_trabajo;
+            $this->trabajos_realizados = $maintenance->trabajos_realizados;
+            $this->costo_repuestos = $maintenance->costo_repuestos;
+            $this->costo_mano_obra = $maintenance->costo_mano_obra;
+            $this->costo_total = $maintenance->costo_total;
+            $this->horas_trabajadas = $maintenance->horas_trabajadas;
+            $this->taller_proveedor = $maintenance->taller_proveedor;
+            $this->tecnico_responsable_id = $maintenance->tecnico_responsable_id;
+            $this->conductor_asignado_id = $maintenance->conductor_asignado_id;
+            $this->observaciones = $maintenance->observaciones;
         }
     }
 
     public function updatedCostoRepuestos()
     {
-        $this->calcularCostoTotal();
+        $this->calculateTotalCost();
     }
 
     public function updatedCostoManoObra()
     {
-        $this->calcularCostoTotal();
+        $this->calculateTotalCost();
     }
 
-    public function calcularCostoTotal()
+    public function calculateTotalCost()
     {
         $this->costo_total = ($this->costo_repuestos ?? 0) + ($this->costo_mano_obra ?? 0);
     }
@@ -125,9 +125,9 @@ new class extends Component
             "observaciones" => $this->observaciones ?: null,
         ];
 
-        if ($this->mantenimientoId) {
-            $mantenimiento = Mantenimiento::findOrFail($this->mantenimientoId);
-            $mantenimiento->update($data);
+        if ($this->maintenanceId) {
+            $maintenance = Mantenimiento::findOrFail($this->maintenanceId);
+            $maintenance->update($data);
             session()->flash("success", "Mantenimiento actualizado correctamente.");
         } else {
             Mantenimiento::create($data);
@@ -139,14 +139,14 @@ new class extends Component
 
     public function render()
     {
-        $vehiculos = Vehiculo::where("estado", "!=", "baja")->orderBy("patente")->get();
-        $tecnicos = User::where("rol", "tecnico")->orWhere("rol", "administrador")->orderBy("name")->get();
-        $conductores = Conductor::where("activo", true)->orderBy("nombre_completo")->get();
+        $vehicles = Vehiculo::where("estado", "!=", "baja")->orderBy("patente")->get();
+        $technicians = User::where("rol", "tecnico")->orWhere("rol", "administrador")->orderBy("name")->get();
+        $drivers = Conductor::where("activo", true)->orderBy("nombre_completo")->get();
 
         return view("livewire.mantenimientos.maintenance-form", [
-            "vehiculos" => $vehiculos,
-            "tecnicos" => $tecnicos,
-            "conductores" => $conductores,
+            "vehicles" => $vehicles,
+            "technicians" => $technicians,
+            "drivers" => $drivers,
         ]);
     }
 };
