@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\AsignacionConductor;
-use App\Models\Conductor;
+use App\Models\DriverAssignment;
+use App\Models\Driver;
 use App\Models\User;
-use App\Models\Vehiculo;
+use App\Models\Vehicle;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -13,53 +13,53 @@ use Illuminate\Validation\ValidationException;
  * Orquesta la asignación conductor–vehículo:
  * - Valida bloqueos (licencia, RT) vía BloqueoAsignacionService.
  * - Cierra la asignación anterior del vehículo.
- * - Crea la nueva asignación y actualiza vehiculo.conductor_actual_id.
+ * - Crea la nueva asignación y actualiza vehicle.current_driver_id.
  */
-class AsignacionService
+class AssignmentService
 {
     public function __construct(
-        protected BloqueoAsignacionService $bloqueo
+        protected BlockAssignmentService $blockService
     ) {}
 
     /**
      * Asigna un conductor a un vehículo.
-     * Valida bloqueos, cierra asignación previa, crea nueva y actualiza vehiculo.
+     * Valida bloqueos, cierra asignación previa, crea nueva y actualiza vehicle.
      *
-     * @param  \Carbon\CarbonInterface|string|null  $fechaAsignacion  Por defecto hoy.
+     * @param  \Carbon\CarbonInterface|string|null  $assignmentDate  Por defecto hoy.
      * @throws ValidationException Si licencia vencida o RT del vehículo caducada.
      */
-    public function asignar(
-        Conductor $conductor,
-        Vehiculo $vehiculo,
-        ?User $asignadoPor = null,
-        $fechaAsignacion = null,
-        ?string $observaciones = null
-    ): AsignacionConductor {
-        $this->bloqueo->validarPuedeAsignar($conductor, $vehiculo);
+    public function assign(
+        Driver $driver,
+        Vehicle $vehicle,
+        ?User $assignedBy = null,
+        $assignmentDate = null,
+        ?string $observations = null
+    ): DriverAssignment {
+        $this->blockService->validateCanAssign($driver, $vehicle);
 
-        $fecha = $fechaAsignacion ? \Carbon\Carbon::parse($fechaAsignacion)->toDateString() : now()->toDateString();
+        $date = $assignmentDate ? \Carbon\Carbon::parse($assignmentDate)->toDateString() : now()->toDateString();
 
-        return DB::transaction(function () use ($conductor, $vehiculo, $asignadoPor, $fecha, $observaciones) {
-            $activa = AsignacionConductor::where('vehiculo_id', $vehiculo->id)
-                ->whereNull('fecha_fin')
+        return DB::transaction(function () use ($driver, $vehicle, $assignedBy, $date, $observations) {
+            $active = DriverAssignment::where('vehicle_id', $vehicle->id)
+                ->whereNull('end_date')
                 ->first();
 
-            if ($activa) {
-                $activa->update(['fecha_fin' => $fecha, 'motivo_fin' => 'cambio_conductor']);
+            if ($active) {
+                $active->update(['end_date' => $date, 'end_reason' => 'driver_change']);
             }
 
-            $asignacion = AsignacionConductor::create([
-                'conductor_id' => $conductor->id,
-                'vehiculo_id' => $vehiculo->id,
-                'fecha_asignacion' => $fecha,
-                'fecha_fin' => null,
-                'asignado_por_id' => $asignadoPor?->id,
-                'observaciones' => $observaciones,
+            $assignment = DriverAssignment::create([
+                'driver_id' => $driver->id,
+                'vehicle_id' => $vehicle->id,
+                'assignment_date' => $date,
+                'end_date' => null,
+                'assigned_by_id' => $assignedBy?->id,
+                'observations' => $observations,
             ]);
 
-            $vehiculo->update(['conductor_actual_id' => $conductor->id]);
+            $vehicle->update(['current_driver_id' => $driver->id]);
 
-            return $asignacion;
+            return $assignment;
         });
     }
 }

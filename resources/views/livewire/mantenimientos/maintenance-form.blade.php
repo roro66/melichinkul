@@ -6,14 +6,14 @@
                 <label for="vehiculo_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Vehículo <span class="text-red-500">*</span>
                 </label>
-                <select id="vehiculo_id" wire:model="vehiculo_id" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error(vehiculo_id) border-red-500 dark:border-red-600 @enderror">
+                <select id="vehicle_id" wire:model="vehicle_id" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error("vehicle_id") border-red-500 dark:border-red-600 @enderror">
                     <option value="">Seleccionar vehículo</option>
                     @foreach($vehicles as $vehicle)
-                        <option value="{{$vehicle->id}}">{{$vehicle->patente}} - {{$vehicle->marca}} {{$vehicle->modelo}}</option>
+                        <option value="{{$vehicle->id}}">{{$vehicle->license_plate}} - {{$vehicle->brand}} {{$vehicle->model}}</option>
                     @endforeach
                 </select>
-                @error(vehiculo_id)
+                @error("vehicle_id")
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -22,11 +22,11 @@
                 <label for="tipo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Tipo <span class="text-red-500">*</span>
                 </label>
-                <select id="tipo" wire:model="tipo" 
+                <select id="type" wire:model="type" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="preventivo">Preventivo</option>
-                    <option value="correctivo">Correctivo</option>
-                    <option value="inspeccion">Inspección</option>
+                    <option value="preventive">Preventivo</option>
+                    <option value="corrective">Correctivo</option>
+                    <option value="inspection">Inspección</option>
                 </select>
             </div>
 
@@ -34,12 +34,12 @@
                 <label for="estado" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Estado <span class="text-red-500">*</span>
                 </label>
-                <select id="estado" wire:model="estado" 
+                <select id="status" wire:model="status" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="programado">Programado</option>
-                    <option value="en_proceso">En Proceso</option>
-                    <option value="completado">Completado</option>
-                    <option value="cancelado">Cancelado</option>
+                    <option value="scheduled">Programado</option>
+                    <option value="in_progress">En Proceso</option>
+                    <option value="completed">Completado</option>
+                    <option value="cancelled">Cancelado</option>
                 </select>
             </div>
         </div>
@@ -50,9 +50,9 @@
                 <label for="fecha_programada" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Fecha Programada <span class="text-red-500">*</span>
                 </label>
-                <input type="date" id="fecha_programada" wire:model="fecha_programada" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error(fecha_programada) border-red-500 dark:border-red-600 @enderror">
-                @error(fecha_programada)
+                <input type="date" id="scheduled_date" wire:model="scheduled_date" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error("scheduled_date") border-red-500 dark:border-red-600 @enderror">
+                @error("scheduled_date")
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -61,7 +61,7 @@
                 <label for="fecha_inicio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Fecha de Inicio
                 </label>
-                <input type="date" id="fecha_inicio" wire:model="fecha_inicio" 
+                <input type="date" id="start_date" wire:model="start_date" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -69,7 +69,7 @@
                 <label for="fecha_fin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Fecha de Fin
                 </label>
-                <input type="date" id="fecha_fin" wire:model="fecha_fin" 
+                <input type="date" id="end_date" wire:model="end_date" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
         </div>
@@ -80,7 +80,7 @@
                 <label for="kilometraje_en_mantenimiento" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Kilometraje en Mantenimiento
                 </label>
-                <input type="number" id="kilometraje_en_mantenimiento" wire:model="kilometraje_en_mantenimiento" step="0.01" min="0" 
+                <input type="number" id="mileage_at_maintenance" wire:model="mileage_at_maintenance" step="0.01" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -88,7 +88,7 @@
                 <label for="horometro_en_mantenimiento" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Horómetro en Mantenimiento
                 </label>
-                <input type="number" id="horometro_en_mantenimiento" wire:model="horometro_en_mantenimiento" step="0.01" min="0" 
+                <input type="number" id="hours_at_maintenance" wire:model="hours_at_maintenance" step="0.01" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
         </div>
@@ -98,7 +98,7 @@
             <label for="motivo_ingreso" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Motivo de Ingreso
             </label>
-            <textarea id="motivo_ingreso" wire:model="motivo_ingreso" rows="2" 
+            <textarea id="entry_reason" wire:model="entry_reason" rows="2" 
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
         </div>
 
@@ -106,9 +106,9 @@
             <label for="descripcion_trabajo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Descripción del Trabajo <span class="text-red-500">*</span>
             </label>
-            <textarea id="descripcion_trabajo" wire:model="descripcion_trabajo" rows="3" 
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error(descripcion_trabajo) border-red-500 dark:border-red-600 @enderror"></textarea>
-            @error(descripcion_trabajo)
+            <textarea id="work_description" wire:model="work_description" rows="3" 
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error("work_description") border-red-500 dark:border-red-600 @enderror"></textarea>
+            @error("work_description")
                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
             @enderror
         </div>
@@ -117,7 +117,7 @@
             <label for="trabajos_realizados" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Trabajos Realizados
             </label>
-            <textarea id="trabajos_realizados" wire:model="trabajos_realizados" rows="3" 
+            <textarea id="work_performed" wire:model="work_performed" rows="3" 
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
         </div>
 
@@ -127,7 +127,7 @@
                 <label for="costo_repuestos" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Costo Repuestos
                 </label>
-                <input type="number" id="costo_repuestos" wire:model.live="costo_repuestos" min="0" 
+                <input type="number" id="parts_cost" wire:model.live="parts_cost" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -135,7 +135,7 @@
                 <label for="costo_mano_obra" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Costo Mano de Obra
                 </label>
-                <input type="number" id="costo_mano_obra" wire:model.live="costo_mano_obra" min="0" 
+                <input type="number" id="labor_cost" wire:model.live="labor_cost" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -143,7 +143,7 @@
                 <label for="costo_total" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Costo Total
                 </label>
-                <input type="number" id="costo_total" wire:model="costo_total" min="0" readonly
+                <input type="number" id="total_cost" wire:model="total_cost" min="0" readonly
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-white">
             </div>
 
@@ -151,7 +151,7 @@
                 <label for="horas_trabajadas" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Horas Trabajadas
                 </label>
-                <input type="number" id="horas_trabajadas" wire:model="horas_trabajadas" step="0.01" min="0" 
+                <input type="number" id="hours_worked" wire:model="hours_worked" step="0.01" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
         </div>
@@ -162,7 +162,7 @@
                 <label for="taller_proveedor" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Taller/Proveedor
                 </label>
-                <input type="text" id="taller_proveedor" wire:model="taller_proveedor" 
+                <input type="text" id="workshop_supplier" wire:model="workshop_supplier" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -170,7 +170,7 @@
                 <label for="tecnico_responsable_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Técnico Responsable
                 </label>
-                <select id="tecnico_responsable_id" wire:model="tecnico_responsable_id" 
+                <select id="responsible_technician_id" wire:model="responsible_technician_id" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Sin asignar</option>
                     @foreach($technicians as $technician)
@@ -183,11 +183,11 @@
                 <label for="conductor_asignado_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Conductor Asignado
                 </label>
-                <select id="conductor_asignado_id" wire:model="conductor_asignado_id" 
+                <select id="assigned_driver_id" wire:model="assigned_driver_id" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Sin asignar</option>
                     @foreach($drivers as $driver)
-                        <option value="{{$driver->id}}">{{$driver->nombre_completo}} ({{$driver->rut}})</option>
+                        <option value="{{$driver->id}}">{{$driver->full_name}} ({{$driver->rut}})</option>
                     @endforeach
                 </select>
             </div>
@@ -198,19 +198,19 @@
             <label for="observaciones" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Observaciones
             </label>
-            <textarea id="observaciones" wire:model="observaciones" rows="3" 
+            <textarea id="observations" wire:model="observations" rows="3" 
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
         </div>
 
         <!-- Botones -->
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <a href="{{route(mantenimientos.index)}}" 
+            <a href="{{route('mantenimientos.index')}}" 
                 class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150">
                 Cancelar
             </a>
             <button type="submit" 
                 class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg transition-colors duration-150">
-                {{ $mantenimientoId ? "Actualizar" : "Crear" }} Mantenimiento
+                {{ $maintenanceId ? "Actualizar" : "Crear" }} Mantenimiento
             </button>
         </div>
     </form>

@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Mantenimiento;
-use App\Models\Vehiculo;
+use App\Models\Maintenance;
+use App\Models\Vehicle;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -13,7 +13,7 @@ new class extends Component
     public $vehicleFilter = "";
     public $typeFilter = "";
     public $statusFilter = "";
-    public $sortField = "fecha_programada";
+    public $sortField = "scheduled_date";
     public $sortDirection = "desc";
 
     public function updatingSearch()
@@ -48,40 +48,40 @@ new class extends Component
 
     public function delete($id)
     {
-        $maintenance = Mantenimiento::findOrFail($id);
+        $maintenance = Maintenance::findOrFail($id);
         $maintenance->delete();
         session()->flash("success", "Mantenimiento eliminado correctamente.");
     }
 
     public function render()
     {
-        $query = Mantenimiento::with(["vehiculo", "tecnicoResponsable", "conductorAsignado"])
+        $query = Maintenance::with(["vehicle", "responsibleTechnician", "assignedDriver"])
             ->where(function ($query) {
-                $query->whereHas("vehiculo", function ($vehicleQuery) {
-                    $vehicleQuery->where("patente", "like", "%" . $this->search . "%")
-                        ->orWhere("marca", "like", "%" . $this->search . "%")
-                        ->orWhere("modelo", "like", "%" . $this->search . "%");
+                $query->whereHas("vehicle", function ($vehicleQuery) {
+                    $vehicleQuery->where("license_plate", "like", "%" . $this->search . "%")
+                        ->orWhere("brand", "like", "%" . $this->search . "%")
+                        ->orWhere("model", "like", "%" . $this->search . "%");
                 })
-                ->orWhere("descripcion_trabajo", "like", "%" . $this->search . "%")
-                ->orWhere("motivo_ingreso", "like", "%" . $this->search . "%");
+                ->orWhere("work_description", "like", "%" . $this->search . "%")
+                ->orWhere("entry_reason", "like", "%" . $this->search . "%");
             });
 
         if ($this->vehicleFilter) {
-            $query->where("vehiculo_id", $this->vehicleFilter);
+            $query->where("vehicle_id", $this->vehicleFilter);
         }
 
         if ($this->typeFilter) {
-            $query->where("tipo", $this->typeFilter);
+            $query->where("type", $this->typeFilter);
         }
 
         if ($this->statusFilter) {
-            $query->where("estado", $this->statusFilter);
+            $query->where("status", $this->statusFilter);
         }
 
         $maintenances = $query->orderBy($this->sortField, $this->sortDirection)
             ->paginate(10);
 
-        $vehicles = Vehiculo::where("estado", "!=", "baja")->orderBy("patente")->get();
+        $vehicles = Vehicle::where("status", "!=", "decommissioned")->orderBy("license_plate")->get();
 
         return view("livewire.mantenimientos.maintenance-table", [
             "maintenances" => $maintenances,

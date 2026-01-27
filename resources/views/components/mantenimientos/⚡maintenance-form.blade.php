@@ -1,102 +1,102 @@
 <?php
 
-use App\Models\Mantenimiento;
-use App\Models\Vehiculo;
+use App\Models\Maintenance;
+use App\Models\Vehicle;
 use App\Models\User;
-use App\Models\Conductor;
+use App\Models\Driver;
 use Livewire\Component;
 
 new class extends Component
 {
     public $maintenanceId = null;
-    public $vehiculo_id = "";
-    public $tipo = "preventivo";
-    public $estado = "programado";
-    public $fecha_programada = "";
-    public $fecha_inicio = "";
-    public $fecha_fin = "";
-    public $kilometraje_en_mantenimiento = "";
-    public $horometro_en_mantenimiento = "";
-    public $motivo_ingreso = "";
-    public $descripcion_trabajo = "";
-    public $trabajos_realizados = "";
-    public $costo_repuestos = 0;
-    public $costo_mano_obra = 0;
-    public $costo_total = 0;
-    public $horas_trabajadas = "";
-    public $taller_proveedor = "";
-    public $tecnico_responsable_id = "";
-    public $conductor_asignado_id = "";
-    public $observaciones = "";
+    public $vehicle_id = "";
+    public $type = "preventive";
+    public $status = "scheduled";
+    public $scheduled_date = "";
+    public $start_date = "";
+    public $end_date = "";
+    public $mileage_at_maintenance = "";
+    public $hours_at_maintenance = "";
+    public $entry_reason = "";
+    public $work_description = "";
+    public $work_performed = "";
+    public $parts_cost = 0;
+    public $labor_cost = 0;
+    public $total_cost = 0;
+    public $hours_worked = "";
+    public $workshop_supplier = "";
+    public $responsible_technician_id = "";
+    public $assigned_driver_id = "";
+    public $observations = "";
 
     protected $rules = [
-        "vehiculo_id" => ["required", "exists:vehiculos,id"],
-        "tipo" => ["required", "string", "in:preventivo,correctivo,inspeccion"],
-        "estado" => ["required", "string", "in:programado,en_proceso,completado,cancelado"],
-        "fecha_programada" => ["required", "date"],
-        "fecha_inicio" => ["nullable", "date"],
-        "fecha_fin" => ["nullable", "date"],
-        "kilometraje_en_mantenimiento" => ["nullable", "numeric", "min:0"],
-        "horometro_en_mantenimiento" => ["nullable", "numeric", "min:0"],
-        "motivo_ingreso" => ["nullable", "string"],
-        "descripcion_trabajo" => ["required", "string"],
-        "trabajos_realizados" => ["nullable", "string"],
-        "costo_repuestos" => ["nullable", "integer", "min:0"],
-        "costo_mano_obra" => ["nullable", "integer", "min:0"],
-        "costo_total" => ["nullable", "integer", "min:0"],
-        "horas_trabajadas" => ["nullable", "numeric", "min:0"],
-        "taller_proveedor" => ["nullable", "string", "max:255"],
-        "tecnico_responsable_id" => ["nullable", "exists:users,id"],
-        "conductor_asignado_id" => ["nullable", "exists:conductores,id"],
-        "observaciones" => ["nullable", "string"],
+        "vehicle_id" => ["required", "exists:vehicles,id"],
+        "type" => ["required", "string", "in:preventive,corrective,inspection"],
+        "status" => ["required", "string", "in:scheduled,in_progress,completed,cancelled"],
+        "scheduled_date" => ["required", "date"],
+        "start_date" => ["nullable", "date"],
+        "end_date" => ["nullable", "date"],
+        "mileage_at_maintenance" => ["nullable", "numeric", "min:0"],
+        "hours_at_maintenance" => ["nullable", "numeric", "min:0"],
+        "entry_reason" => ["nullable", "string"],
+        "work_description" => ["required", "string"],
+        "work_performed" => ["nullable", "string"],
+        "parts_cost" => ["nullable", "integer", "min:0"],
+        "labor_cost" => ["nullable", "integer", "min:0"],
+        "total_cost" => ["nullable", "integer", "min:0"],
+        "hours_worked" => ["nullable", "numeric", "min:0"],
+        "workshop_supplier" => ["nullable", "string", "max:255"],
+        "responsible_technician_id" => ["nullable", "exists:users,id"],
+        "assigned_driver_id" => ["nullable", "exists:drivers,id"],
+        "observations" => ["nullable", "string"],
     ];
 
     protected $messages = [
-        "vehiculo_id.required" => "El vehículo es obligatorio.",
-        "descripcion_trabajo.required" => "La descripción del trabajo es obligatoria.",
-        "fecha_programada.required" => "La fecha programada es obligatoria.",
+        "vehicle_id.required" => "El vehículo es obligatorio.",
+        "work_description.required" => "La descripción del trabajo es obligatoria.",
+        "scheduled_date.required" => "La fecha programada es obligatoria.",
     ];
 
     public function mount($id = null)
     {
         if ($id) {
-            $maintenance = Mantenimiento::findOrFail($id);
+            $maintenance = Maintenance::findOrFail($id);
             $this->maintenanceId = $maintenance->id;
-            $this->vehiculo_id = $maintenance->vehiculo_id;
-            $this->tipo = $maintenance->tipo;
-            $this->estado = $maintenance->estado;
-            $this->fecha_programada = $maintenance->fecha_programada?->format("Y-m-d");
-            $this->fecha_inicio = $maintenance->fecha_inicio?->format("Y-m-d");
-            $this->fecha_fin = $maintenance->fecha_fin?->format("Y-m-d");
-            $this->kilometraje_en_mantenimiento = $maintenance->kilometraje_en_mantenimiento;
-            $this->horometro_en_mantenimiento = $maintenance->horometro_en_mantenimiento;
-            $this->motivo_ingreso = $maintenance->motivo_ingreso;
-            $this->descripcion_trabajo = $maintenance->descripcion_trabajo;
-            $this->trabajos_realizados = $maintenance->trabajos_realizados;
-            $this->costo_repuestos = $maintenance->costo_repuestos;
-            $this->costo_mano_obra = $maintenance->costo_mano_obra;
-            $this->costo_total = $maintenance->costo_total;
-            $this->horas_trabajadas = $maintenance->horas_trabajadas;
-            $this->taller_proveedor = $maintenance->taller_proveedor;
-            $this->tecnico_responsable_id = $maintenance->tecnico_responsable_id;
-            $this->conductor_asignado_id = $maintenance->conductor_asignado_id;
-            $this->observaciones = $maintenance->observaciones;
+            $this->vehicle_id = $maintenance->vehicle_id;
+            $this->type = $maintenance->type;
+            $this->status = $maintenance->status;
+            $this->scheduled_date = $maintenance->scheduled_date?->format("Y-m-d");
+            $this->start_date = $maintenance->start_date?->format("Y-m-d");
+            $this->end_date = $maintenance->end_date?->format("Y-m-d");
+            $this->mileage_at_maintenance = $maintenance->mileage_at_maintenance;
+            $this->hours_at_maintenance = $maintenance->hours_at_maintenance;
+            $this->entry_reason = $maintenance->entry_reason;
+            $this->work_description = $maintenance->work_description;
+            $this->work_performed = $maintenance->work_performed;
+            $this->parts_cost = $maintenance->parts_cost;
+            $this->labor_cost = $maintenance->labor_cost;
+            $this->total_cost = $maintenance->total_cost;
+            $this->hours_worked = $maintenance->hours_worked;
+            $this->workshop_supplier = $maintenance->workshop_supplier;
+            $this->responsible_technician_id = $maintenance->responsible_technician_id;
+            $this->assigned_driver_id = $maintenance->assigned_driver_id;
+            $this->observations = $maintenance->observations;
         }
     }
 
-    public function updatedCostoRepuestos()
+    public function updatedPartsCost()
     {
         $this->calculateTotalCost();
     }
 
-    public function updatedCostoManoObra()
+    public function updatedLaborCost()
     {
         $this->calculateTotalCost();
     }
 
     public function calculateTotalCost()
     {
-        $this->costo_total = ($this->costo_repuestos ?? 0) + ($this->costo_mano_obra ?? 0);
+        $this->total_cost = ($this->parts_cost ?? 0) + ($this->labor_cost ?? 0);
     }
 
     public function save()
@@ -104,33 +104,33 @@ new class extends Component
         $this->validate();
 
         $data = [
-            "vehiculo_id" => $this->vehiculo_id,
-            "tipo" => $this->tipo,
-            "estado" => $this->estado,
-            "fecha_programada" => $this->fecha_programada,
-            "fecha_inicio" => $this->fecha_inicio ?: null,
-            "fecha_fin" => $this->fecha_fin ?: null,
-            "kilometraje_en_mantenimiento" => $this->kilometraje_en_mantenimiento ?: null,
-            "horometro_en_mantenimiento" => $this->horometro_en_mantenimiento ?: null,
-            "motivo_ingreso" => $this->motivo_ingreso ?: null,
-            "descripcion_trabajo" => $this->descripcion_trabajo,
-            "trabajos_realizados" => $this->trabajos_realizados ?: null,
-            "costo_repuestos" => $this->costo_repuestos ?: 0,
-            "costo_mano_obra" => $this->costo_mano_obra ?: 0,
-            "costo_total" => $this->costo_total ?: 0,
-            "horas_trabajadas" => $this->horas_trabajadas ?: null,
-            "taller_proveedor" => $this->taller_proveedor ?: null,
-            "tecnico_responsable_id" => $this->tecnico_responsable_id ?: null,
-            "conductor_asignado_id" => $this->conductor_asignado_id ?: null,
-            "observaciones" => $this->observaciones ?: null,
+            "vehicle_id" => $this->vehicle_id,
+            "type" => $this->type,
+            "status" => $this->status,
+            "scheduled_date" => $this->scheduled_date,
+            "start_date" => $this->start_date ?: null,
+            "end_date" => $this->end_date ?: null,
+            "mileage_at_maintenance" => $this->mileage_at_maintenance ?: null,
+            "hours_at_maintenance" => $this->hours_at_maintenance ?: null,
+            "entry_reason" => $this->entry_reason ?: null,
+            "work_description" => $this->work_description,
+            "work_performed" => $this->work_performed ?: null,
+            "parts_cost" => $this->parts_cost ?: 0,
+            "labor_cost" => $this->labor_cost ?: 0,
+            "total_cost" => $this->total_cost ?: 0,
+            "hours_worked" => $this->hours_worked ?: null,
+            "workshop_supplier" => $this->workshop_supplier ?: null,
+            "responsible_technician_id" => $this->responsible_technician_id ?: null,
+            "assigned_driver_id" => $this->assigned_driver_id ?: null,
+            "observations" => $this->observations ?: null,
         ];
 
         if ($this->maintenanceId) {
-            $maintenance = Mantenimiento::findOrFail($this->maintenanceId);
+            $maintenance = Maintenance::findOrFail($this->maintenanceId);
             $maintenance->update($data);
             session()->flash("success", "Mantenimiento actualizado correctamente.");
         } else {
-            Mantenimiento::create($data);
+            Maintenance::create($data);
             session()->flash("success", "Mantenimiento creado correctamente.");
         }
 
@@ -139,9 +139,9 @@ new class extends Component
 
     public function render()
     {
-        $vehicles = Vehiculo::where("estado", "!=", "baja")->orderBy("patente")->get();
-        $technicians = User::where("rol", "tecnico")->orWhere("rol", "administrador")->orderBy("name")->get();
-        $drivers = Conductor::where("activo", true)->orderBy("nombre_completo")->get();
+        $vehicles = Vehicle::where("status", "!=", "decommissioned")->orderBy("license_plate")->get();
+        $technicians = User::where("role", "technician")->orWhere("role", "administrator")->orderBy("name")->get();
+        $drivers = Driver::where("active", true)->orderBy("full_name")->get();
 
         return view("livewire.mantenimientos.maintenance-form", [
             "vehicles" => $vehicles,

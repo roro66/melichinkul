@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Conductor;
-use App\Models\Vehiculo;
+use App\Models\Driver;
+use App\Models\Vehicle;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -13,40 +13,40 @@ use Illuminate\Validation\ValidationException;
  *
  * La asignación no debe persistirse; se muestra un mensaje claro al usuario.
  */
-class BloqueoAsignacionService
+class BlockAssignmentService
 {
     /**
      * Valida que se pueda asignar el conductor al vehículo.
      *
      * @throws ValidationException Si la licencia está vencida o la RT del vehículo está caducada.
      */
-    public function validarPuedeAsignar(Conductor $conductor, Vehiculo $vehiculo): void
+    public function validateCanAssign(Driver $driver, Vehicle $vehicle): void
     {
-        $errores = [];
+        $errors = [];
 
-        if ($conductor->licenciaVencida()) {
-            $errores['conductor'] = [__('asignacion.bloqueo_licencia_vencida')];
+        if ($driver->hasExpiredLicense()) {
+            $errors['driver'] = [__('asignacion.bloqueo_licencia_vencida')];
         }
 
-        if (! $vehiculo->revisionTecnicaVigente()) {
-            $errores['vehiculo'] = [__('asignacion.bloqueo_rt_vencida')];
+        if (! $vehicle->hasValidTechnicalReview()) {
+            $errors['vehicle'] = [__('asignacion.bloqueo_rt_vencida')];
         }
 
-        if ($errores !== []) {
-            throw ValidationException::withMessages($errores);
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
         }
     }
 
     /**
      * Indica si la asignación está permitida, sin lanzar excepción.
      */
-    public function puedeAsignar(Conductor $conductor, Vehiculo $vehiculo): bool
+    public function canAssign(Driver $driver, Vehicle $vehicle): bool
     {
-        if ($conductor->licenciaVencida()) {
+        if ($driver->hasExpiredLicense()) {
             return false;
         }
 
-        if (! $vehiculo->revisionTecnicaVigente()) {
+        if (! $vehicle->hasValidTechnicalReview()) {
             return false;
         }
 
@@ -58,18 +58,18 @@ class BloqueoAsignacionService
      *
      * @return array<string>
      */
-    public function motivosBloqueo(Conductor $conductor, Vehiculo $vehiculo): array
+    public function blockReasons(Driver $driver, Vehicle $vehicle): array
     {
-        $motivos = [];
+        $reasons = [];
 
-        if ($conductor->licenciaVencida()) {
-            $motivos[] = __('asignacion.bloqueo_licencia_vencida');
+        if ($driver->hasExpiredLicense()) {
+            $reasons[] = __('asignacion.bloqueo_licencia_vencida');
         }
 
-        if (! $vehiculo->revisionTecnicaVigente()) {
-            $motivos[] = __('asignacion.bloqueo_rt_vencida');
+        if (! $vehicle->hasValidTechnicalReview()) {
+            $reasons[] = __('asignacion.bloqueo_rt_vencida');
         }
 
-        return $motivos;
+        return $reasons;
     }
 }

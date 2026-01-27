@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Mantenimiento;
+use App\Models\Maintenance;
 use Illuminate\Validation\ValidationException;
 
-class MantenimientoService
+class MaintenanceService
 {
     /**
      * Verifica si el mantenimiento puede cerrarse (estado completado).
@@ -13,13 +13,13 @@ class MantenimientoService
      *
      * @throws ValidationException Si es correctivo y no tiene evidencia (evidencia_factura o evidencia_foto).
      */
-    public function validarCierre(Mantenimiento $mantenimiento): void
+    public function validarCierre(Maintenance $maintenance): void
     {
-        if (! $mantenimiento->esCorrectivo()) {
+        if (! $maintenance->isCorrective()) {
             return;
         }
 
-        if (! $mantenimiento->tieneEvidenciaObligatoria()) {
+        if (! $maintenance->hasRequiredEvidence()) {
             throw ValidationException::withMessages([
                 'evidencia' => [__('mantenimiento.cierre_sin_evidencia')],
             ]);
@@ -29,25 +29,25 @@ class MantenimientoService
     /**
      * Indica si el mantenimiento puede cerrarse sin lanzar excepción.
      */
-    public function puedeCerrar(Mantenimiento $mantenimiento): bool
+    public function puedeCerrar(Maintenance $maintenance): bool
     {
-        if (! $mantenimiento->esCorrectivo()) {
+        if (! $maintenance->isCorrective()) {
             return true;
         }
 
-        return $mantenimiento->tieneEvidenciaObligatoria();
+        return $maintenance->hasRequiredEvidence();
     }
 
     /**
      * Cierra el mantenimiento (estado completado) validando evidencia en correctivos.
      *
-     * @param  array<string, mixed>  $datos  Campos a actualizar (fecha_fin, trabajos_realizados, costos, etc.)
+     * @param  array<string, mixed>  $datos  Campos a actualizar (end_date, work_performed, costos, etc.)
      * @throws ValidationException Si es correctivo sin evidencia.
      */
-    public function cerrar(Mantenimiento $mantenimiento, array $datos): void
+    public function cerrar(Maintenance $maintenance, array $datos): void
     {
-        $this->validarCierre($mantenimiento);
+        $this->validarCierre($maintenance);
 
-        $mantenimiento->update(array_merge($datos, ['estado' => 'completado']));
+        $maintenance->update(array_merge($datos, ['status' => 'completed']));
     }
 }

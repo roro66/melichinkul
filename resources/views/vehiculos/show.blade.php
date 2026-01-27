@@ -5,13 +5,13 @@
 @section('content')
 <div class="space-y-6">
     @php
-        $vehicle = \App\Models\Vehiculo::with(['categoria', 'conductorActual', 'certificaciones', 'mantenimientos'])->findOrFail($id);
+        $vehicle = \App\Models\Vehicle::with(['category', 'currentDriver', 'certifications', 'maintenances'])->findOrFail($id);
     @endphp
 
     <div class="flex justify-between items-center">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $vehicle->patente }}</h1>
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ $vehicle->marca }} {{ $vehicle->modelo }} ({{ $vehicle->anio }})</p>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $vehicle->license_plate }}</h1>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ $vehicle->brand }} {{ $vehicle->model }} ({{ $vehicle->year }})</p>
         </div>
         <div class="flex space-x-3">
             <a href="{{ route('vehiculos.edit', $vehicle->id) }}" 
@@ -31,33 +31,33 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Categoría:</span>
-                <p class="text-sm text-gray-900 dark:text-white">{{ $vehicle->categoria->nombre ?? 'Sin categoría' }}</p>
+                <p class="text-sm text-gray-900 dark:text-white">{{ $vehicle->category->name ?? 'Sin categoría' }}</p>
             </div>
             <div>
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Estado:</span>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                    {{ $vehicle->estado === 'activo' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
-                       ($vehicle->estado === 'mantenimiento' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
-                       ($vehicle->estado === 'baja' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' : 
+                    {{ $vehicle->status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
+                       ($vehicle->status === 'maintenance' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
+                       ($vehicle->status === 'decommissioned' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' : 
                        'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300')) }}">
-                    {{ ucfirst($vehicle->estado) }}
+                    {{ ucfirst($vehicle->status) }}
                 </span>
             </div>
             <div>
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Tipo de Combustible:</span>
-                <p class="text-sm text-gray-900 dark:text-white">{{ ucfirst($vehicle->tipo_combustible) }}</p>
+                <p class="text-sm text-gray-900 dark:text-white">{{ ucfirst($vehicle->fuel_type) }}</p>
             </div>
             <div>
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Conductor Actual:</span>
-                <p class="text-sm text-gray-900 dark:text-white">{{ $vehicle->conductorActual->nombre_completo ?? 'Sin asignar' }}</p>
+                <p class="text-sm text-gray-900 dark:text-white">{{ $vehicle->currentDriver->full_name ?? 'Sin asignar' }}</p>
             </div>
             <div>
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Kilometraje Actual:</span>
-                <p class="text-sm text-gray-900 dark:text-white">{{ number_format($vehicle->kilometraje_actual, 0, ',', '.') }} km</p>
+                <p class="text-sm text-gray-900 dark:text-white">{{ number_format($vehicle->current_mileage, 0, ',', '.') }} km</p>
             </div>
             <div>
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Horómetro Actual:</span>
-                <p class="text-sm text-gray-900 dark:text-white">{{ number_format($vehicle->horometro_actual, 0, ',', '.') }} hrs</p>
+                <p class="text-sm text-gray-900 dark:text-white">{{ number_format($vehicle->current_hours, 0, ',', '.') }} hrs</p>
             </div>
         </div>
     </div>
@@ -65,21 +65,21 @@
     <!-- Mantenimientos Recientes -->
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Mantenimientos Recientes</h2>
-        @if($vehicle->mantenimientos->isEmpty())
+        @if($vehicle->maintenances->isEmpty())
             <p class="text-sm text-gray-500 dark:text-gray-400">No hay mantenimientos registrados.</p>
         @else
             <div class="space-y-3">
-                @foreach($vehicle->mantenimientos->take(5) as $maintenance)
+                @foreach($vehicle->maintenances->take(5) as $maintenance)
                     <div class="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
                         <div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ ucfirst($maintenance->tipo) }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $maintenance->fecha_programada?->format('d/m/Y') ?? 'Sin fecha' }}</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ ucfirst($maintenance->type) }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $maintenance->scheduled_date?->format('d/m/Y') ?? 'Sin fecha' }}</p>
                         </div>
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                            {{ $maintenance->estado === 'completado' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
-                               ($maintenance->estado === 'en_proceso' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
+                            {{ $maintenance->status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
+                               ($maintenance->status === 'in_progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
                                'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300') }}">
-                            {{ ucfirst(str_replace('_', ' ', $maintenance->estado)) }}
+                            {{ ucfirst(str_replace('_', ' ', $maintenance->status)) }}
                         </span>
                     </div>
                 @endforeach

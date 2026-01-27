@@ -15,31 +15,31 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(CategoriaVehiculoSeeder::class);
+        $this->call(VehicleCategorySeeder::class);
 
         // Crear usuarios
         User::factory()->create([
             'name' => 'Admin Principal',
             'email' => 'admin@melichinkul.cl',
-            'rol' => 'administrador',
+            'role' => 'administrator',
         ]);
 
         User::factory()->create([
             'name' => 'Juan Pérez',
             'email' => 'juan.perez@melichinkul.cl',
-            'rol' => 'tecnico',
+            'role' => 'technician',
         ]);
 
         User::factory()->create([
             'name' => 'María González',
             'email' => 'maria.gonzalez@melichinkul.cl',
-            'rol' => 'tecnico',
+            'role' => 'technician',
         ]);
 
         // Crear vehículos
-        $this->call(VehiculoSeeder::class);
+        $this->call(VehicleSeeder::class);
 
         // Crear mantenimientos
-        $this->call(MantenimientoSeeder::class);
+        $this->call(MaintenanceSeeder::class);
     }
 }

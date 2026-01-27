@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Vehiculo;
-use App\Models\CategoriaVehiculo;
+use App\Models\Vehicle;
+use App\Models\VehicleCategory;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -12,7 +12,7 @@ new class extends Component
     public $search = "";
     public $categoryFilter = "";
     public $statusFilter = "";
-    public $sortField = "patente";
+    public $sortField = "license_plate";
     public $sortDirection = "asc";
 
     public function updatingSearch()
@@ -42,32 +42,32 @@ new class extends Component
 
     public function delete($id)
     {
-        $vehicle = Vehiculo::findOrFail($id);
+        $vehicle = Vehicle::findOrFail($id);
         $vehicle->delete();
         session()->flash("success", "Vehículo eliminado correctamente.");
     }
 
     public function render()
     {
-        $query = Vehiculo::with(["categoria", "conductorActual"])
+        $query = Vehicle::with(["category", "currentDriver"])
             ->where(function ($query) {
-                $query->where("patente", "like", "%" . $this->search . "%")
-                    ->orWhere("marca", "like", "%" . $this->search . "%")
-                    ->orWhere("modelo", "like", "%" . $this->search . "%");
+                $query->where("license_plate", "like", "%" . $this->search . "%")
+                    ->orWhere("brand", "like", "%" . $this->search . "%")
+                    ->orWhere("model", "like", "%" . $this->search . "%");
             });
 
         if ($this->categoryFilter) {
-            $query->where("categoria_id", $this->categoryFilter);
+            $query->where("category_id", $this->categoryFilter);
         }
 
         if ($this->statusFilter) {
-            $query->where("estado", $this->statusFilter);
+            $query->where("status", $this->statusFilter);
         }
 
         $vehicles = $query->orderBy($this->sortField, $this->sortDirection)
             ->paginate(10);
 
-        $categories = CategoriaVehiculo::where("activo", true)->orderBy("nombre")->get();
+        $categories = VehicleCategory::where("active", true)->orderBy("name")->get();
 
         return view("livewire.vehiculos.vehicle-table", [
             "vehicles" => $vehicles,

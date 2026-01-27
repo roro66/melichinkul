@@ -5,10 +5,10 @@
                 <label for="patente" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Patente <span class="text-red-500">*</span>
                 </label>
-                <input type="text" id="patente" wire:model.blur="patente" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error(patente) border-red-500 dark:border-red-600 @enderror"
+                <input type="text" id="license_plate" wire:model.blur="license_plate" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error("license_plate") border-red-500 dark:border-red-600 @enderror"
                     placeholder="ABCD12">
-                @error(patente)
+                @error("license_plate")
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -21,7 +21,7 @@
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Seleccionar categoría</option>
                     @foreach($categories as $category)
-                        <option value="{{$category->id}}">{{$category->nombre}}</option>
+                        <option value="{{$category->id}}">{{$category->name}}</option>
                     @endforeach
                 </select>
             </div>
@@ -30,9 +30,9 @@
                 <label for="marca" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Marca <span class="text-red-500">*</span>
                 </label>
-                <input type="text" id="marca" wire:model="marca" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error(marca) border-red-500 dark:border-red-600 @enderror">
-                @error(marca)
+                <input type="text" id="brand" wire:model="brand" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error("brand") border-red-500 dark:border-red-600 @enderror">
+                @error("brand")
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -41,9 +41,9 @@
                 <label for="modelo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Modelo <span class="text-red-500">*</span>
                 </label>
-                <input type="text" id="modelo" wire:model="modelo" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error(modelo) border-red-500 dark:border-red-600 @enderror">
-                @error(modelo)
+                <input type="text" id="model" wire:model="model" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error("model") border-red-500 dark:border-red-600 @enderror">
+                @error("model")
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -52,9 +52,9 @@
                 <label for="anio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Año <span class="text-red-500">*</span>
                 </label>
-                <input type="number" id="anio" wire:model="anio" min="1900" max="2100" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error(anio) border-red-500 dark:border-red-600 @enderror">
-                @error(anio)
+                <input type="number" id="year" wire:model="year" min="1900" max="2100" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error("year") border-red-500 dark:border-red-600 @enderror">
+                @error("year")
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -63,13 +63,13 @@
                 <label for="tipo_combustible" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Tipo de Combustible <span class="text-red-500">*</span>
                 </label>
-                <select id="tipo_combustible" wire:model="tipo_combustible" 
+                <select id="fuel_type" wire:model="fuel_type" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="gasolina">Gasolina</option>
+                    <option value="gasoline">Gasolina</option>
                     <option value="diesel">Diesel</option>
                     <option value="gas">Gas</option>
-                    <option value="electrico">Eléctrico</option>
-                    <option value="hibrido">Híbrido</option>
+                    <option value="electric">Eléctrico</option>
+                    <option value="hybrid">Híbrido</option>
                 </select>
             </div>
 
@@ -77,12 +77,12 @@
                 <label for="estado" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Estado <span class="text-red-500">*</span>
                 </label>
-                <select id="estado" wire:model="estado" 
+                <select id="status" wire:model="status" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
-                    <option value="mantenimiento">En Mantenimiento</option>
-                    <option value="baja">Baja</option>
+                    <option value="active">Activo</option>
+                    <option value="inactive">Inactivo</option>
+                    <option value="maintenance">En Mantenimiento</option>
+                    <option value="decommissioned">Baja</option>
                 </select>
             </div>
 
@@ -90,9 +90,9 @@
                 <label for="fecha_incorporacion" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Fecha de Incorporación <span class="text-red-500">*</span>
                 </label>
-                <input type="date" id="fecha_incorporacion" wire:model="fecha_incorporacion" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error(fecha_incorporacion) border-red-500 dark:border-red-600 @enderror">
-                @error(fecha_incorporacion)
+                <input type="date" id="incorporation_date" wire:model="incorporation_date" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error("incorporation_date") border-red-500 dark:border-red-600 @enderror">
+                @error("incorporation_date")
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
@@ -101,11 +101,11 @@
                 <label for="conductor_actual_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Conductor Actual
                 </label>
-                <select id="conductor_actual_id" wire:model="conductor_actual_id" 
+                <select id="current_driver_id" wire:model="current_driver_id" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Sin asignar</option>
                     @foreach($drivers as $driver)
-                        <option value="{{$driver->id}}">{{$driver->nombre_completo}} ({{ $driver->rut }})</option>
+                        <option value="{{$driver->id}}">{{$driver->full_name}} ({{ $driver->rut }})</option>
                     @endforeach
                 </select>
             </div>
@@ -114,7 +114,7 @@
                 <label for="numero_motor" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Número de Motor
                 </label>
-                <input type="text" id="numero_motor" wire:model="numero_motor" 
+                <input type="text" id="engine_number" wire:model="engine_number" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -122,7 +122,7 @@
                 <label for="numero_chasis" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Número de Chasis
                 </label>
-                <input type="text" id="numero_chasis" wire:model="numero_chasis" 
+                <input type="text" id="chassis_number" wire:model="chassis_number" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -130,7 +130,7 @@
                 <label for="kilometraje_actual" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Kilometraje Actual
                 </label>
-                <input type="number" id="kilometraje_actual" wire:model="kilometraje_actual" step="0.01" min="0" 
+                <input type="number" id="current_mileage" wire:model="current_mileage" step="0.01" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -138,7 +138,7 @@
                 <label for="horometro_actual" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Horómetro Actual
                 </label>
-                <input type="number" id="horometro_actual" wire:model="horometro_actual" step="0.01" min="0" 
+                <input type="number" id="current_hours" wire:model="current_hours" step="0.01" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -146,7 +146,7 @@
                 <label for="valor_compra" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Valor de Compra
                 </label>
-                <input type="number" id="valor_compra" wire:model="valor_compra" min="0" 
+                <input type="number" id="purchase_value" wire:model="purchase_value" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
         </div>
@@ -155,7 +155,7 @@
             <label for="observaciones" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Observaciones
             </label>
-            <textarea id="observaciones" wire:model="observaciones" rows="3" 
+            <textarea id="observations" wire:model="observations" rows="3" 
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
         </div>
 

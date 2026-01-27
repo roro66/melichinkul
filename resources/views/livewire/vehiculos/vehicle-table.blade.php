@@ -11,7 +11,7 @@
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Todas las categorías</option>
                     @foreach($categories as $category)
-                        <option value="{{$category->id}}">{{$category->nombre}}</option>
+                        <option value="{{$category->id}}">{{$category->name}}</option>
                     @endforeach
                 </select>
             </div>
@@ -19,10 +19,10 @@
                 <select wire:model.live="statusFilter" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Todos los estados</option>
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
-                    <option value="mantenimiento">En Mantenimiento</option>
-                    <option value="baja">Baja</option>
+                    <option value="active">Activo</option>
+                    <option value="inactive">Inactivo</option>
+                    <option value="maintenance">En Mantenimiento</option>
+                    <option value="decommissioned">Baja</option>
                 </select>
             </div>
         </div>
@@ -33,17 +33,17 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <th wire:click="sortBy('patente')" 
+                        <th wire:click="sortBy('license_plate')" 
                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
                             Patente
-                            @if($sortField === 'patente')
+                            @if($sortField === 'license_plate')
                                 <span class="ml-1">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
                             @endif
                         </th>
-                        <th wire:click="sortBy('marca')" 
+                        <th wire:click="sortBy('brand')" 
                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
                             Marca / Modelo
-                            @if($sortField === 'marca')
+                            @if($sortField === 'brand')
                                 <span class="ml-1">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
                             @endif
                         </th>
@@ -66,29 +66,29 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                    {{$vehicle->patente}}
+                                    {{$vehicle->license_plate}}
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900 dark:text-white">{{$vehicle->marca}}</div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">{{$vehicle->modelo}} ({{$vehicle->anio}})</div>
+                                <div class="text-sm text-gray-900 dark:text-white">{{$vehicle->brand}}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">{{$vehicle->model}} ({{$vehicle->year}})</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="text-sm text-gray-900 dark:text-white">
-                                    {{$vehicle->categoria->nombre ?? 'Sin categoría'}}
+                                    {{$vehicle->category->name ?? 'Sin categoría'}}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {{$vehicle->estado === 'activo' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
-                                       ($vehicle->estado === 'mantenimiento' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
-                                       ($vehicle->estado === 'baja' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' : 
+                                    {{$vehicle->status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
+                                       ($vehicle->status === 'maintenance' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
+                                       ($vehicle->status === 'decommissioned' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' : 
                                        'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'))}}">
-                                    {{ucfirst($vehicle->estado)}}
+                                    {{ucfirst($vehicle->status)}}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{$vehicle->conductorActual->nombre_completo ?? 'Sin asignar'}}
+                                {{$vehicle->currentDriver->full_name ?? 'Sin asignar'}}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <a href="{{route('vehiculos.show', $vehicle->id)}}" 

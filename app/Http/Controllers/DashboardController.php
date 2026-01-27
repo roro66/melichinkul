@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Vehiculo;
-use App\Models\Mantenimiento;
-use App\Models\Alerta;
+use App\Models\Vehicle;
+use App\Models\Maintenance;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -12,32 +11,18 @@ class DashboardController extends Controller
     public function index()
     {
         $stats = [
-            'vehiculos_total' => Vehiculo::count(),
-            'vehiculos_activos' => Vehiculo::where('estado', 'activo')->count(),
-            'mantenimientos_programados' => Mantenimiento::where('estado', 'programado')->count(),
-            'mantenimientos_en_proceso' => Mantenimiento::where('estado', 'en_proceso')->count(),
-            'alertas_criticas' => Alerta::where('severidad', 'critica')
-                ->where('estado', '!=', 'cerrada')
-                ->vigentes()
-                ->count(),
-            'alertas_pendientes' => Alerta::where('estado', 'pendiente')
-                ->vigentes()
-                ->count(),
+            'vehiculos_total' => Vehicle::count(),
+            'vehiculos_activos' => Vehicle::where('status', 'active')->count(),
+            'mantenimientos_programados' => Maintenance::where('status', 'scheduled')->count(),
+            'mantenimientos_en_proceso' => Maintenance::where('status', 'in_progress')->count(),
         ];
 
-        $alertas_recientes = Alerta::with(['vehiculo', 'conductor', 'certificacion'])
-            ->where('estado', '!=', 'cerrada')
-            ->vigentes()
-            ->orderBy('fecha_generada', 'desc')
-            ->limit(10)
-            ->get();
-
-        $mantenimientos_recientes = Mantenimiento::with('vehiculo')
-            ->whereIn('estado', ['en_proceso', 'completado'])
+        $mantenimientos_recientes = Maintenance::with('vehicle')
+            ->whereIn('status', ['in_progress', 'completed'])
             ->orderBy('updated_at', 'desc')
             ->limit(5)
             ->get();
 
-        return view('dashboard.index', compact('stats', 'alertas_recientes', 'mantenimientos_recientes'));
+        return view('dashboard.index', compact('stats', 'mantenimientos_recientes'));
     }
 }
