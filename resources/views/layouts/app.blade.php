@@ -3,9 +3,275 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'Melichinkul'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('js/sweetalert-config.js') }}"></script>
+    <style>
+        /* Estilos para SweetAlert2 en modo oscuro */
+        .swal2-popup {
+            @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100;
+        }
+        .swal2-title {
+            @apply text-gray-900 dark:text-white;
+        }
+        .swal2-content {
+            @apply text-gray-600 dark:text-gray-300;
+        }
+        .swal2-confirm {
+            @apply bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600;
+        }
+        .swal2-cancel {
+            @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200;
+        }
+        .swal2-toast {
+            @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700;
+        }
+    </style>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.dataTables.min.css">
+    <style>
+        /* DataTables Tailwind Integration */
+        .dataTables_wrapper {
+            color: #111827;
+        }
+        
+        .dark .dataTables_wrapper {
+            color: #f9fafb;
+        }
+        
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: #374151;
+        }
+        
+        .dark .dataTables_wrapper .dataTables_length,
+        .dark .dataTables_wrapper .dataTables_filter,
+        .dark .dataTables_wrapper .dataTables_info,
+        .dark .dataTables_wrapper .dataTables_paginate {
+            color: #e5e7eb;
+        }
+        
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            color: #111827;
+        }
+        
+        .dark .dataTables_wrapper .dataTables_length select,
+        .dark .dataTables_wrapper .dataTables_filter input {
+            background-color: #1f2937;
+            border-color: #4b5563;
+            color: #f9fafb;
+        }
+        
+        table.dataTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table.dataTable thead th {
+            background-color: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .dark table.dataTable thead th {
+            background-color: #111827;
+            color: #e5e7eb;
+            border-bottom-color: #374151;
+        }
+        
+        table.dataTable tbody td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #ffffff;
+            color: #111827;
+        }
+        
+        .dark table.dataTable tbody td {
+            background-color: #1f2937;
+            color: #f9fafb;
+            border-bottom-color: #374151;
+        }
+        
+        table.dataTable tbody tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        .dark table.dataTable tbody tr:hover {
+            background-color: #374151;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0.25rem 0.75rem;
+            margin: 0 0.25rem;
+            border-radius: 0.375rem;
+            color: #374151;
+        }
+        
+        .dark .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: #e5e7eb;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .dark .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background-color: #4b5563;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background-color: #4f46e5;
+            color: #ffffff;
+        }
+        
+        .dark .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .dataTables_wrapper .dataTables_processing {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dark .dataTables_wrapper .dataTables_processing {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+        
+        /* Estilos para botones de acción con iconos */
+        table.dataTable tbody td .fa-eye,
+        table.dataTable tbody td .fa-edit,
+        table.dataTable tbody td .fa-trash-alt {
+            font-size: 1.125rem;
+            padding: 0.375rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+        }
+        
+        table.dataTable tbody td .fa-eye:hover,
+        table.dataTable tbody td .fa-edit:hover,
+        table.dataTable tbody td .fa-trash-alt:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Estilos para botones de DataTables */
+        .dt-buttons {
+            margin-bottom: 1rem;
+        }
+        
+        .dt-buttons button {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .dt-buttons button:hover {
+            background-color: #4338ca;
+        }
+        
+        .dark .dt-buttons button {
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+        
+        .dark .dt-buttons button:hover {
+            background-color: #818cf8;
+        }
+        
+        /* Dropdown de columnas */
+        .dt-button-collection {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dark .dt-button-collection {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+        
+        .dt-button-collection button {
+            background-color: transparent;
+            color: #374151;
+            padding: 0.5rem 1rem;
+            width: 100%;
+            text-align: left;
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .dt-button-collection button:hover {
+            background-color: #f9fafb;
+        }
+        
+        .dark .dt-button-collection button {
+            color: #e5e7eb;
+            border-bottom-color: #374151;
+        }
+        
+        .dark .dt-button-collection button:hover {
+            background-color: #374151;
+        }
+        
+        /* Ajustar layout de DataTables con botones */
+        .dataTables_wrapper .dt-buttons {
+            float: left;
+            margin-bottom: 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_length {
+            float: left;
+            margin-right: 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_filter {
+            float: right;
+        }
+        
+        .dataTables_wrapper::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+    </style>
     <script>
         // Detectar preferencia de modo oscuro del sistema
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -117,25 +383,7 @@
 
             <!-- Contenido -->
             <main class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 lg:p-6">
-                @if (session('success'))
-                    <div class="mb-4 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 p-4">
-                        <div class="flex">
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-green-800 dark:text-green-300">{{ session('success') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
-                @if (session('error'))
-                    <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-4">
-                        <div class="flex">
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-red-800 dark:text-red-300">{{ session('error') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+                <!-- Los mensajes flash ahora se muestran con SweetAlert2, no necesitamos estos divs -->
 
                 @yield('content')
             </main>
@@ -143,6 +391,111 @@
     </div>
 
     @livewireScripts
+    <!-- Interceptar wire:confirm de Livewire para usar SweetAlert -->
+    <script>
+        // Interceptar wire:confirm cuando Livewire actualiza el DOM
+        document.addEventListener('livewire:init', () => {
+            Livewire.hook('morph.updated', ({ el, component }) => {
+                setTimeout(() => {
+                    el.querySelectorAll('[wire\\:confirm]:not([data-swal-converted])').forEach(element => {
+                        const originalConfirm = element.getAttribute('wire:confirm');
+                        const wireClick = element.getAttribute('wire:click');
+                        
+                        if (originalConfirm && wireClick) {
+                            element.removeAttribute('wire:confirm');
+                            element.setAttribute('data-swal-converted', 'true');
+                            
+                            element.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                swalConfirmDelete('¿Estás seguro?', originalConfirm, 'Sí, eliminar')
+                                    .then((result) => {
+                                        if (result.isConfirmed) {
+                                            const match = wireClick.match(/delete\((\d+)\)/);
+                                            if (match) {
+                                                const id = parseInt(match[1]);
+                                                component.call('delete', id);
+                                            }
+                                        }
+                                    });
+                            });
+                        }
+                    });
+                }, 100);
+            });
+        });
+
+        // Interceptar wire:confirm en elementos existentes al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.querySelectorAll('[wire\\:confirm]:not([data-swal-converted])').forEach(element => {
+                    const originalConfirm = element.getAttribute('wire:confirm');
+                    const wireClick = element.getAttribute('wire:click');
+                    
+                    if (originalConfirm && wireClick) {
+                        element.removeAttribute('wire:confirm');
+                        element.setAttribute('data-swal-converted', 'true');
+                        
+                        element.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            swalConfirmDelete('¿Estás seguro?', originalConfirm, 'Sí, eliminar')
+                                .then((result) => {
+                                    if (result.isConfirmed) {
+                                        const wireId = element.closest('[wire\\:id]')?.getAttribute('wire:id');
+                                        if (wireId) {
+                                            const component = Livewire.find(wireId);
+                                            if (component) {
+                                                const match = wireClick.match(/delete\((\d+)\)/);
+                                                if (match) {
+                                                    const id = parseInt(match[1]);
+                                                    component.call('delete', id);
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                        });
+                    }
+                });
+            }, 500);
+        });
+    </script>
+    <!-- jQuery y DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <!-- DataTables Config debe cargarse después de DataTables pero antes de @stack('scripts') -->
+    <script src="{{ asset('js/datatables-config.js') }}"></script>
+    @stack('scripts')
+    <script>
+        // Mostrar mensajes flash de Laravel con SweetAlert2
+        @if(session('success'))
+            swalSuccess('{{ session('success') }}');
+        @endif
+
+        @if(session('error'))
+            swalError('{{ session('error') }}');
+        @endif
+
+        @if(session('warning'))
+            swalWarning('{{ session('warning') }}');
+        @endif
+
+        @if(session('info'))
+            swalInfo('{{ session('info') }}');
+        @endif
+    </script>
     <script>
         // Función para actualizar logos según el modo
         function updateLogos() {

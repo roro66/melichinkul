@@ -160,7 +160,7 @@
         </div>
 
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <a href="{{route(vehiculos.index)}}" 
+            <a href="{{route('vehiculos.index')}}" 
                 class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150">
                 Cancelar
             </a>

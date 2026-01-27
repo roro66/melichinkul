@@ -48,9 +48,13 @@ new class extends Component
 
     public function delete($id)
     {
-        $maintenance = Maintenance::findOrFail($id);
-        $maintenance->delete();
-        session()->flash("success", "Mantenimiento eliminado correctamente.");
+        try {
+            $maintenance = Maintenance::findOrFail($id);
+            $maintenance->delete();
+            session()->flash("success", "Mantenimiento eliminado correctamente.");
+        } catch (\Exception $e) {
+            session()->flash("error", "Error al eliminar el mantenimiento: " . $e->getMessage());
+        }
     }
 
     public function render()

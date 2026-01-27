@@ -19,9 +19,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Módulo Vehículos
-    Route::get('/vehiculos', function () {
-        return view('vehiculos.index');
-    })->name('vehiculos.index');
+    Route::get('/vehiculos', [\App\Http\Controllers\VehicleController::class, 'index'])->name('vehiculos.index');
     
     Route::get('/vehiculos/create', function () {
         return view('vehiculos.create');
@@ -34,6 +32,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vehiculos/{id}', function ($id) {
         return view('vehiculos.show', ['id' => $id]);
     })->name('vehiculos.show');
+    
+    Route::delete('/vehiculos/{id}', [\App\Http\Controllers\VehicleController::class, 'destroy'])->name('vehiculos.destroy');
+    Route::post('/vehiculos/export/{format}', [\App\Http\Controllers\VehicleController::class, 'export'])->name('vehiculos.export');
     
     // Módulo Mantenimientos
     Route::get('/mantenimientos', function () {

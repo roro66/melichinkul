@@ -42,9 +42,13 @@ new class extends Component
 
     public function delete($id)
     {
-        $vehicle = Vehicle::findOrFail($id);
-        $vehicle->delete();
-        session()->flash("success", "Vehículo eliminado correctamente.");
+        try {
+            $vehicle = Vehicle::findOrFail($id);
+            $vehicle->delete();
+            session()->flash("success", "Vehículo eliminado correctamente.");
+        } catch (\Exception $e) {
+            session()->flash("error", "Error al eliminar el vehículo: " . $e->getMessage());
+        }
     }
 
     public function render()
