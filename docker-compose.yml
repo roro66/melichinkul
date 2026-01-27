@@ -2,8 +2,6 @@
 # PostgreSQL: host Ubuntu (host.docker.internal). Crear BD: melichinkul_db
 # Mailpit: http://localhost:8025 para ver correos de prueba
 
-version: '3.8'
-
 services:
   app:
     build:

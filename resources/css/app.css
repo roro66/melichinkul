@@ -9,3 +9,45 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Configuración de modo oscuro - Tailwind 4 class strategy */
+@custom-variant dark (&&:where(.dark, .dark *));
+
+/* CSS personalizado para modo oscuro (temporal hasta que Tailwind genere las clases) */
+.dark body {
+    background-color: #111827; /* gray-900 */
+}
+
+.dark .bg-white {
+    background-color: #1f2937; /* gray-800 */
+}
+
+.dark .bg-gray-50 {
+    background-color: #111827; /* gray-900 */
+}
+
+.dark .text-gray-900 {
+    color: #f9fafb; /* gray-50 / white */
+}
+
+.dark .text-gray-700 {
+    color: #d1d5db; /* gray-300 */
+}
+
+.dark .text-gray-600 {
+    color: #9ca3af; /* gray-400 */
+}
+
+.dark .text-gray-500 {
+    color: #6b7280; /* gray-500 */
+}
+
+.dark .border-gray-200 {
+    border-color: #374151; /* gray-700 */
+}
+
+.dark .border-gray-300 {
+    border-color: #4b5563; /* gray-600 */
+}
+
+/* Ajustar logo para modo oscuro - remover filtro ya que usaremos versión con fondo */
