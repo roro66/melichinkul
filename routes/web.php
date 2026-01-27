@@ -35,7 +35,7 @@ Route::middleware(['auth'])->group(function () {
         return view('vehiculos.show', ['id' => $id]);
     })->name('vehiculos.show');
     
-    // Placeholder para módulos (se implementarán con Livewire)
+    // Módulo Mantenimientos
     Route::get('/mantenimientos', function () {
         return view('mantenimientos.index');
     })->name('mantenimientos.index');
@@ -43,4 +43,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/mantenimientos/create', function () {
         return view('mantenimientos.create');
     })->name('mantenimientos.create');
+    
+    Route::get('/mantenimientos/{id}/edit', function ($id) {
+        return view('mantenimientos.edit', ['id' => $id]);
+    })->name('mantenimientos.edit');
+    
+    Route::get('/mantenimientos/{id}', function ($id) {
+        return view('mantenimientos.show', ['id' => $id]);
+    })->name('mantenimientos.show');
 });
