@@ -18,7 +18,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    // Placeholder para módulos (se implementarán con Livewire)
+    // Módulo Vehículos
     Route::get('/vehiculos', function () {
         return view('vehiculos.index');
     })->name('vehiculos.index');
@@ -27,6 +27,15 @@ Route::middleware(['auth'])->group(function () {
         return view('vehiculos.create');
     })->name('vehiculos.create');
     
+    Route::get('/vehiculos/{id}/edit', function ($id) {
+        return view('vehiculos.edit', ['id' => $id]);
+    })->name('vehiculos.edit');
+    
+    Route::get('/vehiculos/{id}', function ($id) {
+        return view('vehiculos.show', ['id' => $id]);
+    })->name('vehiculos.show');
+    
+    // Placeholder para módulos (se implementarán con Livewire)
     Route::get('/mantenimientos', function () {
         return view('mantenimientos.index');
     })->name('mantenimientos.index');
