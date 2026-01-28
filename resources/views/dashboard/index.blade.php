@@ -334,15 +334,60 @@
     }
     window.dashboardChartsInitialized = true;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Detectar modo oscuro una sola vez
+    // Función para obtener colores según el modo actual
+    function getChartColors() {
         const isDark = document.documentElement.classList.contains('dark');
-        const textColor = isDark ? '#f3f4f6' : '#111827';
-        const gridColor = isDark ? '#4b5563' : '#e5e7eb';
+        return {
+            isDark: isDark,
+            textColor: isDark ? '#ffffff' : '#000000',
+            gridColor: isDark ? '#4b5563' : '#e5e7eb'
+        };
+    }
 
-        // Gráfico de Costos Mensuales
-        const costCtx = document.getElementById('costChart');
-        if (costCtx && !costCtx.chart) {
+    // Función para actualizar colores de los gráficos
+    function updateChartColors(chart, colors) {
+        if (!chart) return;
+        
+        // Actualizar leyenda
+        if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+            chart.options.plugins.legend.labels.color = colors.textColor;
+        }
+        
+        // Actualizar tooltip
+        if (chart.options.plugins.tooltip) {
+            chart.options.plugins.tooltip.backgroundColor = colors.isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+            chart.options.plugins.tooltip.titleColor = colors.isDark ? '#ffffff' : '#111827';
+            chart.options.plugins.tooltip.bodyColor = colors.isDark ? '#e5e7eb' : '#374151';
+        }
+        
+        // Actualizar ejes
+        if (chart.options.scales) {
+            Object.keys(chart.options.scales).forEach(scaleKey => {
+                const scale = chart.options.scales[scaleKey];
+                if (scale.ticks) {
+                    scale.ticks.color = colors.textColor;
+                }
+                if (scale.grid) {
+                    scale.grid.color = colors.gridColor;
+                }
+                if (scale.title) {
+                    scale.title.color = colors.textColor;
+                }
+            });
+        }
+        
+        chart.update('none');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Esperar un frame para asegurar que el DOM esté completamente renderizado
+        requestAnimationFrame(function() {
+            // Detectar modo oscuro
+            const colors = getChartColors();
+
+            // Gráfico de Costos Mensuales
+            const costCtx = document.getElementById('costChart');
+            if (costCtx && !costCtx.chart) {
             costCtx.chart = new Chart(costCtx, {
                 type: 'line',
                 data: {
@@ -364,25 +409,33 @@
                             display: true,
                             position: 'top',
                             labels: {
-                                color: textColor,
+                                color: colors.textColor,
                                 font: {
                                     size: 14,
                                     weight: '600'
                                 },
-                                padding: 20
+                                padding: 20,
+                                usePointStyle: false
                             }
                         },
                         tooltip: {
+                            backgroundColor: colors.isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                            titleColor: colors.isDark ? '#ffffff' : '#111827',
+                            bodyColor: colors.isDark ? '#e5e7eb' : '#374151',
+                            borderColor: colors.gridColor,
+                            borderWidth: 1,
                             callbacks: {
                                 label: function(context) {
                                     return 'Costo: $' + new Intl.NumberFormat('es-CL').format(context.parsed.y);
                                 }
                             },
                             titleFont: {
-                                size: 14
+                                size: 14,
+                                weight: '600'
                             },
                             bodyFont: {
-                                size: 13
+                                size: 13,
+                                weight: '500'
                             },
                             padding: 12
                         }
@@ -391,7 +444,7 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                color: textColor,
+                                color: colors.textColor,
                                 font: {
                                     size: 14,
                                     weight: '500'
@@ -407,13 +460,13 @@
                                 }
                             },
                             grid: {
-                                color: gridColor,
-                                lineWidth: isDark ? 1.5 : 1
+                                color: colors.gridColor,
+                                lineWidth: colors.isDark ? 1.5 : 1
                             },
                             title: {
                                 display: true,
                                 text: 'Costo (CLP)',
-                                color: textColor,
+                                color: colors.textColor,
                                 font: {
                                     size: 16,
                                     weight: '600'
@@ -426,7 +479,7 @@
                         },
                         x: {
                             ticks: {
-                                color: textColor,
+                                color: colors.textColor,
                                 font: {
                                     size: 14,
                                     weight: '500'
@@ -436,13 +489,13 @@
                                 minRotation: 45
                             },
                             grid: {
-                                color: gridColor,
-                                lineWidth: isDark ? 1.5 : 1
+                                color: colors.gridColor,
+                                lineWidth: colors.isDark ? 1.5 : 1
                             },
                             title: {
                                 display: true,
                                 text: 'Mes',
-                                color: textColor,
+                                color: colors.textColor,
                                 font: {
                                     size: 16,
                                     weight: '600'
@@ -492,7 +545,7 @@
                             position: 'bottom',
                             align: 'center',
                             labels: {
-                                color: textColor,
+                                color: colors.textColor,
                                 font: {
                                     size: 15,
                                     weight: '600'
@@ -505,6 +558,11 @@
                             }
                         },
                         tooltip: {
+                            backgroundColor: colors.isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                            titleColor: colors.isDark ? '#ffffff' : '#111827',
+                            bodyColor: colors.isDark ? '#e5e7eb' : '#374151',
+                            borderColor: colors.gridColor,
+                            borderWidth: 1,
                             callbacks: {
                                 label: function(context) {
                                     const label = context.label || '';
@@ -515,10 +573,12 @@
                                 }
                             },
                             titleFont: {
-                                size: 14
+                                size: 14,
+                                weight: '600'
                             },
                             bodyFont: {
-                                size: 13
+                                size: 13,
+                                weight: '500'
                             },
                             padding: 12
                         }
@@ -526,6 +586,28 @@
                 }
             });
         }
+
+            // Observar cambios en el modo oscuro y actualizar gráficos
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        const newColors = getChartColors();
+                        if (costCtx && costCtx.chart) {
+                            updateChartColors(costCtx.chart, newColors);
+                        }
+                        if (typeCtx && typeCtx.chart) {
+                            updateChartColors(typeCtx.chart, newColors);
+                        }
+                    }
+                });
+            });
+
+            // Observar cambios en la clase 'dark' del elemento html
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        });
     });
 })();
 </script>
