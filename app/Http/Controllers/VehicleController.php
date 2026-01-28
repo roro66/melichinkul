@@ -105,6 +105,47 @@ class VehicleController extends Controller
         }
     }
 
+    public function show($id)
+    {
+        $vehicle = Vehicle::with([
+            'category',
+            'currentDriver',
+            'maintenances' => function($query) {
+                $query->orderBy('scheduled_date', 'desc');
+            },
+            'maintenances.responsibleTechnician',
+            'maintenances.assignedDriver',
+            'certifications' => function($query) {
+                $query->orderBy('expiration_date', 'asc');
+            }
+        ])->findOrFail($id);
+
+        // Calcular estadísticas de gastos
+        $completedMaintenances = $vehicle->maintenances->where('status', 'completed');
+        
+        $stats = [
+            'total_cost' => $completedMaintenances->sum('total_cost'),
+            'preventive_cost' => $completedMaintenances->where('type', 'preventive')->sum('total_cost'),
+            'corrective_cost' => $completedMaintenances->where('type', 'corrective')->sum('total_cost'),
+            'inspection_cost' => $completedMaintenances->where('type', 'inspection')->sum('total_cost'),
+            'parts_cost' => $completedMaintenances->sum('parts_cost'),
+            'labor_cost' => $completedMaintenances->sum('labor_cost'),
+            'total_count' => $completedMaintenances->count(),
+            'preventive_count' => $completedMaintenances->where('type', 'preventive')->count(),
+            'corrective_count' => $completedMaintenances->where('type', 'corrective')->count(),
+            'inspection_count' => $completedMaintenances->where('type', 'inspection')->count(),
+        ];
+
+        // Próximos mantenimientos (programados o en proceso)
+        $upcomingMaintenances = $vehicle->maintenances()
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->orderBy('scheduled_date', 'asc')
+            ->limit(5)
+            ->get();
+
+        return view('vehiculos.show', compact('vehicle', 'stats', 'upcomingMaintenances'));
+    }
+
     public function export(Request $request, $format)
     {
         // Obtener filtros de la petición

@@ -83,12 +83,18 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                    {{$maintenance->vehicle->license_plate}}
-                                </div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{$maintenance->vehicle->brand}} {{$maintenance->vehicle->model}}
-                                </div>
+                                @if($maintenance->vehicle)
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{$maintenance->vehicle->license_plate}}
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{$maintenance->vehicle->brand}} {{$maintenance->vehicle->model}}
+                                    </div>
+                                @else
+                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400 italic">
+                                        Vehículo eliminado
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -104,7 +110,7 @@
                                        ($maintenance->status === 'in_progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
                                        ($maintenance->status === 'cancelled' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' : 
                                        'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'))}}">
-                                    {{ucfirst(str_replace('_\, ' ', $maintenance->status))}}
+                                    {{ucfirst(str_replace('_', ' ', $maintenance->status))}}
                                 </span>
                             </td>
                             <td class="px-6 py-4">
@@ -114,7 +120,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                    ${{number_format($maintenance->total_cost, 0, ', '.')}}
+                                    ${{number_format($maintenance->total_cost, 0, ',', '.')}}
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

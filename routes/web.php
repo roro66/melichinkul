@@ -29,17 +29,15 @@ Route::middleware(['auth'])->group(function () {
         return view('vehiculos.edit', ['id' => $id]);
     })->name('vehiculos.edit');
     
-    Route::get('/vehiculos/{id}', function ($id) {
-        return view('vehiculos.show', ['id' => $id]);
-    })->name('vehiculos.show');
+    Route::get('/vehiculos/{id}', [\App\Http\Controllers\VehicleController::class, 'show'])->name('vehiculos.show');
     
     Route::delete('/vehiculos/{id}', [\App\Http\Controllers\VehicleController::class, 'destroy'])->name('vehiculos.destroy');
     Route::post('/vehiculos/export/{format}', [\App\Http\Controllers\VehicleController::class, 'export'])->name('vehiculos.export');
     
     // Módulo Mantenimientos
-    Route::get('/mantenimientos', function () {
-        return view('mantenimientos.index');
-    })->name('mantenimientos.index');
+    Route::get('/mantenimientos', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('mantenimientos.index');
+    Route::delete('/mantenimientos/{id}', [\App\Http\Controllers\MaintenanceController::class, 'destroy'])->name('mantenimientos.destroy');
+    Route::post('/mantenimientos/export/{format}', [\App\Http\Controllers\MaintenanceController::class, 'export'])->name('mantenimientos.export');
     
     Route::get('/mantenimientos/create', function () {
         return view('mantenimientos.create');

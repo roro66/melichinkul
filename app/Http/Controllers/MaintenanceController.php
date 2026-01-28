@@ -1,0 +1,162 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Maintenance;
+use App\Exports\MaintenancesExport;
+use Yajra\DataTables\Facades\DataTables;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Http\Request;
+
+class MaintenanceController extends Controller
+{
+    public function index()
+    {
+        if (request()->ajax()) {
+            $maintenances = Maintenance::with(['vehicle', 'responsibleTechnician', 'assignedDriver'])
+                ->select('maintenances.*');
+
+            // Aplicar búsqueda global
+            if (request()->has('search') && request()->get('search')['value']) {
+                $search = request()->get('search')['value'];
+                $maintenances->where(function ($query) use ($search) {
+                    $query->whereHas('vehicle', function ($vehicleQuery) use ($search) {
+                        $vehicleQuery->where('license_plate', 'like', "%{$search}%")
+                                     ->orWhere('brand', 'like', "%{$search}%")
+                                     ->orWhere('model', 'like', "%{$search}%");
+                    })
+                    ->orWhere('work_description', 'like', "%{$search}%")
+                    ->orWhere('entry_reason', 'like', "%{$search}%");
+                });
+            }
+
+            // Filtro por vehículo
+            if (request()->has('columns') && request()->get('columns')[1]['search']['value']) {
+                $vehicleId = request()->get('columns')[1]['search']['value'];
+                if ($vehicleId) {
+                    $maintenances->where('vehicle_id', $vehicleId);
+                }
+            }
+
+            // Filtro por tipo
+            if (request()->has('columns') && request()->get('columns')[2]['search']['value']) {
+                $type = request()->get('columns')[2]['search']['value'];
+                if ($type) {
+                    $maintenances->where('type', $type);
+                }
+            }
+
+            // Filtro por estado
+            if (request()->has('columns') && request()->get('columns')[3]['search']['value']) {
+                $status = request()->get('columns')[3]['search']['value'];
+                if ($status) {
+                    $maintenances->where('status', $status);
+                }
+            }
+
+            return DataTables::of($maintenances)
+                ->addColumn('vehicle_info', function ($maintenance) {
+                    if ($maintenance->vehicle) {
+                        return $maintenance->vehicle->license_plate . '<br><span class="text-xs text-gray-500 dark:text-gray-400">' 
+                             . $maintenance->vehicle->brand . ' ' . $maintenance->vehicle->model . '</span>';
+                    }
+                    return '<span class="text-gray-500 dark:text-gray-400 italic">Vehículo eliminado</span>';
+                })
+                ->addColumn('type_badge', function ($maintenance) {
+                    $typeColors = [
+                        'preventive' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+                        'corrective' => 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
+                        'inspection' => 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300',
+                    ];
+                    $color = $typeColors[$maintenance->type] ?? $typeColors['preventive'];
+                    $typeText = ucfirst($maintenance->type);
+                    return "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {$color}'>{$typeText}</span>";
+                })
+                ->addColumn('status_badge', function ($maintenance) {
+                    $statusColors = [
+                        'scheduled' => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+                        'in_progress' => 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+                        'completed' => 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+                        'cancelled' => 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+                    ];
+                    $color = $statusColors[$maintenance->status] ?? $statusColors['scheduled'];
+                    $statusText = ucfirst(str_replace('_', ' ', $maintenance->status));
+                    return "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {$color}'>{$statusText}</span>";
+                })
+                ->addColumn('formatted_cost', function ($maintenance) {
+                    return '$' . number_format($maintenance->total_cost, 0, ',', '.');
+                })
+                ->addColumn('formatted_date', function ($maintenance) {
+                    return $maintenance->scheduled_date ? $maintenance->scheduled_date->format('d/m/Y') : 'Sin fecha';
+                })
+                ->addColumn('actions', function ($maintenance) {
+                    return "
+                        <div class='flex justify-end space-x-3'>
+                            <a href='" . route('mantenimientos.show', $maintenance->id) . "' 
+                               class='text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 transition-colors duration-150'
+                               title='Ver detalles'>
+                                <i class='fas fa-eye'></i>
+                            </a>
+                            <a href='" . route('mantenimientos.edit', $maintenance->id) . "' 
+                               class='text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 transition-colors duration-150'
+                               title='Editar'>
+                                <i class='fas fa-edit'></i>
+                            </a>
+                            <button onclick='deleteMaintenance(" . $maintenance->id . ")' 
+                                    class='text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors duration-150 cursor-pointer bg-transparent border-none'
+                                    title='Eliminar'>
+                                <i class='fas fa-trash-alt'></i>
+                            </button>
+                        </div>
+                    ";
+                })
+                ->rawColumns(['vehicle_info', 'type_badge', 'status_badge', 'actions'])
+                ->make(true);
+        }
+
+        return view('mantenimientos.index');
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $maintenance = Maintenance::findOrFail($id);
+            $maintenance->delete();
+            
+            return response()->json([
+                'success' => true, 
+                'message' => 'Mantenimiento eliminado correctamente.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Error al eliminar el mantenimiento: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function export(Request $request, $format)
+    {
+        $filters = [
+            'vehicle_id' => $request->get('vehicle_id'),
+            'type' => $request->get('type'),
+            'status' => $request->get('status'),
+            'search' => $request->get('search'),
+        ];
+
+        $filters = array_filter($filters, function($value) {
+            return $value !== null && $value !== '';
+        });
+
+        $filename = 'mantenimientos_' . date('Y-m-d_His');
+
+        switch ($format) {
+            case 'excel':
+                return Excel::download(new MaintenancesExport($filters), $filename . '.xlsx');
+            case 'csv':
+                return Excel::download(new MaintenancesExport($filters), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV);
+            default:
+                return redirect()->back()->with('error', 'Formato de exportación no válido');
+        }
+    }
+}
