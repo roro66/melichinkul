@@ -13,14 +13,14 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('js/sweetalert-config.js') }}"></script>
     <style>
-        /* Estilos para SweetAlert2 en modo oscuro */
+        /* Estilos para SweetAlert2 en modo oscuro - sin texto negro */
         .swal2-popup {
             @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100;
         }
         .swal2-title {
             @apply text-gray-900 dark:text-white;
         }
-        .swal2-content {
+        .swal2-content, .swal2-html-container {
             @apply text-gray-600 dark:text-gray-300;
         }
         .swal2-confirm {
@@ -32,6 +32,123 @@
         .swal2-toast {
             @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700;
         }
+        /* Colores semánticos en modo oscuro: éxito=verde, error=rojo, advertencia=ámbar, info=azul */
+        .dark .swal2-popup.swal2-success .swal2-title,
+        .dark .swal2-popup.swal2-success .swal2-html-container { color: #86efac; }
+        .dark .swal2-popup.swal2-error .swal2-title,
+        .dark .swal2-popup.swal2-error .swal2-html-container { color: #fca5a5; }
+        .dark .swal2-popup.swal2-warning .swal2-title,
+        .dark .swal2-popup.swal2-warning .swal2-html-container { color: #fcd34d; }
+        .dark .swal2-popup.swal2-question .swal2-title,
+        .dark .swal2-popup.swal2-question .swal2-html-container { color: #93c5fd; }
+        /* BADGES modo oscuro: forzar fondo y texto legibles (Correctivo, Preventivo, etc.) - solo elementos con rounded-full */
+        html.dark [class*="rounded-full"][class*="bg-orange"],
+        .dark [class*="rounded-full"][class*="bg-orange"] {
+            background-color: #c2410c !important;
+            color: #fed7aa !important;
+        }
+        html.dark [class*="rounded-full"][class*="bg-blue"],
+        .dark [class*="rounded-full"][class*="bg-blue"] {
+            background-color: #1d4ed8 !important;
+            color: #bfdbfe !important;
+        }
+        html.dark [class*="rounded-full"][class*="bg-purple"],
+        .dark [class*="rounded-full"][class*="bg-purple"] {
+            background-color: #6d28d9 !important;
+            color: #e9d5ff !important;
+        }
+        html.dark [class*="rounded-full"][class*="bg-green"],
+        .dark [class*="rounded-full"][class*="bg-green"] {
+            background-color: #15803d !important;
+            color: #bbf7d0 !important;
+        }
+        html.dark [class*="rounded-full"][class*="bg-yellow"],
+        .dark [class*="rounded-full"][class*="bg-yellow"] {
+            background-color: #ca8a04 !important;
+            color: #fef08a !important;
+        }
+        html.dark [class*="rounded-full"][class*="bg-amber"],
+        .dark [class*="rounded-full"][class*="bg-amber"] {
+            background-color: #b45309 !important;
+            color: #fde68a !important;
+        }
+        html.dark [class*="rounded-full"][class*="bg-red"],
+        .dark [class*="rounded-full"][class*="bg-red"] {
+            background-color: #b91c1c !important;
+            color: #fecaca !important;
+        }
+        html.dark [class*="rounded-full"][class*="bg-gray"],
+        .dark [class*="rounded-full"][class*="bg-gray"] {
+            background-color: #4b5563 !important;
+            color: #e5e7eb !important;
+        }
+        /* Badges con "rounded" (pestañas Certificaciones y Alertas) - mismo tratamiento */
+        html.dark span[class*="inline-flex"][class*="rounded"][class*="bg-orange"],
+        .dark span[class*="inline-flex"][class*="rounded"][class*="bg-orange"] {
+            background-color: #c2410c !important;
+            color: #fed7aa !important;
+        }
+        html.dark span[class*="inline-flex"][class*="rounded"][class*="bg-blue"],
+        .dark span[class*="inline-flex"][class*="rounded"][class*="bg-blue"] {
+            background-color: #1d4ed8 !important;
+            color: #bfdbfe !important;
+        }
+        html.dark span[class*="inline-flex"][class*="rounded"][class*="bg-purple"],
+        .dark span[class*="inline-flex"][class*="rounded"][class*="bg-purple"] {
+            background-color: #6d28d9 !important;
+            color: #e9d5ff !important;
+        }
+        html.dark span[class*="inline-flex"][class*="rounded"][class*="bg-green"],
+        .dark span[class*="inline-flex"][class*="rounded"][class*="bg-green"] {
+            background-color: #15803d !important;
+            color: #bbf7d0 !important;
+        }
+        html.dark span[class*="inline-flex"][class*="rounded"][class*="bg-yellow"],
+        .dark span[class*="inline-flex"][class*="rounded"][class*="bg-yellow"] {
+            background-color: #ca8a04 !important;
+            color: #fef08a !important;
+        }
+        html.dark span[class*="inline-flex"][class*="rounded"][class*="bg-amber"],
+        .dark span[class*="inline-flex"][class*="rounded"][class*="bg-amber"] {
+            background-color: #b45309 !important;
+            color: #fde68a !important;
+        }
+        html.dark span[class*="inline-flex"][class*="rounded"][class*="bg-red"],
+        .dark span[class*="inline-flex"][class*="rounded"][class*="bg-red"] {
+            background-color: #b91c1c !important;
+            color: #fecaca !important;
+        }
+        html.dark span[class*="inline-flex"][class*="rounded"][class*="bg-gray"],
+        .dark span[class*="inline-flex"][class*="rounded"][class*="bg-gray"] {
+            background-color: #4b5563 !important;
+            color: #e5e7eb !important;
+        }
+        /* Pestaña Estadísticas: textos e iconos SIEMPRE legibles en modo oscuro */
+        html.dark .vehicle-stats-tab .text-2xl,
+        html.dark .vehicle-stats-tab .text-xl,
+        html.dark .vehicle-stats-tab .text-sm,
+        .dark .vehicle-stats-tab .text-2xl,
+        .dark .vehicle-stats-tab .text-xl,
+        .dark .vehicle-stats-tab .text-sm {
+            color: #f9fafb !important;
+        }
+        html.dark .vehicle-stats-tab .text-xs,
+        .dark .vehicle-stats-tab .text-xs {
+            color: #d1d5db !important;
+        }
+        html.dark .vehicle-stats-tab i.fas,
+        html.dark .vehicle-stats-tab i.far,
+        html.dark .vehicle-stats-tab i.fab,
+        .dark .vehicle-stats-tab i.fas,
+        .dark .vehicle-stats-tab i.far,
+        .dark .vehicle-stats-tab i.fab {
+            color: #e5e7eb !important;
+        }
+        /* Pestaña Alertas: botón Posponer legible en modo oscuro */
+        html.dark .vehicle-alerts-tab button[title="Posponer"],
+        .dark .vehicle-alerts-tab button[title="Posponer"] {
+            color: #fde047 !important;
+        }
     </style>
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
@@ -39,13 +156,13 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.dataTables.min.css">
     <style>
-        /* DataTables Tailwind Integration */
+        /* DataTables - modo oscuro: todo el texto claro, sin negro */
         .dataTables_wrapper {
             color: #111827;
         }
         
         .dark .dataTables_wrapper {
-            color: #f9fafb;
+            color: #e5e7eb !important;
         }
         
         .dataTables_wrapper .dataTables_length,
@@ -59,7 +176,7 @@
         .dark .dataTables_wrapper .dataTables_filter,
         .dark .dataTables_wrapper .dataTables_info,
         .dark .dataTables_wrapper .dataTables_paginate {
-            color: #e5e7eb;
+            color: #e5e7eb !important;
         }
         
         .dataTables_wrapper .dataTables_length select,
@@ -73,9 +190,9 @@
         
         .dark .dataTables_wrapper .dataTables_length select,
         .dark .dataTables_wrapper .dataTables_filter input {
-            background-color: #1f2937;
-            border-color: #4b5563;
-            color: #f9fafb;
+            background-color: #1f2937 !important;
+            border-color: #4b5563 !important;
+            color: #f9fafb !important;
         }
         
         table.dataTable {
@@ -95,8 +212,8 @@
         }
         
         .dark table.dataTable thead th {
-            background-color: #111827;
-            color: #e5e7eb;
+            background-color: #111827 !important;
+            color: #e5e7eb !important;
             border-bottom-color: #374151;
         }
         
@@ -108,8 +225,8 @@
         }
         
         .dark table.dataTable tbody td {
-            background-color: #1f2937;
-            color: #f9fafb;
+            background-color: #1f2937 !important;
+            color: #f9fafb !important;
             border-bottom-color: #374151;
         }
         
@@ -243,12 +360,12 @@
         }
         
         .dark .dt-button-collection button {
-            color: #e5e7eb;
+            color: #e5e7eb !important;
             border-bottom-color: #374151;
         }
         
         .dark .dt-button-collection button:hover {
-            background-color: #374151;
+            background-color: #374151 !important;
         }
         
         /* Ajustar layout de DataTables con botones */
@@ -356,6 +473,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                         </svg>
                         Proveedores
+                    </a>
+
+                    <a href="{{ route('compras.index') }}" 
+                       class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('compras.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Compras
                     </a>
                 </nav>
 

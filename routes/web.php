@@ -80,6 +80,16 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['put', 'patch'], '/proveedores/{id}', [\App\Http\Controllers\SupplierController::class, 'update'])->name('proveedores.update');
     Route::delete('/proveedores/{id}', [\App\Http\Controllers\SupplierController::class, 'destroy'])->name('proveedores.destroy');
 
+    // Módulo Compras (inventario)
+    Route::get('/compras', [\App\Http\Controllers\PurchaseController::class, 'index'])->name('compras.index');
+    Route::get('/compras/create', [\App\Http\Controllers\PurchaseController::class, 'create'])->name('compras.create');
+    Route::post('/compras', [\App\Http\Controllers\PurchaseController::class, 'store'])->name('compras.store');
+    Route::get('/compras/{id}', [\App\Http\Controllers\PurchaseController::class, 'show'])->name('compras.show');
+    Route::get('/compras/{id}/edit', [\App\Http\Controllers\PurchaseController::class, 'edit'])->name('compras.edit');
+    Route::match(['put', 'patch'], '/compras/{id}', [\App\Http\Controllers\PurchaseController::class, 'update'])->name('compras.update');
+    Route::delete('/compras/{id}', [\App\Http\Controllers\PurchaseController::class, 'destroy'])->name('compras.destroy');
+    Route::post('/compras/{id}/recibir', [\App\Http\Controllers\PurchaseController::class, 'receive'])->name('compras.receive');
+
     // Módulo Certificaciones (por vehículo)
     Route::get('/vehiculos/{vehicleId}/certificaciones/create', [\App\Http\Controllers\CertificationController::class, 'create'])->name('certificaciones.create');
     Route::post('/certificaciones', [\App\Http\Controllers\CertificationController::class, 'store'])->name('certificaciones.store');

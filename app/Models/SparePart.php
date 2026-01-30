@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SparePart extends Model
 {
@@ -31,4 +33,24 @@ class SparePart extends Model
         'tool' => 'Herramienta',
         'supply' => 'Insumo',
     ];
+
+    public function stock(): HasOne
+    {
+        return $this->hasOne(Stock::class);
+    }
+
+    public function purchaseItems(): HasMany
+    {
+        return $this->hasMany(PurchaseItem::class);
+    }
+
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
+
+    public function currentStock(): ?Stock
+    {
+        return $this->stock;
+    }
 }
