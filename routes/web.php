@@ -64,6 +64,22 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/alertas/{id}/cerrar', [\App\Http\Controllers\AlertController::class, 'close'])->name('alerts.close');
     Route::post('/alertas/{id}/posponer', [\App\Http\Controllers\AlertController::class, 'snooze'])->name('alerts.snooze');
 
+    // Módulo Repuestos (catálogo)
+    Route::get('/repuestos', [\App\Http\Controllers\SparePartController::class, 'index'])->name('repuestos.index');
+    Route::get('/repuestos/create', [\App\Http\Controllers\SparePartController::class, 'create'])->name('repuestos.create');
+    Route::post('/repuestos', [\App\Http\Controllers\SparePartController::class, 'store'])->name('repuestos.store');
+    Route::get('/repuestos/{id}/edit', [\App\Http\Controllers\SparePartController::class, 'edit'])->name('repuestos.edit');
+    Route::match(['put', 'patch'], '/repuestos/{id}', [\App\Http\Controllers\SparePartController::class, 'update'])->name('repuestos.update');
+    Route::delete('/repuestos/{id}', [\App\Http\Controllers\SparePartController::class, 'destroy'])->name('repuestos.destroy');
+
+    // Módulo Proveedores
+    Route::get('/proveedores', [\App\Http\Controllers\SupplierController::class, 'index'])->name('proveedores.index');
+    Route::get('/proveedores/create', [\App\Http\Controllers\SupplierController::class, 'create'])->name('proveedores.create');
+    Route::post('/proveedores', [\App\Http\Controllers\SupplierController::class, 'store'])->name('proveedores.store');
+    Route::get('/proveedores/{id}/edit', [\App\Http\Controllers\SupplierController::class, 'edit'])->name('proveedores.edit');
+    Route::match(['put', 'patch'], '/proveedores/{id}', [\App\Http\Controllers\SupplierController::class, 'update'])->name('proveedores.update');
+    Route::delete('/proveedores/{id}', [\App\Http\Controllers\SupplierController::class, 'destroy'])->name('proveedores.destroy');
+
     // Módulo Certificaciones (por vehículo)
     Route::get('/vehiculos/{vehicleId}/certificaciones/create', [\App\Http\Controllers\CertificationController::class, 'create'])->name('certificaciones.create');
     Route::post('/certificaciones', [\App\Http\Controllers\CertificationController::class, 'store'])->name('certificaciones.store');
