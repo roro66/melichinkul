@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -73,6 +75,18 @@ class Maintenance extends Model
         return $this->belongsTo(User::class, 'approved_by_id');
     }
 
+    public function spareParts(): BelongsToMany
+    {
+        return $this->belongsToMany(SparePart::class, 'maintenance_spare_parts')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    public function maintenanceSpareParts(): HasMany
+    {
+        return $this->hasMany(MaintenanceSparePart::class);
+    }
+
     public function isCorrective(): bool
     {
         return $this->type === 'corrective';
@@ -102,5 +116,48 @@ class Maintenance extends Model
     public function hasRequiredEvidence(): bool
     {
         return ! empty($this->evidence_invoice_path) || ! empty($this->evidence_photo_path);
+    }
+
+    /**
+     * Process spare parts usage: create inventory movements (type use) and decrease stock.
+     * Only processes pivot rows that do not yet have an InventoryMovement (idempotent).
+     */
+    public function processSparePartsUsage(): void
+    {
+        $pivots = $this->maintenanceSpareParts()->with('sparePart')->get();
+        if ($pivots->isEmpty()) {
+            return;
+        }
+
+        DB::transaction(function () use ($pivots) {
+            foreach ($pivots as $pivot) {
+                $existing = InventoryMovement::where('reference_type', MaintenanceSparePart::class)
+                    ->where('reference_id', $pivot->id)
+                    ->exists();
+                if ($existing) {
+                    continue;
+                }
+
+                $qty = - (int) $pivot->quantity;
+                $sparePartId = $pivot->spare_part_id;
+
+                $stock = Stock::firstOrCreate(
+                    ['spare_part_id' => $sparePartId],
+                    ['quantity' => 0, 'min_stock' => null, 'location' => null]
+                );
+                $stock->increment('quantity', $qty);
+
+                InventoryMovement::create([
+                    'spare_part_id' => $sparePartId,
+                    'type' => InventoryMovement::TYPE_USE,
+                    'quantity' => $qty,
+                    'reference_type' => MaintenanceSparePart::class,
+                    'reference_id' => $pivot->id,
+                    'user_id' => auth()->id(),
+                    'notes' => 'Uso en mantenimiento #' . $this->id,
+                    'movement_date' => $this->end_date ?? now()->toDateString(),
+                ]);
+            }
+        });
     }
 }

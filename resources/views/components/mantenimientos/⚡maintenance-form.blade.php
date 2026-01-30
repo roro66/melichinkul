@@ -145,11 +145,17 @@ new class extends Component
         if ($this->maintenanceId) {
             $maintenance = Maintenance::findOrFail($this->maintenanceId);
             $maintenance->update($data);
+            if ($status === 'completed') {
+                $maintenance->processSparePartsUsage();
+            }
             session()->flash("success", $status === 'pending_approval'
                 ? "Mantenimiento actualizado. El costo supera el umbral de aprobación; quedó pendiente de aprobación."
                 : "Mantenimiento actualizado correctamente.");
         } else {
             $maintenance = Maintenance::create($data);
+            if ($status === 'completed') {
+                $maintenance->processSparePartsUsage();
+            }
             session()->flash("success", $status === 'pending_approval'
                 ? "Mantenimiento creado. El costo supera el umbral de aprobación; quedó pendiente de aprobación."
                 : "Mantenimiento creado correctamente.");

@@ -40,24 +40,35 @@
                 <dd class="text-gray-900 dark:text-white">{{ $sparePart->has_expiration ? 'Sí' : 'No' }}</dd>
             </dl>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Stock actual</h2>
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Stock actual</h2>
             @php $stock = $sparePart->stock; @endphp
             @if($stock)
                 <p class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ $stock->quantity }}</p>
-                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
                     Mínimo: {{ $stock->min_stock !== null ? $stock->min_stock : '—' }}
                     @if($stock->isBelowMinimum())
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 ml-1">Bajo mínimo</span>
                     @endif
                 </p>
                 @if($stock->location)
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Ubicación: {{ $stock->location }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Ubicación: {{ $stock->location }}</p>
                 @endif
             @else
                 <p class="text-2xl font-bold text-gray-500 dark:text-gray-400">0</p>
-                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Sin registro de stock</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Sin registro de stock</p>
             @endif
+            <form action="{{ route('repuestos.stock.update', $sparePart->id) }}" method="POST" class="pt-3 border-t border-gray-200 dark:border-gray-600">
+                @csrf
+                <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Umbral y ubicación</p>
+                <div class="space-y-2">
+                    <input type="number" name="min_stock" value="{{ $stock?->min_stock ?? '' }}" min="0" placeholder="Mín. stock"
+                        class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <input type="text" name="location" value="{{ $stock?->location ?? '' }}" maxlength="128" placeholder="Ubicación"
+                        class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <button type="submit" class="w-full px-2 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded">Guardar</button>
+                </div>
+            </form>
         </div>
     </div>
 

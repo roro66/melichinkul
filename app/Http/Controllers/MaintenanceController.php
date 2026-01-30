@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Maintenance;
+use App\Models\MaintenanceSparePart;
+use App\Models\SparePart;
 use App\Exports\MaintenancesExport;
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
@@ -69,7 +71,7 @@ class MaintenanceController extends Controller
                         'inspection' => 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300',
                     ];
                     $color = $typeColors[$maintenance->type] ?? $typeColors['preventive'];
-                    $typeText = ucfirst($maintenance->type);
+                    $typeText = __('mantenimiento.types.' . $maintenance->type, [], 'es');
                     return "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {$color}'>{$typeText}</span>";
                 })
                 ->addColumn('status_badge', function ($maintenance) {
@@ -81,7 +83,7 @@ class MaintenanceController extends Controller
                         'cancelled' => 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
                     ];
                     $color = $statusColors[$maintenance->status] ?? $statusColors['scheduled'];
-                    $statusText = ucfirst(str_replace('_', ' ', $maintenance->status));
+                    $statusText = __('mantenimiento.statuses.' . $maintenance->status, [], 'es');
                     return "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {$color}'>{$statusText}</span>";
                 })
                 ->addColumn('formatted_cost', function ($maintenance) {
@@ -129,6 +131,7 @@ class MaintenanceController extends Controller
             'approved_by_id' => auth()->id(),
             'approved_at' => now(),
         ]);
+        $maintenance->processSparePartsUsage();
 
         return redirect()->back()->with('success', 'Mantenimiento aprobado correctamente.');
     }
@@ -149,6 +152,46 @@ class MaintenanceController extends Controller
                 'message' => 'Error al eliminar el mantenimiento: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function addSparePart(Request $request, int $id)
+    {
+        $maintenance = Maintenance::findOrFail($id);
+        if ($maintenance->status === 'completed' || $maintenance->status === 'cancelled') {
+            return redirect()->back()->with('error', 'No se pueden agregar repuestos a un mantenimiento completado o cancelado.');
+        }
+
+        $validated = $request->validate([
+            'spare_part_id' => 'required|exists:spare_parts,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $existing = MaintenanceSparePart::where('maintenance_id', $id)
+            ->where('spare_part_id', $validated['spare_part_id'])
+            ->first();
+        if ($existing) {
+            $existing->increment('quantity', $validated['quantity']);
+        } else {
+            MaintenanceSparePart::create([
+                'maintenance_id' => $id,
+                'spare_part_id' => $validated['spare_part_id'],
+                'quantity' => $validated['quantity'],
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Repuesto agregado al mantenimiento.');
+    }
+
+    public function removeSparePart(int $id, int $pivotId)
+    {
+        $maintenance = Maintenance::findOrFail($id);
+        if ($maintenance->status === 'completed' || $maintenance->status === 'cancelled') {
+            return redirect()->back()->with('error', 'No se pueden quitar repuestos de un mantenimiento completado o cancelado.');
+        }
+
+        MaintenanceSparePart::where('maintenance_id', $id)->where('id', $pivotId)->delete();
+
+        return redirect()->back()->with('success', 'Repuesto quitado del mantenimiento.');
     }
 
     public function export(Request $request, $format)

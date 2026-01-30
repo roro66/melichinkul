@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -47,6 +48,13 @@ class SparePart extends Model
     public function inventoryMovements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class);
+    }
+
+    public function maintenances(): BelongsToMany
+    {
+        return $this->belongsToMany(Maintenance::class, 'maintenance_spare_parts')
+            ->withPivot('quantity')
+            ->withTimestamps();
     }
 
     public function currentStock(): ?Stock

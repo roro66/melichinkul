@@ -37,6 +37,8 @@ Route::middleware(['auth'])->group(function () {
     // Módulo Mantenimientos
     Route::get('/mantenimientos', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('mantenimientos.index');
     Route::post('/mantenimientos/{id}/aprobar', [\App\Http\Controllers\MaintenanceController::class, 'approve'])->name('mantenimientos.approve');
+    Route::post('/mantenimientos/{id}/repuestos', [\App\Http\Controllers\MaintenanceController::class, 'addSparePart'])->name('mantenimientos.repuestos.add');
+    Route::delete('/mantenimientos/{id}/repuestos/{pivotId}', [\App\Http\Controllers\MaintenanceController::class, 'removeSparePart'])->name('mantenimientos.repuestos.remove');
     Route::delete('/mantenimientos/{id}', [\App\Http\Controllers\MaintenanceController::class, 'destroy'])->name('mantenimientos.destroy');
     Route::post('/mantenimientos/export/{format}', [\App\Http\Controllers\MaintenanceController::class, 'export'])->name('mantenimientos.export');
     
@@ -73,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/repuestos/{id}', [\App\Http\Controllers\SparePartController::class, 'destroy'])->name('repuestos.destroy');
     Route::get('/repuestos/{id}/ajustar', [\App\Http\Controllers\StockController::class, 'showAdjustForm'])->name('repuestos.ajustar');
     Route::post('/repuestos/{id}/ajustar', [\App\Http\Controllers\StockController::class, 'storeAdjustment'])->name('repuestos.ajustar.store');
+    Route::post('/repuestos/{id}/stock', [\App\Http\Controllers\StockController::class, 'updateSettings'])->name('repuestos.stock.update');
     Route::get('/repuestos/{id}', [\App\Http\Controllers\SparePartController::class, 'show'])->name('repuestos.show');
 
     // Movimientos de inventario

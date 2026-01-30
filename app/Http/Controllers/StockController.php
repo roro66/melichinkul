@@ -64,4 +64,25 @@ class StockController extends Controller
         return redirect()->route('repuestos.show', $sparePart->id)
             ->with('success', "Ajuste de {$action} de {$quantity} unidad(es) registrado correctamente.");
     }
+
+    public function updateSettings(Request $request, int $id)
+    {
+        $sparePart = SparePart::findOrFail($id);
+
+        $validated = $request->validate([
+            'min_stock' => 'nullable|integer|min:0',
+            'location' => 'nullable|string|max:128',
+        ]);
+
+        $stock = Stock::firstOrCreate(
+            ['spare_part_id' => $sparePart->id],
+            ['quantity' => 0, 'min_stock' => null, 'location' => null]
+        );
+        $stock->min_stock = isset($validated['min_stock']) && $validated['min_stock'] !== '' ? (int) $validated['min_stock'] : null;
+        $stock->location = trim($validated['location'] ?? '') ?: null;
+        $stock->save();
+
+        return redirect()->route('repuestos.show', $sparePart->id)
+            ->with('success', 'Configuración de stock actualizada.');
+    }
 }
