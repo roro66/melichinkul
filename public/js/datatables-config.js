@@ -101,7 +101,8 @@ window.exportToServer = function(dt, format) {
         "vehicles-table": "/vehiculos/export/",
         "maintenances-table": "/mantenimientos/export/",
         "drivers-table": "/conductores/export/",
-        "certifications-table": "/certificaciones/export/"
+        "certifications-table": "/certificaciones/export/",
+        "purchases-table": "/compras/export/"
     };
     
     if (entityMap[tableId]) {

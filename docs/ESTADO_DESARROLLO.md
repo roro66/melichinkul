@@ -1,7 +1,7 @@
 # Estado del Desarrollo - Melichinkul
 
-**Última actualización:** 2026-01-27  
-**Último commit:** 10b8f30 - Corregir visibilidad de leyendas en gráficos Chart.js
+**Última actualización:** 2026-01-31  
+**Último commit:** ae6cf5a - Alertas de stock bajo y agotado
 
 ---
 
@@ -22,133 +22,62 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 
 ## ✅ Módulos Completados
 
-### 1. **Dashboard Mejorado** ✅
-- **Estado:** Completado y optimizado
-- **Características:**
-  - 4 cards de métricas principales con bordes de colores que coinciden con iconos:
-    - Total Vehículos (borde amarillo)
-    - En Proceso (borde naranja)
-    - Costo del Mes (borde verde claro)
-    - En Mantenimiento (borde rojo fuerte)
-  - 2 gráficos Chart.js:
-    - Costos de Mantenimiento (últimos 6 meses) - línea
-    - Gastos por Tipo (últimos 6 meses) - donut
-  - Widgets: Mantenimientos en Curso, Próximos Mantenimientos, Vehículos que Requieren Atención
-  - Tabla Top 5 Vehículos por Costo
-  - **Contraste perfecto en modo oscuro** (textos blancos, iconos coloreados, bordes visibles)
-  - **Leyendas de gráficos visibles** en ambos modos con actualización dinámica
+### 1. **Dashboard** ✅
+- Cards de métricas (vehículos, mantenimientos, costo del mes, alertas)
+- Gráficos Chart.js (costos últimos 6 meses, gastos por tipo)
+- Widgets: Mantenimientos en Curso, Próximos Mantenimientos, Vehículos que Requieren Atención, **Alertas activas** (vehículo y stock)
+- Top 5 vehículos por costo
+- Modo oscuro con contraste adecuado
 
 ### 2. **Módulo Vehículos** ✅
-- **Estado:** Completado
-- **Características:**
-  - CRUD completo
-  - DataTables con:
-    - Búsqueda global y por columna
-    - Exportación (Excel, PDF, CSV)
-    - Selector de columnas visibles
-    - Paginación server-side
-  - Validación de patentes
-  - Categorías de vehículos
-  - **Ficha Médica del Vehículo** (vista detallada con tabs):
-    - Resumen
-    - Mantenimientos
-    - Estadísticas
-    - Certificaciones (placeholder)
-    - Alertas (placeholder)
+- CRUD completo, DataTables, exportación (Excel, CSV)
+- Ficha del vehículo con tabs: Resumen, Mantenimientos, Estadísticas, Certificaciones, Alertas
+- Validación de patentes, categorías
 
 ### 3. **Módulo Mantenimientos** ✅
-- **Estado:** Completado
-- **Características:**
-  - CRUD completo
-  - DataTables estándar (igual que Vehículos)
-  - Relación con vehículos, técnicos y conductores
-  - Estados: scheduled, in_progress, completed, cancelled
-  - Tipos: preventive, corrective, inspection
-  - Exportación de datos
+- CRUD completo (Livewire form), DataTables, exportación
+- Estados: scheduled, in_progress, completed, pending_approval, cancelled
+- Evidencia (factura/foto), aprobación por costo (umbral configurable)
+- **Repuestos utilizados**: sección en ficha para agregar/quitar repuestos; al completar o aprobar se descuenta stock y se registran movimientos tipo "uso"
+
+### 4. **Módulo Conductores** ✅
+- CRUD completo, DataTables, validación RUT y licencia
+- Asignaciones (driver_assignments), integración con vehículos
+
+### 5. **Módulo Certificaciones** ✅
+- CRUD por vehículo, documentos (archivos), vencimientos
+- Enlace desde ficha del vehículo
+
+### 6. **Sistema de Alertas** ✅
+- Tabla con DataTables (vehículo o repuesto según tipo)
+- Generación automática: certificados por vencer/vencidos, licencias, mantenimientos vencidos, **stock bajo/agotado**
+- Cierre y posponer (modal), notificación email para alertas críticas
+- Comando programado: `alerts:generate` (diario)
+
+### 7. **Módulo Inventario de Repuestos** ✅
+- **Catálogo repuestos**: CRUD, DataTables, columnas Stock/Mín/Estado stock, ficha con stock actual y últimos movimientos
+- **Proveedores**: CRUD, DataTables
+- **Compras**: CRUD (borrador → recibido), ítems dinámicos, acción "Recibir" (actualiza stock y movimientos), **exportación Excel/CSV**
+- **Stock**: editar min_stock y location en ficha repuesto; ajustes manuales (entrada/salida)
+- **Movimientos de inventario**: listado con DataTables, filtro por repuesto
+- **Repuestos en mantenimiento**: pivot maintenance_spare_parts; al completar mantenimiento se descuenta stock y se crean movimientos tipo "uso"
+- **Alertas de stock**: stock_empty (crítica), stock_below_min (advertencia); cierre automático cuando stock OK
 
 ---
 
-## 🔧 Configuraciones Técnicas Implementadas
+## 🔧 Configuraciones Técnicas
 
-### DataTables Estándar
-- **Archivo:** `resources/js/datatables-config.js`
-- **Características:**
-  - Server-side processing
-  - Exportación de TODOS los datos filtrados (no solo visibles)
-  - Column visibility selector
-  - Dark mode compatible
-  - Botones: Excel, PDF, CSV, Print, Column Visibility
-
-### SweetAlert2
-- **Archivo:** `resources/js/sweetalert-config.js`
-- **Características:**
-  - Interceptor para `wire:confirm` de Livewire
-  - Funciones globales: `swalConfirmDelete`, `swalSuccess`, `swalError`, `swalWarning`, `swalInfo`
-  - Dark mode compatible
-  - Reemplaza `confirm()` y `alert()` nativos
-
-### Estilos CSS Personalizados
-- Bordes de cards en dashboard con colores específicos usando CSS con `!important`
-- Selectores: `html.dark` y `.dark` para máxima compatibilidad
+- **DataTables:** server-side, exportación (Excel, CSV, Print), column visibility, modo oscuro
+- **SweetAlert2:** confirmaciones, mensajes, modo oscuro
+- **Convenciones:** código en inglés, UI en español (docs/CONVENCIONES.md)
 
 ---
 
-## 🚧 Módulos Pendientes (Según Plan Maestro)
+## 🚧 Pendientes (Plan Maestro)
 
-### 1. **Módulo Conductores (Drivers)**
-- CRUD completo
-- DataTables estándar
-- Relación con vehículos
-- Historial de asignaciones
-
-### 2. **Módulo Certificaciones**
-- CRUD completo
-- DataTables estándar
-- Relación con vehículos
-- Alertas de vencimiento
-
-### 3. **Sistema de Alertas**
-- Tabla con DataTables
-- Generación automática de alertas
-- Cierre de alertas
-- Notificaciones
-
-### 4. **Módulo Inventario de Repuestos**
-- CRUD completo
-- DataTables estándar
-- Control de stock
-- Relación con mantenimientos
-
----
-
-## 📝 Notas Técnicas Importantes
-
-### Convenciones de Código
-- **TODO el código (excepto comentarios e interfaz de usuario) debe estar en inglés**
-- Seguir estándares de Laravel
-- Modelos, controladores, migraciones en inglés
-- Vistas y mensajes al usuario en español
-
-### Estándares de UI
-- **DataTables:** Formato estándar para TODAS las tablas
-- **Iconos:** Font Awesome para botones de acción (ver/editar/eliminar)
-- **Modo Oscuro:** Contraste adecuado en todos los elementos
-- **Responsive:** Diseño adaptable a todos los dispositivos
-
-### Problemas Resueltos Recientemente
-1. ✅ Bordes de cards en dashboard - Solucionado con CSS personalizado
-2. ✅ Contraste en modo oscuro - Textos blancos, iconos coloreados
-3. ✅ Leyendas de gráficos - Detección dinámica de modo oscuro con MutationObserver
-4. ✅ Inicialización de gráficos - requestAnimationFrame para asegurar DOM listo
-
----
-
-## 🎯 Próximos Pasos Sugeridos
-
-1. **Módulo Conductores** - CRUD completo con DataTables
-2. **Módulo Certificaciones** - CRUD completo con DataTables
-3. **Sistema de Alertas** - Implementar generación automática
-4. **Completar Ficha Médica** - Implementar tabs de Certificaciones y Alertas
+- **Permisos por rol** (administrador, supervisor, administrativo, técnico, visualizador)
+- **Auditoría** de acciones críticas (opcional)
+- **Reportes avanzados** de inventario/compras (opcional)
 
 ---
 
@@ -157,47 +86,39 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 ```
 app/
 ├── Http/Controllers/
+│   ├── AlertController.php ✅
 │   ├── DashboardController.php ✅
+│   ├── DriverController.php ✅
+│   ├── MaintenanceController.php ✅
+│   ├── PurchaseController.php ✅
+│   ├── SparePartController.php ✅
+│   ├── StockController.php ✅
+│   ├── SupplierController.php ✅
 │   ├── VehicleController.php ✅
-│   └── MaintenanceController.php ✅
+│   └── InventoryMovementController.php ✅
 ├── Exports/
-│   ├── VehiclesExport.php ✅
-│   └── MaintenancesExport.php ✅
-└── Models/
-    ├── Vehicle.php ✅
-    └── Maintenance.php ✅
-
-resources/
-├── views/
-│   ├── dashboard/index.blade.php ✅
-│   ├── vehiculos/
-│   │   ├── index.blade.php ✅
-│   │   └── show.blade.php ✅ (Ficha Médica)
-│   └── mantenimientos/
-│       └── index.blade.php ✅
-└── js/
-    ├── datatables-config.js ✅
-    └── sweetalert-config.js ✅
+│   ├── MaintenancesExport.php ✅
+│   ├── PurchasesExport.php ✅
+│   └── VehiclesExport.php ✅
+├── Models/
+│   ├── Alert.php ✅
+│   ├── Maintenance.php ✅ (+ MaintenanceSparePart)
+│   ├── Purchase.php, PurchaseItem.php, Stock.php, InventoryMovement.php ✅
+│   ├── SparePart.php, Supplier.php ✅
+│   └── Vehicle.php ✅
+└── Console/Commands/
+    └── GenerateAlertsCommand.php ✅ (incluye stock)
 ```
-
----
-
-## 🔑 Credenciales de Desarrollo
-
-- **Base de datos:** PostgreSQL
-- **Usuario:** (verificar en .env)
-- **Contraseña:** (verificar en .env)
 
 ---
 
 ## 💡 Recordatorios
 
-- Siempre usar DataTables estándar para nuevas tablas
-- Implementar SweetAlert2 para confirmaciones
-- Verificar contraste en modo oscuro
-- Seguir convenciones de código (inglés para código, español para UI)
-- Probar en ambos modos (claro/oscuro) antes de commit
+- DataTables estándar para nuevas tablas
+- SweetAlert2 para confirmaciones
+- Contraste en modo oscuro
+- Convenciones: inglés código, español UI
 
 ---
 
-**¡Buen trabajo hoy! 🚀**
+**¡Buen trabajo! 🚀**

@@ -98,6 +98,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['put', 'patch'], '/compras/{id}', [\App\Http\Controllers\PurchaseController::class, 'update'])->name('compras.update');
     Route::delete('/compras/{id}', [\App\Http\Controllers\PurchaseController::class, 'destroy'])->name('compras.destroy');
     Route::post('/compras/{id}/recibir', [\App\Http\Controllers\PurchaseController::class, 'receive'])->name('compras.receive');
+    Route::post('/compras/export/{format}', [\App\Http\Controllers\PurchaseController::class, 'export'])->name('compras.export');
 
     // Módulo Certificaciones (por vehículo)
     Route::get('/vehiculos/{vehicleId}/certificaciones/create', [\App\Http\Controllers\CertificationController::class, 'create'])->name('certificaciones.create');

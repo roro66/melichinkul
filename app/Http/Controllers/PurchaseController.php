@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PurchasesExport;
 use App\Models\InventoryMovement;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
@@ -10,6 +11,7 @@ use App\Models\Stock;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 
 class PurchaseController extends Controller
@@ -248,5 +250,22 @@ class PurchaseController extends Controller
         });
 
         return redirect()->route('compras.show', $purchase->id)->with('success', 'Compra recibida. El stock se ha actualizado.');
+    }
+
+    public function export(Request $request, string $format)
+    {
+        $filters = [
+            'status' => $request->get('status'),
+            'search' => $request->get('search'),
+        ];
+        $filters = array_filter($filters, fn ($v) => $v !== null && $v !== '');
+
+        $filename = 'compras_' . date('Y-m-d_His');
+
+        return match ($format) {
+            'excel' => Excel::download(new PurchasesExport($filters), $filename . '.xlsx'),
+            'csv' => Excel::download(new PurchasesExport($filters), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV),
+            default => redirect()->back()->with('error', 'Formato de exportación no válido'),
+        };
     }
 }
