@@ -5,9 +5,13 @@ use App\Models\Vehicle;
 use App\Models\User;
 use App\Models\Driver;
 use Livewire\Component;
+use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Storage;
 
 new class extends Component
 {
+    use WithFileUploads;
+
     public $maintenanceId = null;
     public $vehicle_id = "";
     public $type = "preventive";
@@ -28,6 +32,8 @@ new class extends Component
     public $responsible_technician_id = "";
     public $assigned_driver_id = "";
     public $observations = "";
+    public $evidence_invoice = null;
+    public $evidence_photo = null;
 
     protected $rules = [
         "vehicle_id" => ["required", "exists:vehicles,id"],
@@ -49,12 +55,16 @@ new class extends Component
         "responsible_technician_id" => ["nullable", "exists:users,id"],
         "assigned_driver_id" => ["nullable", "exists:drivers,id"],
         "observations" => ["nullable", "string"],
+        "evidence_invoice" => ["nullable", "file", "mimes:pdf,jpg,jpeg,png", "max:10240"],
+        "evidence_photo" => ["nullable", "file", "mimes:pdf,jpg,jpeg,png", "max:10240"],
     ];
 
     protected $messages = [
         "vehicle_id.required" => "El vehículo es obligatorio.",
         "work_description.required" => "La descripción del trabajo es obligatoria.",
         "scheduled_date.required" => "La fecha programada es obligatoria.",
+        "evidence_invoice.max" => "El documento no debe superar 10 MB.",
+        "evidence_photo.max" => "La foto no debe superar 10 MB.",
     ];
 
     public function mount($id = null)
@@ -130,8 +140,25 @@ new class extends Component
             $maintenance->update($data);
             session()->flash("success", "Mantenimiento actualizado correctamente.");
         } else {
-            Maintenance::create($data);
+            $maintenance = Maintenance::create($data);
             session()->flash("success", "Mantenimiento creado correctamente.");
+        }
+
+        $evidenceData = [];
+        if ($this->evidence_invoice) {
+            if ($maintenance->evidence_invoice_path && Storage::disk("public")->exists($maintenance->evidence_invoice_path)) {
+                Storage::disk("public")->delete($maintenance->evidence_invoice_path);
+            }
+            $evidenceData["evidence_invoice_path"] = $this->evidence_invoice->store("maintenances/" . $maintenance->id, "public");
+        }
+        if ($this->evidence_photo) {
+            if ($maintenance->evidence_photo_path && Storage::disk("public")->exists($maintenance->evidence_photo_path)) {
+                Storage::disk("public")->delete($maintenance->evidence_photo_path);
+            }
+            $evidenceData["evidence_photo_path"] = $this->evidence_photo->store("maintenances/" . $maintenance->id, "public");
+        }
+        if (! empty($evidenceData)) {
+            $maintenance->update($evidenceData);
         }
 
         return redirect()->route("mantenimientos.index");
@@ -142,11 +169,13 @@ new class extends Component
         $vehicles = Vehicle::where("status", "!=", "decommissioned")->orderBy("license_plate")->get();
         $technicians = User::where("role", "technician")->orWhere("role", "administrator")->orderBy("name")->get();
         $drivers = Driver::where("active", true)->orderBy("full_name")->get();
+        $maintenance = $this->maintenanceId ? Maintenance::find($this->maintenanceId) : null;
 
         return view("livewire.mantenimientos.maintenance-form", [
             "vehicles" => $vehicles,
             "technicians" => $technicians,
             "drivers" => $drivers,
+            "maintenance" => $maintenance,
         ]);
     }
 };

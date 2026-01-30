@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Driver;
+use App\Models\DriverAssignment;
 use App\Models\Vehicle;
 use App\Models\VehicleCategory;
-use App\Models\Driver;
+use App\Services\AssignmentService;
 use App\Support\ChileanValidationHelper;
 use Livewire\Component;
 
@@ -94,6 +96,7 @@ new class extends Component
 
         $this->validate();
 
+        $driverId = $this->current_driver_id ? (int) $this->current_driver_id : null;
         $data = [
             "license_plate" => strtoupper($this->license_plate),
             "brand" => $this->brand,
@@ -106,18 +109,44 @@ new class extends Component
             "status" => $this->status,
             "current_mileage" => $this->current_mileage ?: 0,
             "current_hours" => $this->current_hours ?: 0,
-            "current_driver_id" => $this->current_driver_id ?: null,
             "incorporation_date" => $this->incorporation_date,
             "purchase_value" => $this->purchase_value ?: null,
             "observations" => $this->observations ?: null,
         ];
 
+        $assignmentService = app(AssignmentService::class);
+
         if ($this->vehicleId) {
             $vehicle = Vehicle::findOrFail($this->vehicleId);
+            $previousDriverId = $vehicle->current_driver_id;
+
+            if ($driverId && $driverId !== $previousDriverId) {
+                $assignmentService->assign(
+                    Driver::findOrFail($driverId),
+                    $vehicle,
+                    auth()->user()
+                );
+            } elseif (! $driverId && $previousDriverId) {
+                $active = DriverAssignment::where('vehicle_id', $vehicle->id)
+                    ->whereNull('end_date')
+                    ->first();
+                if ($active) {
+                    $active->update(['end_date' => now()->toDateString(), 'end_reason' => 'driver_change']);
+                }
+                $vehicle->update(['current_driver_id' => null]);
+            }
+
             $vehicle->update($data);
             session()->flash("success", "Vehículo actualizado correctamente.");
         } else {
-            Vehicle::create($data);
+            $vehicle = Vehicle::create(array_merge($data, ['current_driver_id' => null]));
+            if ($driverId) {
+                $assignmentService->assign(
+                    Driver::findOrFail($driverId),
+                    $vehicle,
+                    auth()->user()
+                );
+            }
             session()->flash("success", "Vehículo creado correctamente.");
         }
 

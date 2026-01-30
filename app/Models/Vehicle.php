@@ -59,6 +59,11 @@ class Vehicle extends Model
         return $this->hasMany(Maintenance::class, 'vehicle_id');
     }
 
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(Alert::class, 'vehicle_id');
+    }
+
     public function hasValidTechnicalReview(): bool
     {
         return $this->certifications()

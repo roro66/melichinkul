@@ -52,4 +52,10 @@ class User extends Authenticatable
             'active' => 'boolean',
         ];
     }
+
+    /** Alias para la vista (rol en español). */
+    public function getRolAttribute(): string
+    {
+        return $this->attributes['role'] ?? 'viewer';
+    }
 }

@@ -7,18 +7,18 @@ use App\Models\Vehicle;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Plan 13.4: Impide asignar vehículo a conductor si:
- * 1. La licencia de conducir del conductor está vencida.
- * 2. El vehículo tiene la Revisión Técnica caducada.
+ * Prevents assigning a vehicle to a driver when:
+ * 1. The driver's license is expired.
+ * 2. The vehicle's technical review (Revisión Técnica) is expired.
  *
- * La asignación no debe persistirse; se muestra un mensaje claro al usuario.
+ * Assignment must not be persisted; a clear message is shown to the user.
  */
 class BlockAssignmentService
 {
     /**
-     * Valida que se pueda asignar el conductor al vehículo.
+     * Validates that the driver can be assigned to the vehicle.
      *
-     * @throws ValidationException Si la licencia está vencida o la RT del vehículo está caducada.
+     * @throws ValidationException If license is expired or vehicle's technical review is expired.
      */
     public function validateCanAssign(Driver $driver, Vehicle $vehicle): void
     {
@@ -38,7 +38,7 @@ class BlockAssignmentService
     }
 
     /**
-     * Indica si la asignación está permitida, sin lanzar excepción.
+     * Returns whether assignment is allowed, without throwing.
      */
     public function canAssign(Driver $driver, Vehicle $vehicle): bool
     {
@@ -54,7 +54,7 @@ class BlockAssignmentService
     }
 
     /**
-     * Devuelve los motivos de bloqueo (para mostrarlos sin lanzar).
+     * Returns the block reasons (for display without throwing).
      *
      * @return array<string>
      */

@@ -31,6 +31,8 @@ class Maintenance extends Model
         'responsible_technician_id',
         'assigned_driver_id',
         'observations',
+        'evidence_invoice_path',
+        'evidence_photo_path',
     ];
 
     protected function casts(): array
@@ -71,5 +73,14 @@ class Maintenance extends Model
     public function isCompleted(): bool
     {
         return $this->status === 'completed';
+    }
+
+    /**
+     * Whether the maintenance has at least one evidence file (invoice PDF or photo).
+     * Required for closing corrective maintenances.
+     */
+    public function hasRequiredEvidence(): bool
+    {
+        return ! empty($this->evidence_invoice_path) || ! empty($this->evidence_photo_path);
     }
 }

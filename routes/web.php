@@ -50,4 +50,24 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/mantenimientos/{id}', function ($id) {
         return view('mantenimientos.show', ['id' => $id]);
     })->name('mantenimientos.show');
+
+    // Módulo Conductores
+    Route::get('/conductores', [\App\Http\Controllers\DriverController::class, 'index'])->name('conductores.index');
+    Route::get('/conductores/create', [\App\Http\Controllers\DriverController::class, 'create'])->name('conductores.create');
+    Route::get('/conductores/{id}/edit', [\App\Http\Controllers\DriverController::class, 'edit'])->name('conductores.edit');
+    Route::get('/conductores/{id}', [\App\Http\Controllers\DriverController::class, 'show'])->name('conductores.show');
+    Route::delete('/conductores/{id}', [\App\Http\Controllers\DriverController::class, 'destroy'])->name('conductores.destroy');
+
+    // Módulo Alertas
+    Route::get('/alertas', [\App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index');
+    Route::post('/alertas/{id}/cerrar', [\App\Http\Controllers\AlertController::class, 'close'])->name('alerts.close');
+    Route::post('/alertas/{id}/posponer', [\App\Http\Controllers\AlertController::class, 'snooze'])->name('alerts.snooze');
+
+    // Módulo Certificaciones (por vehículo)
+    Route::get('/vehiculos/{vehicleId}/certificaciones/create', [\App\Http\Controllers\CertificationController::class, 'create'])->name('certificaciones.create');
+    Route::post('/certificaciones', [\App\Http\Controllers\CertificationController::class, 'store'])->name('certificaciones.store');
+    Route::get('/certificaciones/{id}/edit', [\App\Http\Controllers\CertificationController::class, 'edit'])->name('certificaciones.edit');
+    Route::match(['put', 'patch'], '/certificaciones/{id}', [\App\Http\Controllers\CertificationController::class, 'update'])->name('certificaciones.update');
+    Route::delete('/certificaciones/{id}', [\App\Http\Controllers\CertificationController::class, 'destroy'])->name('certificaciones.destroy');
+    Route::get('/certificaciones/{id}/archivo/{slot}', [\App\Http\Controllers\CertificationController::class, 'download'])->name('certificaciones.download')->where('slot', '[12]');
 });

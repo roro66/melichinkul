@@ -2,18 +2,18 @@
 
 namespace App\Services;
 
-use App\Models\DriverAssignment;
 use App\Models\Driver;
+use App\Models\DriverAssignment;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Orquesta la asignación conductor–vehículo:
- * - Valida bloqueos (licencia, RT) vía BloqueoAsignacionService.
- * - Cierra la asignación anterior del vehículo.
- * - Crea la nueva asignación y actualiza vehicle.current_driver_id.
+ * Orchestrates driver–vehicle assignment:
+ * - Validates blocks (license, technical review) via BlockAssignmentService.
+ * - Closes the vehicle's previous assignment.
+ * - Creates the new assignment and updates vehicle.current_driver_id.
  */
 class AssignmentService
 {
@@ -22,11 +22,11 @@ class AssignmentService
     ) {}
 
     /**
-     * Asigna un conductor a un vehículo.
-     * Valida bloqueos, cierra asignación previa, crea nueva y actualiza vehicle.
+     * Assigns a driver to a vehicle.
+     * Validates blocks, closes previous assignment, creates new one and updates vehicle.
      *
-     * @param  \Carbon\CarbonInterface|string|null  $assignmentDate  Por defecto hoy.
-     * @throws ValidationException Si licencia vencida o RT del vehículo caducada.
+     * @param  \Carbon\CarbonInterface|string|null  $assignmentDate  Default today.
+     * @throws ValidationException If license expired or vehicle's technical review expired.
      */
     public function assign(
         Driver $driver,

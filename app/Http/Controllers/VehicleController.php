@@ -117,6 +117,9 @@ class VehicleController extends Controller
             'maintenances.assignedDriver',
             'certifications' => function($query) {
                 $query->orderBy('expiration_date', 'asc');
+            },
+            'alerts' => function($query) {
+                $query->where('status', '!=', 'closed')->orderBy('due_date', 'asc');
             }
         ])->findOrFail($id);
 

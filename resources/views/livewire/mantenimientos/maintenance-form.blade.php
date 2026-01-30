@@ -202,6 +202,48 @@
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
         </div>
 
+        <!-- Evidencia (opcional) -->
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Evidencia (opcional)</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="evidence_invoice" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Factura / Documento (PDF o imagen)
+                    </label>
+                    @if(isset($maintenance) && $maintenance->evidence_invoice_path)
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            Actual: <a href="{{ Storage::url($maintenance->evidence_invoice_path) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Ver archivo</a>
+                        </p>
+                    @endif
+                    <input type="file" id="evidence_invoice" wire:model="evidence_invoice" accept=".pdf,.jpg,.jpeg,.png"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50">
+                    @error("evidence_invoice")
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Máx. 10 MB. PDF, JPG o PNG.</p>
+                </div>
+                <div>
+                    <label for="evidence_photo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Foto del trabajo realizado
+                    </label>
+                    @if(isset($maintenance) && $maintenance->evidence_photo_path)
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            Actual: <a href="{{ Storage::url($maintenance->evidence_photo_path) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Ver archivo</a>
+                        </p>
+                    @endif
+                    <input type="file" id="evidence_photo" wire:model="evidence_photo" accept=".pdf,.jpg,.jpeg,.png"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50">
+                    @error("evidence_photo")
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Máx. 10 MB. PDF, JPG o PNG.</p>
+                </div>
+            </div>
+            <div wire:loading wire:target="evidence_invoice,evidence_photo" class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                Subiendo archivo…
+            </div>
+        </div>
+
         <!-- Botones -->
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <a href="{{route('mantenimientos.index')}}" 

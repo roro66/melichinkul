@@ -144,5 +144,34 @@
             @endif
         </div>
     </div>
+
+    @if($maintenance->evidence_invoice_path || $maintenance->evidence_photo_path)
+    <!-- Evidencia -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Evidencia</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @if($maintenance->evidence_invoice_path)
+                <div>
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Factura / Documento:</span>
+                    <p class="mt-1">
+                        <a href="{{ Storage::url($maintenance->evidence_invoice_path) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center">
+                            <i class="fas fa-external-link-alt mr-2"></i> Ver archivo
+                        </a>
+                    </p>
+                </div>
+            @endif
+            @if($maintenance->evidence_photo_path)
+                <div>
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Foto del trabajo:</span>
+                    <p class="mt-1">
+                        <a href="{{ Storage::url($maintenance->evidence_photo_path) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center">
+                            <i class="fas fa-external-link-alt mr-2"></i> Ver archivo
+                        </a>
+                    </p>
+                </div>
+            @endif
+        </div>
+    </div>
+    @endif
 </div>
 @endsection
