@@ -47,6 +47,14 @@ Route::middleware(['auth'])->group(function () {
         return view('mantenimientos.show', ['id' => $id]);
     })->name('mantenimientos.show')->middleware('permission:maintenances.view');
 
+    // Plantillas de mantenimiento
+    Route::get('/plantillas', [\App\Http\Controllers\MaintenanceTemplateController::class, 'index'])->name('plantillas.index')->middleware('permission:maintenances.view');
+    Route::get('/plantillas/create', [\App\Http\Controllers\MaintenanceTemplateController::class, 'create'])->name('plantillas.create')->middleware('permission:maintenances.create');
+    Route::post('/plantillas', [\App\Http\Controllers\MaintenanceTemplateController::class, 'store'])->name('plantillas.store')->middleware('permission:maintenances.create');
+    Route::get('/plantillas/{id}/edit', [\App\Http\Controllers\MaintenanceTemplateController::class, 'edit'])->name('plantillas.edit')->middleware('permission:maintenances.create');
+    Route::match(['put', 'patch'], '/plantillas/{id}', [\App\Http\Controllers\MaintenanceTemplateController::class, 'update'])->name('plantillas.update')->middleware('permission:maintenances.create');
+    Route::delete('/plantillas/{id}', [\App\Http\Controllers\MaintenanceTemplateController::class, 'destroy'])->name('plantillas.destroy')->middleware('permission:maintenances.create');
+
     // Módulo Conductores
     Route::get('/conductores', [\App\Http\Controllers\DriverController::class, 'index'])->name('conductores.index')->middleware('permission:drivers.view');
     Route::get('/conductores/create', [\App\Http\Controllers\DriverController::class, 'create'])->name('conductores.create')->middleware('permission:drivers.create');

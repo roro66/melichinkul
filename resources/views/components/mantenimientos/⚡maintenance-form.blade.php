@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Maintenance;
+use App\Models\MaintenanceTemplate;
 use App\Models\Vehicle;
 use App\Models\User;
 use App\Models\Driver;
@@ -13,6 +14,7 @@ new class extends Component
     use WithFileUploads;
 
     public $maintenanceId = null;
+    public $template_id = "";
     public $vehicle_id = "";
     public $type = "preventive";
     public $status = "scheduled";
@@ -94,6 +96,22 @@ new class extends Component
         }
     }
 
+    public function updatedTemplateId()
+    {
+        if (! $this->template_id) {
+            return;
+        }
+        $template = MaintenanceTemplate::find($this->template_id);
+        if ($template) {
+            if ($template->type) {
+                $this->type = $template->type;
+            }
+            if ($template->description) {
+                $this->work_description = $template->description;
+            }
+        }
+    }
+
     public function updatedPartsCost()
     {
         $this->calculateTotalCost();
@@ -153,6 +171,12 @@ new class extends Component
                 : "Mantenimiento actualizado correctamente.");
         } else {
             $maintenance = Maintenance::create($data);
+            if ($this->template_id) {
+                $template = MaintenanceTemplate::with('spareParts')->find($this->template_id);
+                if ($template) {
+                    $template->applySparePartsTo($maintenance);
+                }
+            }
             if ($status === 'completed') {
                 $maintenance->processSparePartsUsage();
             }
@@ -178,6 +202,9 @@ new class extends Component
             $maintenance->update($evidenceData);
         }
 
+        if (! $this->maintenanceId && $maintenance->id) {
+            return redirect()->route("mantenimientos.show", $maintenance->id);
+        }
         return redirect()->route("mantenimientos.index");
     }
 
@@ -186,12 +213,14 @@ new class extends Component
         $vehicles = Vehicle::where("status", "!=", "decommissioned")->orderBy("license_plate")->get();
         $technicians = User::role(['technician', 'administrator'])->orderBy('name')->get();
         $drivers = Driver::where("active", true)->orderBy("full_name")->get();
+        $templates = MaintenanceTemplate::orderBy('name')->get();
         $maintenance = $this->maintenanceId ? Maintenance::find($this->maintenanceId) : null;
 
         return view("livewire.mantenimientos.maintenance-form", [
             "vehicles" => $vehicles,
             "technicians" => $technicians,
             "drivers" => $drivers,
+            "templates" => $templates,
             "maintenance" => $maintenance,
         ]);
     }
