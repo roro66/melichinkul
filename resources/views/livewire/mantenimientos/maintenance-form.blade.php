@@ -39,6 +39,7 @@
                     <option value="scheduled">Programado</option>
                     <option value="in_progress">En Proceso</option>
                     <option value="completed">Completado</option>
+                    <option value="pending_approval">Pendiente de aprobación</option>
                     <option value="cancelled">Cancelado</option>
                 </select>
             </div>

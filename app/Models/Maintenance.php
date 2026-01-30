@@ -33,6 +33,8 @@ class Maintenance extends Model
         'observations',
         'evidence_invoice_path',
         'evidence_photo_path',
+        'approved_by_id',
+        'approved_at',
     ];
 
     protected function casts(): array
@@ -41,6 +43,7 @@ class Maintenance extends Model
             'scheduled_date' => 'date',
             'start_date' => 'date',
             'end_date' => 'date',
+            'approved_at' => 'datetime',
             'mileage_at_maintenance' => 'decimal:2',
             'hours_at_maintenance' => 'decimal:2',
             'hours_worked' => 'decimal:2',
@@ -65,6 +68,11 @@ class Maintenance extends Model
         return $this->belongsTo(Driver::class, 'assigned_driver_id');
     }
 
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by_id');
+    }
+
     public function isCorrective(): bool
     {
         return $this->type === 'corrective';
@@ -73,6 +81,18 @@ class Maintenance extends Model
     public function isCompleted(): bool
     {
         return $this->status === 'completed';
+    }
+
+    public function isPendingApproval(): bool
+    {
+        return $this->status === 'pending_approval';
+    }
+
+    public function requiresApprovalByCost(): bool
+    {
+        $threshold = (int) config('maintenance.approval_threshold', 500_000);
+
+        return $this->total_cost > $threshold;
     }
 
     /**

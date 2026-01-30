@@ -5,7 +5,8 @@
 @section('content')
 <div class="space-y-6">
     @php
-        $maintenance = \App\Models\Maintenance::with(['vehicle', 'responsibleTechnician', 'assignedDriver'])->findOrFail($id);
+        $maintenance = \App\Models\Maintenance::with(['vehicle', 'responsibleTechnician', 'assignedDriver', 'approvedBy'])->findOrFail($id);
+        $canApprove = in_array(Auth::user()->rol ?? Auth::user()->role ?? null, ['administrator', 'supervisor']);
     @endphp
 
     <div class="flex justify-between items-center">
@@ -15,7 +16,15 @@
                 {{ $maintenance->vehicle->license_plate }} - {{ ucfirst($maintenance->type) }}
             </p>
         </div>
-        <div class="flex space-x-3">
+        <div class="flex flex-wrap gap-3">
+            @if($maintenance->status === 'pending_approval' && $canApprove)
+                <form action="{{ route('mantenimientos.approve', $maintenance->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Aprobar este mantenimiento?');">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors duration-150">
+                        <i class="fas fa-check mr-2"></i> Aprobar
+                    </button>
+                </form>
+            @endif
             <a href="{{ route('mantenimientos.edit', $maintenance->id) }}" 
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors duration-150">
                 Editar
@@ -48,9 +57,10 @@
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Estado:</span>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                     {{ $maintenance->status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
+                       ($maintenance->status === 'pending_approval' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' : 
                        ($maintenance->status === 'in_progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
                        ($maintenance->status === 'cancelled' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' : 
-                       'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300')) }}">
+                       'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'))) }}">
                     {{ ucfirst(str_replace('_', ' ', $maintenance->status)) }}
                 </span>
             </div>
@@ -128,6 +138,13 @@
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Taller/Proveedor:</span>
                 <p class="text-sm text-gray-900 dark:text-white">{{ $maintenance->workshop_supplier ?? 'N/A' }}</p>
             </div>
+            @if($maintenance->approved_by_id && $maintenance->approved_at)
+                <div>
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Aprobado por:</span>
+                    <p class="text-sm text-gray-900 dark:text-white">{{ $maintenance->approvedBy->name ?? 'N/A' }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $maintenance->approved_at->format('d/m/Y H:i') }}</p>
+                </div>
+            @endif
             <div>
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Kilometraje:</span>
                 <p class="text-sm text-gray-900 dark:text-white">{{ $maintenance->mileage_at_maintenance ? number_format($maintenance->mileage_at_maintenance, 0, ',', '.') . ' km' : 'N/A' }}</p>

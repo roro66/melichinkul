@@ -36,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Módulo Mantenimientos
     Route::get('/mantenimientos', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('mantenimientos.index');
+    Route::post('/mantenimientos/{id}/aprobar', [\App\Http\Controllers\MaintenanceController::class, 'approve'])->name('mantenimientos.approve');
     Route::delete('/mantenimientos/{id}', [\App\Http\Controllers\MaintenanceController::class, 'destroy'])->name('mantenimientos.destroy');
     Route::post('/mantenimientos/export/{format}', [\App\Http\Controllers\MaintenanceController::class, 'export'])->name('mantenimientos.export');
     

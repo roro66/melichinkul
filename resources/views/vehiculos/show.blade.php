@@ -122,8 +122,9 @@
                             <div class="flex items-center space-x-3">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                     {{ $maintenance->status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
+                                       ($maintenance->status === 'pending_approval' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' : 
                                        ($maintenance->status === 'in_progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
-                                       'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300') }}">
+                                       'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300')) }}">
                                     {{ ucfirst(str_replace('_', ' ', $maintenance->status)) }}
                                 </span>
                                 <a href="{{ route('mantenimientos.show', $maintenance->id) }}" 
@@ -223,9 +224,10 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                                             {{ $maintenance->status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 
+                                               ($maintenance->status === 'pending_approval' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' : 
                                                ($maintenance->status === 'in_progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
                                                ($maintenance->status === 'cancelled' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' : 
-                                               'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300')) }}">
+                                               'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'))) }}">
                                             {{ ucfirst(str_replace('_', ' ', $maintenance->status)) }}
                                         </span>
                                     </td>

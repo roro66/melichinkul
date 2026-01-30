@@ -77,6 +77,7 @@ class MaintenanceController extends Controller
                         'scheduled' => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
                         'in_progress' => 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
                         'completed' => 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+                        'pending_approval' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300',
                         'cancelled' => 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
                     ];
                     $color = $statusColors[$maintenance->status] ?? $statusColors['scheduled'];
@@ -115,6 +116,21 @@ class MaintenanceController extends Controller
         }
 
         return view('mantenimientos.index');
+    }
+
+    public function approve(int $id)
+    {
+        $maintenance = Maintenance::findOrFail($id);
+        if ($maintenance->status !== 'pending_approval') {
+            return redirect()->back()->with('error', 'Solo se pueden aprobar mantenimientos en estado pendiente de aprobación.');
+        }
+        $maintenance->update([
+            'status' => 'completed',
+            'approved_by_id' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Mantenimiento aprobado correctamente.');
     }
 
     public function destroy($id)

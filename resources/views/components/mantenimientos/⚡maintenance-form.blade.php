@@ -38,7 +38,7 @@ new class extends Component
     protected $rules = [
         "vehicle_id" => ["required", "exists:vehicles,id"],
         "type" => ["required", "string", "in:preventive,corrective,inspection"],
-        "status" => ["required", "string", "in:scheduled,in_progress,completed,cancelled"],
+        "status" => ["required", "string", "in:scheduled,in_progress,completed,pending_approval,cancelled"],
         "scheduled_date" => ["required", "date"],
         "start_date" => ["nullable", "date"],
         "end_date" => ["nullable", "date"],
@@ -113,10 +113,17 @@ new class extends Component
     {
         $this->validate();
 
+        $status = $this->status;
+        $totalCost = (int) ($this->total_cost ?? 0);
+        $threshold = (int) config('maintenance.approval_threshold', 500_000);
+        if ($status === 'completed' && $totalCost > $threshold) {
+            $status = 'pending_approval';
+        }
+
         $data = [
             "vehicle_id" => $this->vehicle_id,
             "type" => $this->type,
-            "status" => $this->status,
+            "status" => $status,
             "scheduled_date" => $this->scheduled_date,
             "start_date" => $this->start_date ?: null,
             "end_date" => $this->end_date ?: null,
@@ -138,10 +145,14 @@ new class extends Component
         if ($this->maintenanceId) {
             $maintenance = Maintenance::findOrFail($this->maintenanceId);
             $maintenance->update($data);
-            session()->flash("success", "Mantenimiento actualizado correctamente.");
+            session()->flash("success", $status === 'pending_approval'
+                ? "Mantenimiento actualizado. El costo supera el umbral de aprobación; quedó pendiente de aprobación."
+                : "Mantenimiento actualizado correctamente.");
         } else {
             $maintenance = Maintenance::create($data);
-            session()->flash("success", "Mantenimiento creado correctamente.");
+            session()->flash("success", $status === 'pending_approval'
+                ? "Mantenimiento creado. El costo supera el umbral de aprobación; quedó pendiente de aprobación."
+                : "Mantenimiento creado correctamente.");
         }
 
         $evidenceData = [];
