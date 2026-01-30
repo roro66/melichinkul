@@ -16,3 +16,8 @@
 | Mensaje usuario | —                  | `__('alerta.snooze_cerrada')` |
 
 Referencia: `docs/PLAN_MAESTRO_SISTEMA_MANTENIMIENTO_FLOTAS.md`, stack Laravel 12.
+
+## Git
+
+- **Commit por módulo:** después de terminar cada módulo o entrega lógica (feature), hacer un commit con mensaje claro, por ejemplo: `feat: módulo X (descripción breve)`.
+- Facilita el historial, el rollback y la revisión por cambios.
