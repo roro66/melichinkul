@@ -13,41 +13,156 @@
 /* Configuración de modo oscuro - Tailwind 4 class strategy */
 @custom-variant dark (&&:where(.dark, .dark *));
 
-/* CSS personalizado para modo oscuro (temporal hasta que Tailwind genere las clases) */
+/* ========== MODO OSCURO: NUNCA TEXTO NEGRO ========== */
+/* Por defecto todo el contenido en .dark tiene texto claro */
+html.dark,
+html.dark body,
+html.dark body * {
+    color: #e5e7eb !important; /* gray-200 - visible en fondo oscuro */
+}
+
+/* Enlaces: azul claro para que sigan siendo reconocibles */
+html.dark a[href] {
+    color: #93c5fd !important;
+}
+html.dark a[href]:hover {
+    color: #bfdbfe !important;
+}
+
+/* Texto de éxito / verde (mantener tono verde claro) */
+html.dark .text-green-300,
+html.dark .text-green-400,
+html.dark [class*="text-green-3"],
+html.dark [class*="text-green-4"] {
+    color: #86efac !important;
+}
+
+/* Texto de error / rojo (mantener tono rojo claro) */
+html.dark .text-red-300,
+html.dark .text-red-400,
+html.dark [class*="text-red-3"],
+html.dark [class*="text-red-4"] {
+    color: #fca5a5 !important;
+}
+
+/* Texto de advertencia / ámbar (mantener tono claro) */
+html.dark .text-amber-300,
+html.dark .text-amber-400,
+html.dark .text-yellow-300,
+html.dark .text-yellow-400,
+html.dark [class*="text-amber-3"],
+html.dark [class*="text-amber-4"],
+html.dark [class*="text-yellow-3"],
+html.dark [class*="text-yellow-4"] {
+    color: #fde047 !important;
+}
+
+/* Texto informativo / azul e indigo (mantener tono claro) */
+html.dark .text-blue-300,
+html.dark .text-blue-400,
+html.dark .text-indigo-300,
+html.dark .text-indigo-400,
+html.dark [class*="text-blue-3"],
+html.dark [class*="text-blue-4"],
+html.dark [class*="text-indigo-3"],
+html.dark [class*="text-indigo-4"] {
+    color: #93c5fd !important;
+}
+
+/* Botones primarios (indigo, etc.): texto blanco */
+html.dark button[class*="bg-indigo"],
+html.dark a[class*="bg-indigo"],
+html.dark [class*="bg-indigo-6"],
+html.dark [class*="bg-indigo-5"] {
+    color: #ffffff !important;
+}
+
+/* ========== Fondos y bordes modo oscuro ========== */
 .dark body {
-    background-color: #111827; /* gray-900 */
+    background-color: #111827;
 }
 
 .dark .bg-white {
-    background-color: #1f2937; /* gray-800 */
+    background-color: #1f2937;
 }
 
 .dark .bg-gray-50 {
-    background-color: #111827; /* gray-900 */
-}
-
-.dark .text-gray-900 {
-    color: #f9fafb; /* gray-50 / white */
-}
-
-.dark .text-gray-700 {
-    color: #d1d5db; /* gray-300 */
-}
-
-.dark .text-gray-600 {
-    color: #9ca3af; /* gray-400 */
-}
-
-.dark .text-gray-500 {
-    color: #6b7280; /* gray-500 */
+    background-color: #111827;
 }
 
 .dark .border-gray-200 {
-    border-color: #374151; /* gray-700 */
+    border-color: #374151;
 }
 
 .dark .border-gray-300 {
-    border-color: #4b5563; /* gray-600 */
+    border-color: #4b5563;
+}
+
+/* Inputs: texto y placeholder claros */
+.dark input,
+.dark select,
+.dark textarea,
+.dark [role="textbox"] {
+    color: #f9fafb !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #9ca3af !important;
+}
+
+/* ========== BADGES en modo oscuro: fondo y texto SIEMPRE legibles ========== */
+/* Correctivo (naranja): fondo naranja medio, texto claro */
+html.dark span.rounded-full[class*="bg-orange"] {
+    background-color: #c2410c !important;  /* orange-700 */
+    color: #fed7aa !important;             /* orange-200 */
+}
+
+/* Preventivo (azul): fondo azul medio, texto claro */
+html.dark span.rounded-full[class*="bg-blue"] {
+    background-color: #1d4ed8 !important;  /* blue-700 */
+    color: #bfdbfe !important;             /* blue-200 */
+}
+
+/* Inspección (púrpura): fondo púrpura medio, texto claro */
+html.dark span.rounded-full[class*="bg-purple"] {
+    background-color: #6d28d9 !important;  /* purple-700 */
+    color: #e9d5ff !important;            /* purple-200 */
+}
+
+/* Completado / Activo (verde): fondo verde medio, texto claro */
+html.dark span.rounded-full[class*="bg-green"] {
+    background-color: #15803d !important;  /* green-700 */
+    color: #bbf7d0 !important;            /* green-200 */
+}
+
+/* En progreso (amarillo): fondo amarillo medio, texto oscuro sobre amarillo */
+html.dark span.rounded-full[class*="bg-yellow"] {
+    background-color: #ca8a04 !important;  /* yellow-600 */
+    color: #fef08a !important;            /* yellow-200 */
+}
+
+/* Pendiente aprobación (ámbar) */
+html.dark span.rounded-full[class*="bg-amber"] {
+    background-color: #b45309 !important;  /* amber-700 */
+    color: #fde68a !important;             /* amber-200 */
+}
+
+/* Cancelado / Error (rojo) */
+html.dark span.rounded-full[class*="bg-red"] {
+    background-color: #b91c1c !important;  /* red-700 */
+    color: #fecaca !important;             /* red-200 */
+}
+
+/* Programado / neutro (gris) */
+html.dark span.rounded-full[class*="bg-gray"] {
+    background-color: #4b5563 !important;  /* gray-600 */
+    color: #e5e7eb !important;             /* gray-200 */
+}
+
+/* Cualquier otro badge con rounded-full: texto claro por si acaso */
+html.dark span.inline-flex.rounded-full {
+    color: #e5e7eb !important;
 }
 
 /* Ajustar logo para modo oscuro - remover filtro ya que usaremos versión con fondo */

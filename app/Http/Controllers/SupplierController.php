@@ -10,7 +10,7 @@ class SupplierController extends Controller
 {
     public function index()
     {
-        if (request()->ajax()) {
+        if (request()->ajax() || request()->has('draw')) {
             $suppliers = Supplier::select('suppliers.*');
 
             if (request()->has('search') && request()->get('search')['value']) {

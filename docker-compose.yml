@@ -23,9 +23,16 @@ services:
       - DB_DATABASE=melichinkul_db
       - DB_USERNAME=admin
       - DB_PASSWORD=${DB_PASSWORD:-}
+      - MAIL_MAILER=smtp
       - MAIL_HOST=mailpit
       - MAIL_PORT=1025
+      - MAIL_USERNAME=null
+      - MAIL_PASSWORD=null
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@melichinkul.local}
+      - MAIL_FROM_NAME=${APP_NAME:-Melichinkul}
+      - MAIL_ENCRYPTION=null
       - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
 
   nginx:
     image: nginx:alpine
@@ -59,6 +66,33 @@ services:
       - "1025:1025"
     networks:
       - melichinkul_network
+
+  # Procesa la cola (notificaciones por email, jobs)
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: melichinkul_queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - melichinkul_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5432
+      - DB_DATABASE=melichinkul_db
+      - DB_USERNAME=admin
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=mailpit
+      - MAIL_PORT=1025
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
 
 networks:
   melichinkul_network:

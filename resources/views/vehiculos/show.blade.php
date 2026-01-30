@@ -111,7 +111,7 @@
                                         {{ $maintenance->type === 'preventive' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' : 
                                            ($maintenance->type === 'corrective' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' : 
                                            'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300') }}">
-                                        {{ ucfirst($maintenance->type) }}
+                                        {{ __('mantenimiento.types.' . $maintenance->type, [], 'es') }}
                                     </span>
                                     <span class="text-sm font-medium text-gray-900 dark:text-white">{{ $maintenance->work_description }}</span>
                                 </div>
@@ -125,7 +125,7 @@
                                        ($maintenance->status === 'pending_approval' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' : 
                                        ($maintenance->status === 'in_progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
                                        'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300')) }}">
-                                    {{ ucfirst(str_replace('_', ' ', $maintenance->status)) }}
+                                    {{ __('mantenimiento.statuses.' . $maintenance->status, [], 'es') }}
                                 </span>
                                 <a href="{{ route('mantenimientos.show', $maintenance->id) }}" 
                                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
@@ -218,7 +218,7 @@
                                             {{ $maintenance->type === 'preventive' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' : 
                                                ($maintenance->type === 'corrective' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' : 
                                                'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300') }}">
-                                            {{ ucfirst($maintenance->type) }}
+                                            {{ __('mantenimiento.types.' . $maintenance->type, [], 'es') }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -228,7 +228,7 @@
                                                ($maintenance->status === 'in_progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' : 
                                                ($maintenance->status === 'cancelled' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' : 
                                                'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'))) }}">
-                                            {{ ucfirst(str_replace('_', ' ', $maintenance->status)) }}
+                                            {{ __('mantenimiento.statuses.' . $maintenance->status, [], 'es') }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4">
@@ -261,7 +261,7 @@
             </div>
 
             <!-- Pestaña: Estadísticas -->
-            <div x-show="activeTab === 'estadisticas'" class="space-y-6">
+            <div x-show="activeTab === 'estadisticas'" class="space-y-6 vehicle-stats-tab">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Estadísticas de Gasto</h3>
                 
                 <!-- Cards de Resumen -->
@@ -269,40 +269,40 @@
                     <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Gasto Total</p>
-                                <p class="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">${{ number_format($stats['total_cost'], 0, ',', '.') }}</p>
+                                <p class="text-sm font-medium text-blue-600 dark:text-blue-300">Gasto Total</p>
+                                <p class="text-2xl font-bold text-blue-900 dark:text-white mt-1">${{ number_format($stats['total_cost'], 0, ',', '.') }}</p>
                             </div>
-                            <i class="fas fa-dollar-sign text-blue-400 dark:text-blue-500 text-3xl"></i>
+                            <i class="fas fa-dollar-sign text-blue-400 dark:text-blue-300 text-3xl" aria-hidden="true"></i>
                         </div>
                     </div>
                     <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-green-600 dark:text-green-400">Preventivos</p>
-                                <p class="text-2xl font-bold text-green-900 dark:text-green-100 mt-1">${{ number_format($stats['preventive_cost'], 0, ',', '.') }}</p>
-                                <p class="text-xs text-green-600 dark:text-green-400 mt-1">{{ $stats['preventive_count'] }} mantenimientos</p>
+                                <p class="text-sm font-medium text-green-600 dark:text-green-300">Preventivos</p>
+                                <p class="text-2xl font-bold text-green-900 dark:text-white mt-1">${{ number_format($stats['preventive_cost'], 0, ',', '.') }}</p>
+                                <p class="text-xs text-green-600 dark:text-gray-300 mt-1">{{ $stats['preventive_count'] }} mantenimientos</p>
                             </div>
-                            <i class="fas fa-shield-alt text-green-400 dark:text-green-500 text-3xl"></i>
+                            <i class="fas fa-shield-alt text-green-400 dark:text-green-300 text-3xl" aria-hidden="true"></i>
                         </div>
                     </div>
                     <div class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg p-6 border border-orange-200 dark:border-orange-800">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-orange-600 dark:text-orange-400">Correctivos</p>
-                                <p class="text-2xl font-bold text-orange-900 dark:text-orange-100 mt-1">${{ number_format($stats['corrective_cost'], 0, ',', '.') }}</p>
-                                <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">{{ $stats['corrective_count'] }} mantenimientos</p>
+                                <p class="text-sm font-medium text-orange-600 dark:text-orange-300">Correctivos</p>
+                                <p class="text-2xl font-bold text-orange-900 dark:text-white mt-1">${{ number_format($stats['corrective_cost'], 0, ',', '.') }}</p>
+                                <p class="text-xs text-orange-600 dark:text-gray-300 mt-1">{{ $stats['corrective_count'] }} mantenimientos</p>
                             </div>
-                            <i class="fas fa-tools text-orange-400 dark:text-orange-500 text-3xl"></i>
+                            <i class="fas fa-tools text-orange-400 dark:text-orange-300 text-3xl" aria-hidden="true"></i>
                         </div>
                     </div>
                     <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-purple-600 dark:text-purple-400">Total Mantenimientos</p>
-                                <p class="text-2xl font-bold text-purple-900 dark:text-purple-100 mt-1">{{ $stats['total_count'] }}</p>
-                                <p class="text-xs text-purple-600 dark:text-purple-400 mt-1">completados</p>
+                                <p class="text-sm font-medium text-purple-600 dark:text-white">Total Mantenimientos</p>
+                                <p class="text-2xl font-bold text-purple-900 dark:text-white mt-1">{{ $stats['total_count'] }}</p>
+                                <p class="text-xs text-purple-600 dark:text-gray-300 mt-1">completados</p>
                             </div>
-                            <i class="fas fa-list text-purple-400 dark:text-purple-500 text-3xl"></i>
+                            <i class="fas fa-list text-purple-400 dark:text-purple-300 text-3xl" aria-hidden="true"></i>
                         </div>
                     </div>
                 </div>
@@ -401,7 +401,7 @@
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $cert->expiration_date->format('d/m/Y') }}</td>
                                         <td class="px-6 py-4">
-                                            <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded {{ $estadoClase }}">{{ ucfirst($estado) }}</span>
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $estadoClase }}">{{ ucfirst($estado) }}</span>
                                         </td>
                                         <td class="px-6 py-4 text-sm">
                                             @if($cert->attached_file)
@@ -433,7 +433,7 @@
             </div>
 
             <!-- Pestaña: Alertas -->
-            <div x-show="activeTab === 'alertas'" class="space-y-4 w-full">
+            <div x-show="activeTab === 'alertas'" class="space-y-4 w-full vehicle-alerts-tab">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Alertas del Vehículo</h3>
                 @if($vehicle->alerts->isEmpty())
                     <div class="text-center py-16">
@@ -464,7 +464,7 @@
                                 @foreach($vehicle->alerts as $alert)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                         <td class="px-6 py-4">
-                                            <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded {{ $severityColors[$alert->severity] ?? $severityColors['informativa'] }}">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $severityColors[$alert->severity] ?? $severityColors['informativa'] }}">
                                                 {{ ucfirst($alert->severity) }}
                                             </span>
                                         </td>
@@ -489,7 +489,7 @@
                                                 @csrf
                                                 <button type="submit" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:underline mr-3" title="Cerrar"><i class="fas fa-check"></i> Cerrar</button>
                                             </form>
-                                            <button type="button" @click="selectedAlertId = {{ $alert->id }}; showSnoozeModal = true" class="text-amber-600 dark:text-amber-400 hover:underline" title="Posponer"><i class="fas fa-clock"></i> Posponer</button>
+                                            <button type="button" @click="selectedAlertId = {{ $alert->id }}; showSnoozeModal = true" class="text-amber-600 dark:text-amber-300 hover:underline" title="Posponer"><i class="fas fa-clock"></i> Posponer</button>
                                         </td>
                                     </tr>
                                 @endforeach
