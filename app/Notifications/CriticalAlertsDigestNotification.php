@@ -39,10 +39,11 @@ class CriticalAlertsDigestNotification extends Notification implements ShouldQue
             ->action('Ver alertas', route('alerts.index'));
 
         foreach ($this->alerts as $alert) {
-            $vehicle = $alert->vehicle;
-            $vehicleInfo = $vehicle ? $vehicle->license_plate . ' - ' . $vehicle->brand . ' ' . $vehicle->model : 'Vehículo';
+            $context = $alert->vehicle
+                ? $alert->vehicle->license_plate . ' - ' . $alert->vehicle->brand . ' ' . $alert->vehicle->model
+                : ($alert->sparePart ? $alert->sparePart->code . ' - ' . $alert->sparePart->description : '—');
             $message->line('• **' . $alert->title . '**')
-                ->line('  ' . $vehicleInfo . ' — ' . ($alert->due_date ? $alert->due_date->format('d/m/Y') : ''))
+                ->line('  ' . $context . ($alert->due_date ? ' — ' . $alert->due_date->format('d/m/Y') : ''))
                 ->line('  ' . $alert->message)
                 ->line('');
         }

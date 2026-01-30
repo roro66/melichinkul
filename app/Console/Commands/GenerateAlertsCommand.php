@@ -6,6 +6,8 @@ use App\Models\Alert;
 use App\Models\Certification;
 use App\Models\Driver;
 use App\Models\Maintenance;
+use App\Models\SparePart;
+use App\Models\Stock;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Notifications\CriticalAlertsDigestNotification;
@@ -129,8 +131,48 @@ class GenerateAlertsCommand extends Command
             }
         }
 
+        // Stock: below minimum or empty
+        $stocks = Stock::with('sparePart')->get();
+        foreach ($stocks as $stock) {
+            $sparePart = $stock->sparePart;
+            if (! $sparePart) {
+                continue;
+            }
+            $key = 'stock_' . $stock->spare_part_id;
+            $qty = $stock->quantity;
+            $min = $stock->min_stock;
+            $code = $sparePart->code;
+            $desc = $sparePart->description;
+
+            if ($qty <= 0) {
+                [$n, $id] = $this->createStockAlertOnce(
+                    $sparePart->id,
+                    'stock_empty',
+                    'critica',
+                    'Stock agotado: ' . $code,
+                    "El repuesto {$code} - {$desc} está agotado. Comprar con urgencia.",
+                    ['key' => $key]
+                );
+                $count += $n;
+                if ($id !== null) {
+                    $criticalAlertIds[] = $id;
+                }
+            } elseif ($min !== null && $qty < $min) {
+                $count += $this->createStockAlertOnce(
+                    $sparePart->id,
+                    'stock_below_min',
+                    'advertencia',
+                    'Stock bajo: ' . $code,
+                    "El repuesto {$code} - {$desc} tiene {$qty} unidades (mínimo: {$min}).",
+                    ['key' => $key]
+                )[0];
+            } else {
+                $this->closeStockAlertsIfOk($sparePart->id, $key);
+            }
+        }
+
         if (! empty($criticalAlertIds)) {
-            $alerts = Alert::with('vehicle')->whereIn('id', $criticalAlertIds)->orderBy('due_date')->get();
+            $alerts = Alert::with(['vehicle', 'sparePart'])->whereIn('id', $criticalAlertIds)->orderBy('due_date')->get();
             $recipients = User::whereIn('role', ['administrator', 'supervisor'])
                 ->where('active', true)
                 ->whereNotNull('email')
@@ -184,5 +226,51 @@ class GenerateAlertsCommand extends Command
         ]);
 
         return [1, $alert->id];
+    }
+
+    /**
+     * @return array{0: int, 1: int|null}
+     */
+    private function createStockAlertOnce(int $sparePartId, string $type, string $severity, string $title, string $message, array $metadata): array
+    {
+        $refKey = $metadata['key'] ?? null;
+        if ($refKey !== null) {
+            $exists = Alert::where('spare_part_id', $sparePartId)
+                ->where('type', $type)
+                ->where('status', '!=', 'closed')
+                ->whereRaw("metadata->>'key' = ?", [$refKey])
+                ->exists();
+            if ($exists) {
+                return [0, null];
+            }
+        }
+
+        $alert = Alert::create([
+            'vehicle_id' => null,
+            'spare_part_id' => $sparePartId,
+            'maintenance_id' => null,
+            'type' => $type,
+            'severity' => $severity,
+            'title' => $title,
+            'message' => $message,
+            'generated_at' => now(),
+            'due_date' => null,
+            'status' => 'pending',
+            'metadata' => $metadata,
+        ]);
+
+        return [1, $alert->id];
+    }
+
+    private function closeStockAlertsIfOk(int $sparePartId, string $refKey): void
+    {
+        Alert::where('spare_part_id', $sparePartId)
+            ->whereIn('type', ['stock_empty', 'stock_below_min'])
+            ->where('status', '!=', 'closed')
+            ->whereRaw("metadata->>'key' = ?", [$refKey])
+            ->update([
+                'status' => 'closed',
+                'closed_at' => now(),
+            ]);
     }
 }

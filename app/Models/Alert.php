@@ -9,6 +9,7 @@ class Alert extends Model
 {
     protected $fillable = [
         'vehicle_id',
+        'spare_part_id',
         'maintenance_id',
         'type',
         'severity',
@@ -39,6 +40,11 @@ class Alert extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class, 'vehicle_id');
+    }
+
+    public function sparePart(): BelongsTo
+    {
+        return $this->belongsTo(SparePart::class, 'spare_part_id');
     }
 
     public function maintenance(): BelongsTo

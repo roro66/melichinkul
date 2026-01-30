@@ -188,7 +188,7 @@
                                         {{ $maintenance->type === 'preventive' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' : 
                                            ($maintenance->type === 'corrective' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' : 
                                            'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300') }}">
-                                        {{ ucfirst($maintenance->type) }}
+                                        {{ __('mantenimiento.types.' . $maintenance->type, [], 'es') }}
                                     </span>
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
@@ -243,7 +243,7 @@
                                         {{ $maintenance->type === 'preventive' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' : 
                                            ($maintenance->type === 'corrective' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' : 
                                            'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300') }}">
-                                        {{ ucfirst($maintenance->type) }}
+                                        {{ __('mantenimiento.types.' . $maintenance->type, [], 'es') }}
                                     </span>
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
@@ -306,6 +306,8 @@
                                 <div class="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
                                     @if($alert->vehicle)
                                         <a href="{{ route('vehiculos.show', $alert->vehicle_id) }}#alertas" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ $alert->vehicle->license_plate }}</a>
+                                    @elseif($alert->sparePart)
+                                        <a href="{{ route('repuestos.show', $alert->spare_part_id) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ $alert->sparePart->code }}</a>
                                     @endif
                                     @if($alert->due_date)
                                         <span>Vence: {{ $alert->due_date->format('d/m/Y') }}</span>

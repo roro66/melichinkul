@@ -16,7 +16,7 @@ class AlertController extends Controller
     public function index()
     {
         if (request()->ajax()) {
-            $alerts = Alert::with(['vehicle', 'closedBy', 'snoozedBy'])
+            $alerts = Alert::with(['vehicle', 'sparePart', 'closedBy', 'snoozedBy'])
                 ->select('alerts.*')
                 ->where('status', '!=', 'closed');
 
@@ -29,6 +29,10 @@ class AlertController extends Controller
                             $q->where('license_plate', 'like', "%{$search}%")
                                 ->orWhere('brand', 'like', "%{$search}%")
                                 ->orWhere('model', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('sparePart', function ($q) use ($search) {
+                            $q->where('code', 'like', "%{$search}%")
+                                ->orWhere('description', 'like', "%{$search}%");
                         });
                 });
             }
@@ -52,6 +56,9 @@ class AlertController extends Controller
                         return $alert->vehicle->license_plate . '<br><span class="text-xs text-gray-500 dark:text-gray-400">'
                             . $alert->vehicle->brand . ' ' . $alert->vehicle->model . '</span>';
                     }
+                    if ($alert->sparePart) {
+                        return '<span class="text-indigo-600 dark:text-indigo-400">' . e($alert->sparePart->code) . '</span><br><span class="text-xs text-gray-500 dark:text-gray-400">' . e($alert->sparePart->description) . '</span>';
+                    }
                     return '<span class="text-gray-500 dark:text-gray-400 italic">—</span>';
                 })
                 ->addColumn('severity_badge', function (Alert $alert) {
@@ -74,13 +81,15 @@ class AlertController extends Controller
                     return '—';
                 })
                 ->addColumn('actions', function (Alert $alert) {
-                    $closeUrl = route('alerts.close', $alert->id);
-                    $snoozeUrl = route('alerts.snooze', $alert->id);
-                    $viewVehicle = route('vehiculos.show', $alert->vehicle_id);
-                    $buttons = "
+                    $viewLink = $alert->vehicle_id
+                        ? route('vehiculos.show', $alert->vehicle_id)
+                        : ($alert->spare_part_id ? route('repuestos.show', $alert->spare_part_id) : '#');
+                    $viewTitle = $alert->vehicle_id ? 'Ver vehículo' : 'Ver repuesto';
+                    $viewIcon = $alert->vehicle_id ? 'fa-car' : 'fa-box';
+                    return "
                         <div class='flex justify-end items-center gap-2'>
-                            <a href='{$viewVehicle}' class='text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300' title='Ver vehículo'>
-                                <i class='fas fa-car'></i>
+                            <a href='{$viewLink}' class='text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300' title='{$viewTitle}'>
+                                <i class='fas {$viewIcon}'></i>
                             </a>
                             <button type='button' onclick='snoozeAlert({$alert->id})' class='text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 cursor-pointer bg-transparent border-none' title='Posponer'>
                                 <i class='fas fa-clock'></i>
@@ -90,7 +99,6 @@ class AlertController extends Controller
                             </button>
                         </div>
                     ";
-                    return $buttons;
                 })
                 ->rawColumns(['vehicle_info', 'severity_badge', 'snoozed_info', 'actions'])
                 ->make(true);

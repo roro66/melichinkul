@@ -112,8 +112,8 @@ class DashboardController extends Controller
                 ->sum('total_cost'),
         ];
 
-        // Alertas activas (para listado en dashboard)
-        $alertas_activas = Alert::with('vehicle')
+        // Alertas activas (para listado en dashboard; incluye alertas de vehículo y de stock)
+        $alertas_activas = Alert::with(['vehicle', 'sparePart'])
             ->where('status', '!=', 'closed')
             ->orderByRaw("CASE severity WHEN 'critica' THEN 1 WHEN 'advertencia' THEN 2 ELSE 3 END")
             ->orderBy('due_date', 'asc')

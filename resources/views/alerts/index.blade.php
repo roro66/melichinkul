@@ -7,7 +7,7 @@
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Alertas</h1>
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Mantenimientos próximos, documentos por vencer y licencias</p>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Mantenimientos próximos, documentos por vencer, licencias y stock bajo</p>
         </div>
     </div>
 
