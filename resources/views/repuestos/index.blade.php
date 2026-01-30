@@ -26,6 +26,9 @@
                             <th>Marca</th>
                             <th>Categoría</th>
                             <th>Precio ref.</th>
+                            <th>Stock</th>
+                            <th>Mín.</th>
+                            <th>Estado stock</th>
                             <th>Vencimiento</th>
                             <th>Activo</th>
                             <th class="text-right">Acciones</th>
@@ -49,14 +52,17 @@ document.addEventListener('DOMContentLoaded', function() {
             { data: 'brand', name: 'brand', render: function(d) { return d || '—'; } },
             { data: 'category_label', name: 'category', orderable: true, searchable: false },
             { data: 'reference_price_formatted', name: 'reference_price', orderable: true, searchable: false },
+            { data: 'stock_quantity', name: 'stock_quantity', orderable: true, searchable: false },
+            { data: 'stock_min', name: 'stock_min', orderable: true, searchable: false },
+            { data: 'stock_badge', name: 'stock_badge', orderable: false, searchable: false },
             { data: 'has_expiration', name: 'has_expiration', render: function(d) { return d ? 'Sí' : 'No'; } },
             { data: 'active_badge', name: 'active', orderable: true, searchable: false },
             { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'no-export' }
         ],
         order: [[1, 'asc']],
         columnDefs: [
-            { className: "text-left", targets: [0, 1, 2, 3, 4, 5, 6] },
-            { className: "text-right", targets: [7] }
+            { className: "text-left", targets: [0, 1, 2, 3, 4, 7, 8, 9] },
+            { className: "text-right", targets: [5, 6, 10] }
         ]
     });
 });

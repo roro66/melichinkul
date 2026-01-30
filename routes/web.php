@@ -64,13 +64,19 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/alertas/{id}/cerrar', [\App\Http\Controllers\AlertController::class, 'close'])->name('alerts.close');
     Route::post('/alertas/{id}/posponer', [\App\Http\Controllers\AlertController::class, 'snooze'])->name('alerts.snooze');
 
-    // Módulo Repuestos (catálogo)
+    // Módulo Repuestos (catálogo e inventario)
     Route::get('/repuestos', [\App\Http\Controllers\SparePartController::class, 'index'])->name('repuestos.index');
     Route::get('/repuestos/create', [\App\Http\Controllers\SparePartController::class, 'create'])->name('repuestos.create');
     Route::post('/repuestos', [\App\Http\Controllers\SparePartController::class, 'store'])->name('repuestos.store');
     Route::get('/repuestos/{id}/edit', [\App\Http\Controllers\SparePartController::class, 'edit'])->name('repuestos.edit');
     Route::match(['put', 'patch'], '/repuestos/{id}', [\App\Http\Controllers\SparePartController::class, 'update'])->name('repuestos.update');
     Route::delete('/repuestos/{id}', [\App\Http\Controllers\SparePartController::class, 'destroy'])->name('repuestos.destroy');
+    Route::get('/repuestos/{id}/ajustar', [\App\Http\Controllers\StockController::class, 'showAdjustForm'])->name('repuestos.ajustar');
+    Route::post('/repuestos/{id}/ajustar', [\App\Http\Controllers\StockController::class, 'storeAdjustment'])->name('repuestos.ajustar.store');
+    Route::get('/repuestos/{id}', [\App\Http\Controllers\SparePartController::class, 'show'])->name('repuestos.show');
+
+    // Movimientos de inventario
+    Route::get('/inventario/movimientos', [\App\Http\Controllers\InventoryMovementController::class, 'index'])->name('inventario.movimientos.index');
 
     // Módulo Proveedores
     Route::get('/proveedores', [\App\Http\Controllers\SupplierController::class, 'index'])->name('proveedores.index');

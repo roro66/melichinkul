@@ -10,8 +10,8 @@ class SparePartController extends Controller
 {
     public function index()
     {
-        if (request()->ajax()) {
-            $items = SparePart::select('spare_parts.*');
+        if (request()->ajax() || request()->has('draw')) {
+            $items = SparePart::with('stock')->select('spare_parts.*');
 
             if (request()->has('search') && request()->get('search')['value']) {
                 $search = request()->get('search')['value'];
@@ -27,7 +27,7 @@ class SparePartController extends Controller
                 $items->where('category', $categoryFilter);
             }
 
-            $activeFilter = request()->input('columns.5.search.value');
+            $activeFilter = request()->input('columns.9.search.value');
             if ($activeFilter !== null && $activeFilter !== '') {
                 $active = in_array(strtolower($activeFilter), ['1', 'true', 'activo', 'yes'], true);
                 $items->where('active', $active);
@@ -40,6 +40,23 @@ class SparePartController extends Controller
                 ->addColumn('reference_price_formatted', function (SparePart $item) {
                     return $item->reference_price !== null ? '$' . number_format($item->reference_price, 0, ',', '.') : '—';
                 })
+                ->addColumn('stock_quantity', function (SparePart $item) {
+                    $qty = $item->stock?->quantity ?? 0;
+                    return (string) $qty;
+                })
+                ->addColumn('stock_min', function (SparePart $item) {
+                    $min = $item->stock?->min_stock;
+                    return $min !== null ? (string) $min : '—';
+                })
+                ->addColumn('stock_badge', function (SparePart $item) {
+                    $stock = $item->stock;
+                    $qty = $stock?->quantity ?? 0;
+                    $min = $stock?->min_stock;
+                    if ($min !== null && $qty < $min) {
+                        return "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'>Bajo</span>";
+                    }
+                    return "<span class='text-gray-600 dark:text-gray-400'>{$qty}</span>";
+                })
                 ->addColumn('active_badge', function (SparePart $item) {
                     $color = $item->active ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
                     $label = $item->active ? 'Activo' : 'Inactivo';
@@ -48,6 +65,9 @@ class SparePartController extends Controller
                 ->addColumn('actions', function (SparePart $item) {
                     return "
                         <div class='flex justify-end space-x-3'>
+                            <a href='" . route('repuestos.show', $item->id) . "' 
+                               class='text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300'
+                               title='Ver'><i class='fas fa-eye'></i></a>
                             <a href='" . route('repuestos.edit', $item->id) . "' 
                                class='text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300'
                                title='Editar'><i class='fas fa-edit'></i></a>
@@ -57,7 +77,7 @@ class SparePartController extends Controller
                         </div>
                     ";
                 })
-                ->rawColumns(['active_badge', 'actions'])
+                ->rawColumns(['active_badge', 'stock_badge', 'actions'])
                 ->make(true);
         }
 
@@ -85,6 +105,14 @@ class SparePartController extends Controller
 
         SparePart::create($validated);
         return redirect()->route('repuestos.index')->with('success', 'Repuesto creado correctamente.');
+    }
+
+    public function show(int $id)
+    {
+        $sparePart = SparePart::with(['stock', 'inventoryMovements' => fn ($q) => $q->with('user')->orderByDesc('movement_date')->limit(30)])
+            ->findOrFail($id);
+
+        return view('repuestos.show', ['sparePart' => $sparePart]);
     }
 
     public function edit(int $id)
