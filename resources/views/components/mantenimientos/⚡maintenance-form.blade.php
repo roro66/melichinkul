@@ -184,7 +184,7 @@ new class extends Component
     public function render()
     {
         $vehicles = Vehicle::where("status", "!=", "decommissioned")->orderBy("license_plate")->get();
-        $technicians = User::where("role", "technician")->orWhere("role", "administrator")->orderBy("name")->get();
+        $technicians = User::role(['technician', 'administrator'])->orderBy('name')->get();
         $drivers = Driver::where("active", true)->orderBy("full_name")->get();
         $maintenance = $this->maintenanceId ? Maintenance::find($this->maintenanceId) : null;
 

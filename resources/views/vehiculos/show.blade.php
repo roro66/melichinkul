@@ -485,11 +485,15 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 text-right">
+                                            @can('alerts.close')
                                             <form action="{{ route('alerts.close', $alert->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Cerrar esta alerta?');">
                                                 @csrf
                                                 <button type="submit" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:underline mr-3" title="Cerrar"><i class="fas fa-check"></i> Cerrar</button>
                                             </form>
+                                            @endcan
+                                            @can('alerts.snooze')
                                             <button type="button" @click="selectedAlertId = {{ $alert->id }}; showSnoozeModal = true" class="text-amber-600 dark:text-amber-300 hover:underline" title="Posponer"><i class="fas fa-clock"></i> Posponer</button>
+                                            @endcan
                                         </td>
                                     </tr>
                                 @endforeach

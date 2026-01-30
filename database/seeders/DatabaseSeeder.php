@@ -50,6 +50,8 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Laura Visor', 'email' => 'visor@melichinkul.cl', 'password' => $defaultPassword, 'role' => 'viewer', 'full_name' => 'Laura Visor']
         );
 
+        $this->call(RolesAndPermissionsSeeder::class);
+
         $this->call(VehicleSeeder::class);
         $this->call(DriverSeeder::class);
         $this->call(CertificationSeeder::class);

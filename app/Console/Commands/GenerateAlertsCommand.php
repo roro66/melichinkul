@@ -173,7 +173,7 @@ class GenerateAlertsCommand extends Command
 
         if (! empty($criticalAlertIds)) {
             $alerts = Alert::with(['vehicle', 'sparePart'])->whereIn('id', $criticalAlertIds)->orderBy('due_date')->get();
-            $recipients = User::whereIn('role', ['administrator', 'supervisor'])
+            $recipients = User::role(['administrator', 'supervisor'])
                 ->where('active', true)
                 ->whereNotNull('email')
                 ->get();

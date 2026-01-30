@@ -13,7 +13,7 @@ class MaintenanceSeeder extends Seeder
     public function run(): void
     {
         $vehicles = Vehicle::all();
-        $technicians = User::whereIn("role", ["technician", "administrator"])->get();
+        $technicians = User::role(['technician', 'administrator'])->get();
         
         if ($vehicles->isEmpty()) {
             $this->command->warn("No hay vehículos en la base de datos. Ejecuta primero VehicleSeeder.");

@@ -426,6 +426,7 @@
                         Dashboard
                     </a>
 
+                    @can('vehicles.view')
                     <a href="{{ route('vehiculos.index') }}" 
                        class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('vehiculos.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -433,7 +434,9 @@
                         </svg>
                         Vehículos
                     </a>
+                    @endcan
 
+                    @can('maintenances.view')
                     <a href="{{ route('mantenimientos.index') }}" 
                        class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('mantenimientos.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,7 +445,9 @@
                         </svg>
                         Mantenimientos
                     </a>
+                    @endcan
 
+                    @can('drivers.view')
                     <a href="{{ route('conductores.index') }}" 
                        class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('conductores.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -450,7 +455,9 @@
                         </svg>
                         Conductores
                     </a>
+                    @endcan
 
+                    @can('alerts.view')
                     <a href="{{ route('alerts.index') }}" 
                        class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('alerts.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -458,7 +465,9 @@
                         </svg>
                         Alertas
                     </a>
+                    @endcan
 
+                    @can('spare_parts.view')
                     <a href="{{ route('repuestos.index') }}" 
                        class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('repuestos.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -466,7 +475,9 @@
                         </svg>
                         Repuestos
                     </a>
+                    @endcan
 
+                    @can('suppliers.view')
                     <a href="{{ route('proveedores.index') }}" 
                        class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('proveedores.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,7 +485,9 @@
                         </svg>
                         Proveedores
                     </a>
+                    @endcan
 
+                    @can('purchases.view')
                     <a href="{{ route('compras.index') }}" 
                        class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('compras.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -482,7 +495,9 @@
                         </svg>
                         Compras
                     </a>
+                    @endcan
 
+                    @can('inventory.view_movements')
                     <a href="{{ route('inventario.movimientos.index') }}" 
                        class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('inventario.movimientos.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -490,6 +505,7 @@
                         </svg>
                         Movimientos
                     </a>
+                    @endcan
                 </nav>
 
                 <!-- Footer del Sidebar -->

@@ -6,7 +6,6 @@
 <div class="space-y-6">
     @php
         $maintenance = \App\Models\Maintenance::with(['vehicle', 'responsibleTechnician', 'assignedDriver', 'approvedBy', 'maintenanceSpareParts.sparePart'])->findOrFail($id);
-        $canApprove = in_array(Auth::user()->rol ?? Auth::user()->role ?? null, ['administrator', 'supervisor']);
         $spareParts = \App\Models\SparePart::where('active', true)->orderBy('code')->get();
     @endphp
 
@@ -18,7 +17,8 @@
             </p>
         </div>
         <div class="flex flex-wrap gap-3">
-            @if($maintenance->status === 'pending_approval' && $canApprove)
+            @can('maintenances.approve')
+            @if($maintenance->status === 'pending_approval')
                 <form action="{{ route('mantenimientos.approve', $maintenance->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Aprobar este mantenimiento?');">
                     @csrf
                     <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors duration-150">
@@ -26,10 +26,13 @@
                     </button>
                 </form>
             @endif
+            @endcan
+            @can('maintenances.edit')
             <a href="{{ route('mantenimientos.edit', $maintenance->id) }}" 
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors duration-150">
                 Editar
             </a>
+            @endcan
             <a href="{{ route('mantenimientos.index') }}" 
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150">
                 Volver
@@ -135,9 +138,11 @@
                         <tr>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Repuesto</th>
                             <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Cantidad</th>
+                            @can('maintenances.edit')
                             @if($maintenance->status !== 'completed' && $maintenance->status !== 'cancelled')
                                 <th class="px-4 py-2 w-20"></th>
                             @endif
+                            @endcan
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
@@ -148,6 +153,7 @@
                                     - {{ $pivot->sparePart->description }}
                                 </td>
                                 <td class="px-4 py-2 text-sm text-gray-900 dark:text-white text-right">{{ $pivot->quantity }}</td>
+                                @can('maintenances.edit')
                                 @if($maintenance->status !== 'completed' && $maintenance->status !== 'cancelled')
                                     <td class="px-4 py-2">
                                         <form action="{{ route('mantenimientos.repuestos.remove', [$maintenance->id, $pivot->id]) }}" method="POST" class="inline" onsubmit="return confirm('¿Quitar este repuesto del mantenimiento?');">
@@ -157,12 +163,14 @@
                                         </form>
                                     </td>
                                 @endif
+                                @endcan
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
         @endif
+        @can('maintenances.edit')
         @if($maintenance->status !== 'completed' && $maintenance->status !== 'cancelled')
             <form action="{{ route('mantenimientos.repuestos.add', $maintenance->id) }}" method="POST" class="flex flex-wrap items-end gap-3">
                 @csrf
@@ -182,6 +190,7 @@
                 <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-sm rounded-lg">Agregar</button>
             </form>
         @endif
+        @endcan
     </div>
 
     <!-- Información Adicional -->
