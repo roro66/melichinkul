@@ -32,7 +32,7 @@
     </div>
 
     <!-- Cards de Métricas Principales -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
         <!-- Total Vehículos -->
         <div class="card-total-vehiculos bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/60 dark:to-indigo-800/60 overflow-hidden shadow rounded-lg border-2 border-indigo-200">
             <div class="p-5">
@@ -112,6 +112,30 @@
                 </div>
             </div>
         </div>
+
+        <!-- Alertas Activas -->
+        <a href="{{ route('alerts.index') }}" class="block bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/60 dark:to-amber-800/60 overflow-hidden shadow rounded-lg border-2 border-amber-200 dark:border-amber-700 hover:border-amber-400 dark:hover:border-amber-500 transition-colors">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-bell text-amber-600 dark:text-amber-400 text-3xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-amber-700 dark:text-white truncate">Alertas activas</dt>
+                            <dd class="text-2xl font-bold text-amber-900 dark:text-white">{{ $stats['alertas_activas'] }}</dd>
+                            <dd class="text-xs text-amber-700 dark:text-gray-200 mt-1">
+                                @if($stats['alertas_criticas'] > 0)
+                                    <span class="font-medium text-red-600 dark:text-red-400">{{ $stats['alertas_criticas'] }} críticas</span>
+                                @else
+                                    Ver todas
+                                @endif
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -243,6 +267,58 @@
                     </div>
                 @endif
             </div>
+        </div>
+    </div>
+
+    <!-- Alertas activas -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-white">Alertas activas</h2>
+                <a href="{{ route('alerts.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">
+                    Ver todas
+                </a>
+            </div>
+            @if($alertas_activas->isEmpty())
+                <div class="text-center py-8">
+                    <i class="fas fa-check-circle text-green-500 dark:text-green-400 text-4xl mb-2"></i>
+                    <p class="text-sm text-gray-500 dark:text-gray-300">No hay alertas activas</p>
+                </div>
+            @else
+                <div class="space-y-3">
+                    @php
+                        $severityColors = [
+                            'informativa' => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+                            'advertencia' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300',
+                            'critica' => 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+                        ];
+                    @endphp
+                    @foreach($alertas_activas as $alert)
+                        <div class="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium {{ $severityColors[$alert->severity] ?? $severityColors['informativa'] }}">
+                                        {{ ucfirst($alert->severity) }}
+                                    </span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ $alert->title }}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{{ $alert->message }}</p>
+                                <div class="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    @if($alert->vehicle)
+                                        <a href="{{ route('vehiculos.show', $alert->vehicle_id) }}#alertas" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ $alert->vehicle->license_plate }}</a>
+                                    @endif
+                                    @if($alert->due_date)
+                                        <span>Vence: {{ $alert->due_date->format('d/m/Y') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <a href="{{ route('alerts.index') }}" class="ml-3 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 shrink-0" title="Ir a alertas">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
 

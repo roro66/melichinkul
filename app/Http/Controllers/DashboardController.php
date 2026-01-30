@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alert;
 use App\Models\Vehicle;
 use App\Models\Maintenance;
 use Illuminate\Http\Request;
@@ -24,6 +25,8 @@ class DashboardController extends Controller
                 ->whereMonth('end_date', now()->month)
                 ->whereYear('end_date', now()->year)
                 ->count(),
+            'alertas_activas' => Alert::where('status', '!=', 'closed')->count(),
+            'alertas_criticas' => Alert::where('status', '!=', 'closed')->where('severity', 'critica')->count(),
         ];
 
         // Costos del mes actual
@@ -109,6 +112,14 @@ class DashboardController extends Controller
                 ->sum('total_cost'),
         ];
 
+        // Alertas activas (para listado en dashboard)
+        $alertas_activas = Alert::with('vehicle')
+            ->where('status', '!=', 'closed')
+            ->orderByRaw("CASE severity WHEN 'critica' THEN 1 WHEN 'advertencia' THEN 2 ELSE 3 END")
+            ->orderBy('due_date', 'asc')
+            ->limit(8)
+            ->get();
+
         return view('dashboard.index', compact(
             'stats',
             'costo_mes_actual',
@@ -118,7 +129,8 @@ class DashboardController extends Controller
             'mantenimientos_recientes',
             'vehiculos_atencion',
             'top_vehiculos_costo',
-            'stats_por_tipo'
+            'stats_por_tipo',
+            'alertas_activas'
         ));
     }
 }
