@@ -19,6 +19,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Módulo Vehículos
+    Route::get('/vehiculos-buscar', [\App\Http\Controllers\VehicleController::class, 'search'])->name('vehiculos.search')->middleware('permission:vehicles.view');
     Route::get('/vehiculos', [\App\Http\Controllers\VehicleController::class, 'index'])->name('vehiculos.index')->middleware('permission:vehicles.view');
     Route::get('/vehiculos/create', function ($id = null) {
         return view('vehiculos.create');
@@ -35,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/mantenimientos/{id}/aprobar', [\App\Http\Controllers\MaintenanceController::class, 'approve'])->name('mantenimientos.approve')->middleware('permission:maintenances.approve');
     Route::post('/mantenimientos/{id}/repuestos', [\App\Http\Controllers\MaintenanceController::class, 'addSparePart'])->name('mantenimientos.repuestos.add')->middleware('permission:maintenances.edit');
     Route::delete('/mantenimientos/{id}/repuestos/{pivotId}', [\App\Http\Controllers\MaintenanceController::class, 'removeSparePart'])->name('mantenimientos.repuestos.remove')->middleware('permission:maintenances.edit');
+    Route::post('/mantenimientos/{id}/checklist/{itemId}/toggle', [\App\Http\Controllers\MaintenanceController::class, 'toggleChecklistItem'])->name('mantenimientos.checklist.toggle')->middleware('permission:maintenances.edit');
     Route::delete('/mantenimientos/{id}', [\App\Http\Controllers\MaintenanceController::class, 'destroy'])->name('mantenimientos.destroy')->middleware('permission:maintenances.delete');
     Route::post('/mantenimientos/export/{format}', [\App\Http\Controllers\MaintenanceController::class, 'export'])->name('mantenimientos.export')->middleware('permission:maintenances.export');
     Route::get('/mantenimientos/create', function () {
@@ -54,6 +56,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/plantillas/{id}/edit', [\App\Http\Controllers\MaintenanceTemplateController::class, 'edit'])->name('plantillas.edit')->middleware('permission:maintenances.create');
     Route::match(['put', 'patch'], '/plantillas/{id}', [\App\Http\Controllers\MaintenanceTemplateController::class, 'update'])->name('plantillas.update')->middleware('permission:maintenances.create');
     Route::delete('/plantillas/{id}', [\App\Http\Controllers\MaintenanceTemplateController::class, 'destroy'])->name('plantillas.destroy')->middleware('permission:maintenances.create');
+
+    // Ítems de checklist de mantenimiento
+    Route::get('/checklist', [\App\Http\Controllers\MaintenanceChecklistItemController::class, 'index'])->name('checklist.index')->middleware('permission:maintenances.view');
+    Route::get('/checklist/create', [\App\Http\Controllers\MaintenanceChecklistItemController::class, 'create'])->name('checklist.create')->middleware('permission:maintenances.create');
+    Route::post('/checklist', [\App\Http\Controllers\MaintenanceChecklistItemController::class, 'store'])->name('checklist.store')->middleware('permission:maintenances.create');
+    Route::get('/checklist/{id}/edit', [\App\Http\Controllers\MaintenanceChecklistItemController::class, 'edit'])->name('checklist.edit')->middleware('permission:maintenances.create');
+    Route::match(['put', 'patch'], '/checklist/{id}', [\App\Http\Controllers\MaintenanceChecklistItemController::class, 'update'])->name('checklist.update')->middleware('permission:maintenances.create');
+    Route::delete('/checklist/{id}', [\App\Http\Controllers\MaintenanceChecklistItemController::class, 'destroy'])->name('checklist.destroy')->middleware('permission:maintenances.create');
 
     // Módulo Conductores
     Route::get('/conductores', [\App\Http\Controllers\DriverController::class, 'index'])->name('conductores.index')->middleware('permission:drivers.view');
@@ -108,4 +118,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['put', 'patch'], '/certificaciones/{id}', [\App\Http\Controllers\CertificationController::class, 'update'])->name('certificaciones.update')->middleware('permission:certifications.edit');
     Route::delete('/certificaciones/{id}', [\App\Http\Controllers\CertificationController::class, 'destroy'])->name('certificaciones.destroy')->middleware('permission:certifications.delete');
     Route::get('/certificaciones/{id}/archivo/{slot}', [\App\Http\Controllers\CertificationController::class, 'download'])->name('certificaciones.download')->where('slot', '[12]')->middleware('permission:certifications.view');
+
+    // Auditoría (solo administrator y supervisor)
+    Route::get('/auditoria', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit.index')->middleware('permission:audit.view');
 });

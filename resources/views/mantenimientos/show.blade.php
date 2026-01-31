@@ -5,8 +5,11 @@
 @section('content')
 <div class="space-y-6">
     @php
-        $maintenance = \App\Models\Maintenance::with(['vehicle', 'responsibleTechnician', 'assignedDriver', 'approvedBy', 'maintenanceSpareParts.sparePart'])->findOrFail($id);
+        $maintenance = \App\Models\Maintenance::with(['vehicle', 'responsibleTechnician', 'assignedDriver', 'approvedBy', 'maintenanceSpareParts.sparePart', 'checklistCompletions.completedBy'])->findOrFail($id);
         $spareParts = \App\Models\SparePart::where('active', true)->orderBy('code')->get();
+        $checklistItems = $maintenance->getChecklistItemsForMaintenance();
+        $completedItemIds = $maintenance->checklistCompletions->pluck('maintenance_checklist_item_id')->all();
+        $completionsByItem = $maintenance->checklistCompletions->keyBy('maintenance_checklist_item_id');
     @endphp
 
     <div class="flex justify-between items-center">
@@ -192,6 +195,48 @@
         @endif
         @endcan
     </div>
+
+    <!-- Checklist -->
+    @if($checklistItems->isNotEmpty())
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Checklist</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Ítems que aplican a este tipo de mantenimiento ({{ __('mantenimiento.types.' . $maintenance->type, [], 'es') }}). Marca los completados antes de cerrar el mantenimiento.</p>
+        <ul class="space-y-2">
+            @foreach($checklistItems as $item)
+            <li class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
+                <div class="flex items-center gap-3">
+                    @php $isCompleted = in_array($item->id, $completedItemIds); $completion = $completionsByItem->get($item->id); @endphp
+                    @if($maintenance->status !== 'completed' && $maintenance->status !== 'cancelled' && auth()->user()->can('maintenances.edit'))
+                        <form action="{{ route('mantenimientos.checklist.toggle', [$maintenance->id, $item->id]) }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center gap-2 p-2 rounded-lg {{ $isCompleted ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' }}" title="{{ $isCompleted ? 'Desmarcar' : 'Marcar completado' }}">
+                                <i class="fas {{ $isCompleted ? 'fa-check-circle' : 'fa-circle' }}"></i>
+                                <span class="text-sm">{{ $item->name }}</span>
+                                @if($item->is_required)<span class="text-amber-600 dark:text-amber-400 text-xs" title="Obligatorio">*</span>@endif
+                            </button>
+                        </form>
+                    @else
+                        <span class="inline-flex items-center gap-2">
+                            <i class="fas {{ $isCompleted ? 'fa-check-circle text-green-600 dark:text-green-400' : 'fa-circle text-gray-400 dark:text-gray-500' }}"></i>
+                            <span class="text-sm text-gray-900 dark:text-white">{{ $item->name }}</span>
+                            @if($item->is_required)<span class="text-amber-600 dark:text-amber-400 text-xs">*</span>@endif
+                        </span>
+                    @endif
+                    @if($item->description)
+                        <span class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs" title="{{ $item->description }}">{{ $item->description }}</span>
+                    @endif
+                </div>
+                @if($isCompleted && $completion)
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ $completion->completed_at->format('d/m/Y H:i') }} @if($completion->completedBy) · {{ $completion->completedBy->name }}@endif</span>
+                @endif
+            </li>
+            @endforeach
+        </ul>
+        @if(!$maintenance->hasRequiredChecklistCompleted() && ($maintenance->status === 'in_progress' || $maintenance->status === 'scheduled'))
+            <p class="mt-3 text-sm text-amber-600 dark:text-amber-400"><i class="fas fa-exclamation-triangle mr-1"></i> Faltan ítems obligatorios (*) por marcar antes de completar el mantenimiento.</p>
+        @endif
+    </div>
+    @endif
 
     <!-- Información Adicional -->
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">

@@ -4,12 +4,36 @@ namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
 use App\Exports\VehiclesExport;
+use App\Services\AuditService;
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class VehicleController extends Controller
 {
+    public function __construct(
+        protected AuditService $audit
+    ) {}
+
+    /**
+     * Búsqueda por patente para el header (autocompletado). Devuelve JSON.
+     */
+    public function search(Request $request)
+    {
+        $q = $request->input('q', '');
+        $q = trim($q);
+        if (strlen($q) < 2) {
+            return response()->json(['data' => []]);
+        }
+        $vehicles = Vehicle::query()
+            ->where('license_plate', 'ilike', '%' . $q . '%')
+            ->select('id', 'license_plate', 'brand', 'model')
+            ->orderBy('license_plate')
+            ->limit(10)
+            ->get();
+        return response()->json(['data' => $vehicles]);
+    }
+
     public function index()
     {
         if (request()->ajax()) {
@@ -91,10 +115,18 @@ class VehicleController extends Controller
     {
         try {
             $vehicle = Vehicle::findOrFail($id);
+            $this->audit->log(
+                'delete_vehicle',
+                'Vehicle',
+                (int) $vehicle->id,
+                'Vehículo eliminado: ' . $vehicle->license_plate . ' (' . $vehicle->brand . ' ' . $vehicle->model . ')',
+                $vehicle->toArray(),
+                null
+            );
             $vehicle->delete();
-            
+
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => 'Vehículo eliminado correctamente.'
             ]);
         } catch (\Exception $e) {

@@ -1,7 +1,7 @@
 # Estado del Desarrollo - Melichinkul
 
 **Última actualización:** 2026-01-31  
-**Último commit:** ae6cf5a - Alertas de stock bajo y agotado
+**Último commit:** (pendiente) - feat: módulo Auditoría (audit_logs, AuditService, integración en vehículos/mantenimientos/alertas)
 
 ---
 
@@ -17,6 +17,7 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 - **DataTables** (estándar para todas las tablas)
 - **Chart.js** (gráficos en dashboard)
 - **SweetAlert2** (confirmaciones y mensajes)
+- **Spatie Laravel-Permission** (roles y permisos granulares)
 
 ---
 
@@ -40,21 +41,27 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 - Evidencia (factura/foto), aprobación por costo (umbral configurable)
 - **Repuestos utilizados**: sección en ficha para agregar/quitar repuestos; al completar o aprobar se descuenta stock y se registran movimientos tipo "uso"
 
-### 4. **Módulo Conductores** ✅
+### 4. **Plantillas de Mantenimiento** ✅
+- CRUD de plantillas (nombre, tipo, descripción, repuestos con cantidad)
+- DataTables en listado (server-side, búsqueda, eliminar vía AJAX)
+- Aplicar plantilla al crear mantenimiento: pre-llena tipo y descripción; al guardar copia repuestos al mantenimiento y redirige a ficha
+- Menú "Plantillas" (permiso maintenances.view)
+
+### 5. **Módulo Conductores** ✅
 - CRUD completo, DataTables, validación RUT y licencia
 - Asignaciones (driver_assignments), integración con vehículos
 
-### 5. **Módulo Certificaciones** ✅
+### 6. **Módulo Certificaciones** ✅
 - CRUD por vehículo, documentos (archivos), vencimientos
 - Enlace desde ficha del vehículo
 
-### 6. **Sistema de Alertas** ✅
+### 7. **Sistema de Alertas** ✅
 - Tabla con DataTables (vehículo o repuesto según tipo)
 - Generación automática: certificados por vencer/vencidos, licencias, mantenimientos vencidos, **stock bajo/agotado**
 - Cierre y posponer (modal), notificación email para alertas críticas
 - Comando programado: `alerts:generate` (diario)
 
-### 7. **Módulo Inventario de Repuestos** ✅
+### 8. **Módulo Inventario de Repuestos** ✅
 - **Catálogo repuestos**: CRUD, DataTables, columnas Stock/Mín/Estado stock, ficha con stock actual y últimos movimientos
 - **Proveedores**: CRUD, DataTables
 - **Compras**: CRUD (borrador → recibido), ítems dinámicos, acción "Recibir" (actualiza stock y movimientos), **exportación Excel/CSV**
@@ -62,6 +69,31 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 - **Movimientos de inventario**: listado con DataTables, filtro por repuesto
 - **Repuestos en mantenimiento**: pivot maintenance_spare_parts; al completar mantenimiento se descuenta stock y se crean movimientos tipo "uso"
 - **Alertas de stock**: stock_empty (crítica), stock_below_min (advertencia); cierre automático cuando stock OK
+
+### 9. **Permisos por rol** ✅
+- **Spatie Laravel-Permission**: roles (administrator, supervisor, administrativo, technician, viewer) y permisos granulares por recurso (vehicles.*, maintenances.*, drivers.*, alerts.*, spare_parts.*, suppliers.*, purchases.*, inventory.view_movements, certifications.*, users.manage)
+- Rutas protegidas con middleware `permission:...`
+- Menú y botones (aprobar, editar, cerrar/posponer alertas) con `@can`
+- Seeder `RolesAndPermissionsSeeder` sincroniza usuarios existentes con Spatie
+- Documentación en CONVENCIONES.md
+
+### 10. **Checklist de Mantenimiento** ✅
+- CRUD de ítems de checklist (nombre, tipo preventive/corrective/inspection o todos, obligatorio, orden)
+- Ítems se muestran en la ficha del mantenimiento según el tipo del mantenimiento
+- Marcar/desmarcar ítem completado (toggle) con registro de quién y cuándo
+- Validación: no se puede completar ni aprobar un mantenimiento sin tener todos los ítems obligatorios marcados
+- Menú "Checklist" (permiso maintenances.view)
+
+### 11. **Auditoría** ✅
+- Tabla `audit_logs` (user_id, action, model, model_id, description, old_values, new_values, ip_address, user_agent, created_at)
+- Modelo `AuditLog` y servicio `AuditService` para registrar acciones críticas
+- Registro automático en: eliminar vehículo, aprobar mantenimiento, eliminar mantenimiento, cerrar alerta
+- Vista "Auditoría" con DataTables (listado por fecha, usuario, acción, modelo, descripción)
+- Permiso `audit.view` (solo administrator y supervisor), menú "Auditoría"
+
+### 12. **Búsqueda rápida por patente (header)** ✅
+- Ruta `GET /vehiculos-buscar?q=` devuelve JSON con hasta 10 vehículos (id, license_plate, brand, model).
+- Input en el header (visible si el usuario tiene `vehicles.view`) con debounce 300 ms; dropdown con resultados; clic en resultado lleva a la ficha del vehículo.
 
 ---
 
@@ -73,11 +105,12 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 
 ---
 
-## 🚧 Pendientes (Plan Maestro)
+## 🚧 Pendientes (Plan Maestro – Fase 3 y posteriores)
 
-- **Permisos por rol** (administrador, supervisor, administrativo, técnico, visualizador)
-- **Auditoría** de acciones críticas (opcional)
+- **Notificaciones en tiempo real:** Laravel Echo + Broadcasting (Pusher/Redis), badges en navegación, notificaciones push para alertas críticas
 - **Reportes avanzados** de inventario/compras (opcional)
+- **Fase 4:** Caché inteligente, jobs asíncronos, análisis avanzados de costos, backup automático (búsqueda por patente en header ya implementada)
+- **Fase 5:** Optimizaciones BD, testing, documentación técnica y de usuario, preparación API REST
 
 ---
 
@@ -90,12 +123,20 @@ app/
 │   ├── DashboardController.php ✅
 │   ├── DriverController.php ✅
 │   ├── MaintenanceController.php ✅
+│   ├── MaintenanceTemplateController.php ✅
+│   ├── MaintenanceChecklistItemController.php ✅
 │   ├── PurchaseController.php ✅
 │   ├── SparePartController.php ✅
 │   ├── StockController.php ✅
 │   ├── SupplierController.php ✅
 │   ├── VehicleController.php ✅
-│   └── InventoryMovementController.php ✅
+│   ├── CertificationController.php ✅
+│   ├── InventoryMovementController.php ✅
+│   └── AuditLogController.php ✅
+├── Services/
+│   ├── AlertService.php ✅
+│   ├── AuditService.php ✅
+│   └── ...
 ├── Exports/
 │   ├── MaintenancesExport.php ✅
 │   ├── PurchasesExport.php ✅
@@ -103,11 +144,16 @@ app/
 ├── Models/
 │   ├── Alert.php ✅
 │   ├── Maintenance.php ✅ (+ MaintenanceSparePart)
+│   ├── MaintenanceTemplate.php ✅
+│   ├── MaintenanceChecklistItem.php, MaintenanceChecklistCompletion.php ✅
 │   ├── Purchase.php, PurchaseItem.php, Stock.php, InventoryMovement.php ✅
 │   ├── SparePart.php, Supplier.php ✅
-│   └── Vehicle.php ✅
-└── Console/Commands/
-    └── GenerateAlertsCommand.php ✅ (incluye stock)
+│   ├── Vehicle.php ✅
+│   └── AuditLog.php ✅
+├── Console/Commands/
+│   └── GenerateAlertsCommand.php ✅ (incluye stock)
+└── database/seeders/
+    └── RolesAndPermissionsSeeder.php ✅
 ```
 
 ---

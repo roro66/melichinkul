@@ -87,6 +87,40 @@ class Maintenance extends Model
         return $this->hasMany(MaintenanceSparePart::class);
     }
 
+    public function checklistCompletions(): HasMany
+    {
+        return $this->hasMany(MaintenanceChecklistCompletion::class);
+    }
+
+    /**
+     * Checklist items that apply to this maintenance's type, ordered by sort_order.
+     */
+    public function getChecklistItemsForMaintenance(): \Illuminate\Database\Eloquent\Collection
+    {
+        return MaintenanceChecklistItem::where(function ($q) {
+            $q->whereNull('type')->orWhere('type', $this->type);
+        })->orderBy('sort_order')->orderBy('id')->get();
+    }
+
+    /**
+     * Whether all required checklist items (for this maintenance type) are completed.
+     */
+    public function hasRequiredChecklistCompleted(): bool
+    {
+        $items = $this->getChecklistItemsForMaintenance();
+        $required = $items->where('is_required', true);
+        if ($required->isEmpty()) {
+            return true;
+        }
+        $completedIds = $this->checklistCompletions()->pluck('maintenance_checklist_item_id')->all();
+        foreach ($required as $item) {
+            if (! in_array($item->id, $completedIds, true)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public function isCorrective(): bool
     {
         return $this->type === 'corrective';

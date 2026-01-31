@@ -452,6 +452,13 @@
                         </svg>
                         Plantillas
                     </a>
+                    <a href="{{ route('checklist.index') }}" 
+                       class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('checklist.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                        </svg>
+                        Checklist
+                    </a>
                     @endcan
 
                     @can('drivers.view')
@@ -513,6 +520,16 @@
                         Movimientos
                     </a>
                     @endcan
+
+                    @can('audit.view')
+                    <a href="{{ route('audit.index') }}" 
+                       class="nav-item flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 {{ request()->routeIs('audit.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Auditoría
+                    </a>
+                    @endcan
                 </nav>
 
                 <!-- Footer del Sidebar -->
@@ -549,12 +566,23 @@
         <!-- Contenido principal -->
         <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
             <!-- Header superior -->
-            <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 lg:px-6">
+            <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 lg:px-6 gap-4">
                 <button id="sidebar-toggle" class="lg:hidden text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
+
+                @can('vehicles.view')
+                <div class="flex-1 max-w-md hidden sm:block relative" id="header-search-wrap">
+                    <input type="text" id="header-search-patente" placeholder="Buscar por patente..." autocomplete="off"
+                        class="w-full px-3 py-2 pl-9 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <svg class="w-5 h-5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <div id="header-search-results" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 hidden overflow-hidden"></div>
+                </div>
+                @endcan
 
                 <div class="flex items-center space-x-4">
                     <!-- Toggle modo oscuro -->
@@ -570,7 +598,7 @@
             </header>
 
             <!-- Contenido -->
-            <main class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 lg:p-6">
+            <main class="main-content flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 lg:p-6">
                 <!-- Los mensajes flash ahora se muestran con SweetAlert2, no necesitamos estos divs -->
 
                 @yield('content')
@@ -799,6 +827,56 @@
                     }
                 });
             });
+
+            // Búsqueda rápida por patente en header
+            const searchInput = document.getElementById('header-search-patente');
+            const searchResults = document.getElementById('header-search-results');
+            const searchWrap = document.getElementById('header-search-wrap');
+            if (searchInput && searchResults && searchWrap) {
+                let debounceTimer = null;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(debounceTimer);
+                    const q = this.value.trim();
+                    if (q.length < 2) {
+                        searchResults.classList.add('hidden');
+                        searchResults.innerHTML = '';
+                        return;
+                    }
+                    debounceTimer = setTimeout(function() {
+                        fetch("{{ route('vehiculos.search') }}?q=" + encodeURIComponent(q), {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                        })
+                        .then(r => r.json())
+                        .then(function(res) {
+                            const data = res.data || [];
+                            if (data.length === 0) {
+                                searchResults.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Sin resultados</div>';
+                            } else {
+                                searchResults.innerHTML = data.map(function(v) {
+                                    return '<a href="{{ url("vehiculos") }}/' + v.id + '" class="block px-3 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0">' +
+                                        '<span class="font-medium">' + (v.license_plate || '') + '</span> ' +
+                                        '<span class="text-gray-500 dark:text-gray-400">' + (v.brand || '') + ' ' + (v.model || '') + '</span></a>';
+                                }).join('');
+                            }
+                            searchResults.classList.remove('hidden');
+                        })
+                        .catch(function() {
+                            searchResults.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Error al buscar</div>';
+                            searchResults.classList.remove('hidden');
+                        });
+                    }, 300);
+                });
+                searchInput.addEventListener('focus', function() {
+                    if (searchResults.innerHTML && !searchResults.classList.contains('hidden')) {
+                        searchResults.classList.remove('hidden');
+                    }
+                });
+                document.addEventListener('click', function(e) {
+                    if (!searchWrap.contains(e.target)) {
+                        searchResults.classList.add('hidden');
+                    }
+                });
+            }
         });
     </script>
 </body>

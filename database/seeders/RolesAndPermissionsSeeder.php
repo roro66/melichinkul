@@ -23,6 +23,7 @@ class RolesAndPermissionsSeeder extends Seeder
         'inventory' => ['view_movements'],
         'certifications' => ['view', 'create', 'edit', 'delete'],
         'users' => ['manage'],
+        'audit' => ['view'],
     ];
 
     /**
@@ -71,14 +72,14 @@ class RolesAndPermissionsSeeder extends Seeder
         // Administrator: all
         $roles['administrator']->syncPermissions($all);
 
-        // Supervisor: all except users.manage
+        // Supervisor: all except users.manage (includes audit.view)
         $roles['supervisor']->syncPermissions(
             array_filter($all, fn (string $p) => $p !== 'users.manage')
         );
 
         // Administrativo: operational, no approve/maintenances.delete, no users.manage
         $adminPerms = array_filter($all, function (string $p) {
-            if ($p === 'users.manage') {
+            if ($p === 'users.manage' || $p === 'audit.view') {
                 return false;
             }
             if ($p === 'maintenances.approve' || $p === 'maintenances.delete') {

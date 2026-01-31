@@ -138,6 +138,14 @@ new class extends Component
             $status = 'pending_approval';
         }
 
+        if ($status === 'completed' || $status === 'pending_approval') {
+            $maintenanceForCheck = $this->maintenanceId ? Maintenance::find($this->maintenanceId) : null;
+            if ($maintenanceForCheck && ! $maintenanceForCheck->hasRequiredChecklistCompleted()) {
+                $this->addError('work_description', 'Debe marcar todos los ítems obligatorios del checklist antes de completar el mantenimiento.');
+                return;
+            }
+        }
+
         $data = [
             "vehicle_id" => $this->vehicle_id,
             "type" => $this->type,

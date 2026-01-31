@@ -166,3 +166,36 @@ html.dark span.inline-flex.rounded-full {
 }
 
 /* Ajustar logo para modo oscuro - remover filtro ya que usaremos versión con fondo */
+
+/* ========== SweetAlert2 en modo oscuro: título y texto del modal siempre visibles ========== */
+html.dark .swal2-popup {
+    background-color: #1f2937 !important; /* gray-800 */
+}
+html.dark .swal2-title,
+html.dark .swal2-html-container,
+html.dark .swal2-content {
+    color: #f3f4f6 !important; /* gray-100 */
+}
+
+/* ========== MODO CLARO: Campos con fondo amarillo (al final para ganar a Tailwind) ========== */
+html:not(.dark) body input[type="text"]:not([readonly]):not([disabled]),
+html:not(.dark) body input[type="number"]:not([readonly]):not([disabled]),
+html:not(.dark) body input[type="date"]:not([readonly]):not([disabled]),
+html:not(.dark) body input[type="email"]:not([readonly]):not([disabled]),
+html:not(.dark) body input:not([type]):not([readonly]):not([disabled]),
+html:not(.dark) body select:not([disabled]),
+html:not(.dark) body textarea:not([readonly]):not([disabled]) {
+    background-color: #fffde7 !important; /* Amarillo muy claro */
+}
+
+html:not(.dark) body input[type="text"]:not([readonly]):not([disabled]):focus,
+html:not(.dark) body input[type="number"]:not([readonly]):not([disabled]):focus,
+html:not(.dark) body input[type="date"]:not([readonly]):not([disabled]):focus,
+html:not(.dark) body input[type="email"]:not([readonly]):not([disabled]):focus,
+html:not(.dark) body input:not([type]):not([readonly]):not([disabled]):focus,
+html:not(.dark) body select:not([disabled]):focus,
+html:not(.dark) body textarea:not([readonly]):not([disabled]):focus {
+    background-color: #fff9c4 !important; /* Amarillo más intenso al enfocar */
+    border-color: #fbc02d !important;     /* Borde amarillo */
+    box-shadow: 0 0 0 0.2rem rgba(251, 192, 45, 0.25) !important;
+}

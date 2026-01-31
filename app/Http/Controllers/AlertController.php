@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Alert;
 use App\Services\AlertService;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
 class AlertController extends Controller
 {
     public function __construct(
-        protected AlertService $alertService
+        protected AlertService $alertService,
+        protected AuditService $audit
     ) {}
 
     public function index()
@@ -116,11 +118,25 @@ class AlertController extends Controller
             }
             return redirect()->back()->with('error', __('alerta.snooze_cerrada'));
         }
+        $oldStatus = $alert->status;
         $alert->update([
             'status' => 'closed',
             'closed_by_id' => auth()->id(),
             'closed_at' => now(),
         ]);
+
+        $subject = $alert->vehicle_id
+            ? ($alert->vehicle?->license_plate ?? 'Vehículo #' . $alert->vehicle_id)
+            : ($alert->sparePart?->code ?? 'Repuesto #' . $alert->spare_part_id);
+        $this->audit->log(
+            'close_alert',
+            'Alert',
+            $alert->id,
+            'Alerta cerrada: ' . $alert->title . ' (' . $subject . ', severidad: ' . $alert->severity . ')',
+            ['status' => $oldStatus],
+            ['status' => 'closed', 'closed_by_id' => auth()->id()]
+        );
+
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'Alerta cerrada correctamente.']);
         }

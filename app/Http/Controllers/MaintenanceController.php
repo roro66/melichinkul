@@ -3,15 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Maintenance;
+use App\Models\MaintenanceChecklistCompletion;
+use App\Models\MaintenanceChecklistItem;
 use App\Models\MaintenanceSparePart;
 use App\Models\SparePart;
 use App\Exports\MaintenancesExport;
+use App\Services\AuditService;
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class MaintenanceController extends Controller
 {
+    public function __construct(
+        protected AuditService $audit
+    ) {}
+
     public function index()
     {
         if (request()->ajax()) {
@@ -126,6 +133,10 @@ class MaintenanceController extends Controller
         if ($maintenance->status !== 'pending_approval') {
             return redirect()->back()->with('error', 'Solo se pueden aprobar mantenimientos en estado pendiente de aprobación.');
         }
+        if (! $maintenance->hasRequiredChecklistCompleted()) {
+            return redirect()->back()->with('error', 'Debe completar todos los ítems obligatorios del checklist antes de aprobar.');
+        }
+        $oldStatus = $maintenance->status;
         $maintenance->update([
             'status' => 'completed',
             'approved_by_id' => auth()->id(),
@@ -133,22 +144,40 @@ class MaintenanceController extends Controller
         ]);
         $maintenance->processSparePartsUsage();
 
+        $this->audit->log(
+            'approve_maintenance',
+            'Maintenance',
+            $maintenance->id,
+            'Mantenimiento #' . $maintenance->id . ' aprobado (vehículo: ' . ($maintenance->vehicle?->license_plate ?? 'N/A') . ', costo total: $' . number_format($maintenance->total_cost, 0, ',', '.') . ')',
+            ['status' => $oldStatus],
+            ['status' => 'completed', 'approved_by_id' => auth()->id()]
+        );
+
         return redirect()->back()->with('success', 'Mantenimiento aprobado correctamente.');
     }
 
     public function destroy($id)
     {
         try {
-            $maintenance = Maintenance::findOrFail($id);
+            $maintenance = Maintenance::with('vehicle')->findOrFail($id);
+            $vehicleInfo = $maintenance->vehicle ? $maintenance->vehicle->license_plate : 'N/A';
+            $this->audit->log(
+                'delete_maintenance',
+                'Maintenance',
+                $maintenance->id,
+                'Mantenimiento #' . $maintenance->id . ' eliminado (vehículo: ' . $vehicleInfo . ', tipo: ' . $maintenance->type . ')',
+                $maintenance->toArray(),
+                null
+            );
             $maintenance->delete();
-            
+
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => 'Mantenimiento eliminado correctamente.'
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Error al eliminar el mantenimiento: ' . $e->getMessage()
             ], 500);
         }
@@ -192,6 +221,36 @@ class MaintenanceController extends Controller
         MaintenanceSparePart::where('maintenance_id', $id)->where('id', $pivotId)->delete();
 
         return redirect()->back()->with('success', 'Repuesto quitado del mantenimiento.');
+    }
+
+    public function toggleChecklistItem(int $id, int $itemId)
+    {
+        $maintenance = Maintenance::findOrFail($id);
+        if ($maintenance->status === 'completed' || $maintenance->status === 'cancelled') {
+            return redirect()->back()->with('error', 'No se puede modificar el checklist de un mantenimiento completado o cancelado.');
+        }
+
+        $item = MaintenanceChecklistItem::findOrFail($itemId);
+        if (! $item->appliesToType($maintenance->type)) {
+            return redirect()->back()->with('error', 'Ese ítem no aplica al tipo de este mantenimiento.');
+        }
+
+        $completion = MaintenanceChecklistCompletion::where('maintenance_id', $id)
+            ->where('maintenance_checklist_item_id', $itemId)
+            ->first();
+
+        if ($completion) {
+            $completion->delete();
+            return redirect()->back()->with('success', 'Ítem desmarcado.');
+        }
+
+        MaintenanceChecklistCompletion::create([
+            'maintenance_id' => $id,
+            'maintenance_checklist_item_id' => $itemId,
+            'completed_at' => now(),
+            'completed_by_id' => auth()->id(),
+        ]);
+        return redirect()->back()->with('success', 'Ítem marcado como completado.');
     }
 
     public function export(Request $request, $format)
