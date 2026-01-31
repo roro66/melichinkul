@@ -405,11 +405,11 @@
                                         </td>
                                         <td class="px-6 py-4 text-sm">
                                             @if($cert->attached_file)
-                                                <a href="{{ Storage::url($cert->attached_file) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline mr-2" title="Ver archivo 1"><i class="fas fa-external-link-alt"></i></a>
+                                                <a href="{{ route('certificaciones.view', [$cert->id, 1]) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline mr-2" title="Ver archivo 1"><i class="fas fa-external-link-alt"></i></a>
                                                 <a href="{{ route('certificaciones.download', [$cert->id, 1]) }}" class="text-gray-600 dark:text-gray-400 hover:underline" title="Descargar archivo 1"><i class="fas fa-download"></i></a>
                                             @endif
                                             @if($cert->attached_file_2)
-                                                <a href="{{ Storage::url($cert->attached_file_2) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline ml-2 mr-2" title="Ver archivo 2"><i class="fas fa-external-link-alt"></i></a>
+                                                <a href="{{ route('certificaciones.view', [$cert->id, 2]) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline ml-2 mr-2" title="Ver archivo 2"><i class="fas fa-external-link-alt"></i></a>
                                                 <a href="{{ route('certificaciones.download', [$cert->id, 2]) }}" class="text-gray-600 dark:text-gray-400 hover:underline" title="Descargar archivo 2"><i class="fas fa-download"></i></a>
                                             @endif
                                             @if(!$cert->attached_file && !$cert->attached_file_2)

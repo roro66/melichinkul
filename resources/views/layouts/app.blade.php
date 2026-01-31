@@ -478,6 +478,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                         </svg>
                         Alertas
+                        <span id="alerts-badge" class="flex-shrink-0 min-w-[1.25rem] h-5 px-1.5 inline-flex items-center justify-center rounded-full text-xs font-medium" aria-label="Alertas pendientes">—</span>
                     </a>
                     @endcan
 
@@ -580,7 +581,7 @@
                     <svg class="w-5 h-5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
-                    <div id="header-search-results" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 hidden overflow-hidden"></div>
+                    <div id="header-search-results" class="absolute left-0 right-0 top-full mt-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 hidden overflow-hidden"></div>
                 </div>
                 @endcan
 
@@ -827,6 +828,28 @@
                     }
                 });
             });
+
+            // Badge de alertas pendientes (polling cada 30 s)
+            const alertsBadge = document.getElementById('alerts-badge');
+            if (alertsBadge) {
+                function updateAlertsBadge() {
+                    fetch("{{ route('alerts.summary') }}", { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            var total = data.total || 0;
+                            var criticas = data.criticas || 0;
+                            alertsBadge.textContent = total > 0 ? total : '—';
+                            if (criticas > 0) {
+                                alertsBadge.classList.add('alerts-badge--critical');
+                            } else {
+                                alertsBadge.classList.remove('alerts-badge--critical');
+                            }
+                        })
+                        .catch(function() { alertsBadge.textContent = '—'; });
+                }
+                updateAlertsBadge();
+                setInterval(updateAlertsBadge, 30000);
+            }
 
             // Búsqueda rápida por patente en header
             const searchInput = document.getElementById('header-search-patente');

@@ -15,6 +15,20 @@ class AlertController extends Controller
         protected AuditService $audit
     ) {}
 
+    /**
+     * Resumen de alertas pendientes para badge en navegación (polling).
+     */
+    public function summary()
+    {
+        $total = Alert::where('status', '!=', 'closed')->count();
+        $criticas = Alert::where('status', '!=', 'closed')->where('severity', 'critica')->count();
+
+        return response()->json([
+            'total' => $total,
+            'criticas' => $criticas,
+        ]);
+    }
+
     public function index()
     {
         if (request()->ajax()) {

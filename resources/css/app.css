@@ -167,6 +167,34 @@ html.dark span.inline-flex.rounded-full {
 
 /* Ajustar logo para modo oscuro - remover filtro ya que usaremos versión con fondo */
 
+/* ========== Badge de alertas en menú: siempre visible en modo claro y oscuro ========== */
+#alerts-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 1.25rem !important;
+    height: 1.25rem !important;
+    padding: 0 0.375rem !important;
+    margin-left: 1rem !important;
+    border-radius: 9999px !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    flex-shrink: 0 !important;
+}
+html:not(.dark) #alerts-badge {
+    background-color: #fde68a !important; /* amber-200 */
+    color: #78350f !important;             /* amber-900 */
+}
+html.dark #alerts-badge {
+    background-color: #4b5563 !important; /* gray-600 */
+    color: #e5e7eb !important;             /* gray-200 */
+}
+html:not(.dark) #alerts-badge.alerts-badge--critical,
+html.dark #alerts-badge.alerts-badge--critical {
+    background-color: #dc2626 !important; /* red-600 */
+    color: #ffffff !important;
+}
+
 /* ========== SweetAlert2 en modo oscuro: título y texto del modal siempre visibles ========== */
 html.dark .swal2-popup {
     background-color: #1f2937 !important; /* gray-800 */

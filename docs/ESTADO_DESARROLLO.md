@@ -95,6 +95,11 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 - Ruta `GET /vehiculos-buscar?q=` devuelve JSON con hasta 10 vehículos (id, license_plate, brand, model).
 - Input en el header (visible si el usuario tiene `vehicles.view`) con debounce 300 ms; dropdown con resultados; clic en resultado lleva a la ficha del vehículo.
 
+### 13. **Badge de alertas en navegación (polling)** ✅
+- Ruta `GET /alertas-resumen` devuelve JSON `{ total, criticas }` (alertas no cerradas).
+- Badge junto al enlace "Alertas" en el menú: muestra total pendientes; fondo rojo si hay críticas.
+- Polling cada 30 segundos para actualizar el contador (fallback sin WebSockets).
+
 ---
 
 ## 🔧 Configuraciones Técnicas
@@ -107,7 +112,7 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 
 ## 🚧 Pendientes (Plan Maestro – Fase 3 y posteriores)
 
-- **Notificaciones en tiempo real:** Laravel Echo + Broadcasting (Pusher/Redis), badges en navegación, notificaciones push para alertas críticas
+- **Notificaciones en tiempo real:** Laravel Echo + Broadcasting (Pusher/Redis), notificaciones push (badge en navegación ya implementado con polling 30 s)
 - **Reportes avanzados** de inventario/compras (opcional)
 - **Fase 4:** Caché inteligente, jobs asíncronos, análisis avanzados de costos, backup automático (búsqueda por patente en header ya implementada)
 - **Fase 5:** Optimizaciones BD, testing, documentación técnica y de usuario, preparación API REST

@@ -73,6 +73,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/conductores/{id}', [\App\Http\Controllers\DriverController::class, 'destroy'])->name('conductores.destroy')->middleware('permission:drivers.delete');
 
     // Módulo Alertas
+    Route::get('/alertas-resumen', [\App\Http\Controllers\AlertController::class, 'summary'])->name('alerts.summary')->middleware('permission:alerts.view');
     Route::get('/alertas', [\App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index')->middleware('permission:alerts.view');
     Route::post('/alertas/{id}/cerrar', [\App\Http\Controllers\AlertController::class, 'close'])->name('alerts.close')->middleware('permission:alerts.close');
     Route::post('/alertas/{id}/posponer', [\App\Http\Controllers\AlertController::class, 'snooze'])->name('alerts.snooze')->middleware('permission:alerts.snooze');
@@ -117,6 +118,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/certificaciones/{id}/edit', [\App\Http\Controllers\CertificationController::class, 'edit'])->name('certificaciones.edit')->middleware('permission:certifications.edit');
     Route::match(['put', 'patch'], '/certificaciones/{id}', [\App\Http\Controllers\CertificationController::class, 'update'])->name('certificaciones.update')->middleware('permission:certifications.edit');
     Route::delete('/certificaciones/{id}', [\App\Http\Controllers\CertificationController::class, 'destroy'])->name('certificaciones.destroy')->middleware('permission:certifications.delete');
+    Route::get('/certificaciones/{id}/ver/{slot}', [\App\Http\Controllers\CertificationController::class, 'view'])->name('certificaciones.view')->where('slot', '[12]')->middleware('permission:certifications.view');
     Route::get('/certificaciones/{id}/archivo/{slot}', [\App\Http\Controllers\CertificationController::class, 'download'])->name('certificaciones.download')->where('slot', '[12]')->middleware('permission:certifications.view');
 
     // Auditoría (solo administrator y supervisor)

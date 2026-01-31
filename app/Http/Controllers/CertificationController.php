@@ -6,6 +6,7 @@ use App\Models\Certification;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -100,12 +101,17 @@ class CertificationController extends Controller
                 Storage::disk('public')->delete($certification->attached_file);
             }
             $validated['attached_file'] = $request->file('attached_file')->store('certifications/' . $certification->vehicle_id, 'public');
+        } else {
+            // Preservar la ruta existente si no se sube archivo nuevo
+            $validated['attached_file'] = $certification->attached_file;
         }
         if ($request->hasFile('attached_file_2')) {
             if ($certification->attached_file_2) {
                 Storage::disk('public')->delete($certification->attached_file_2);
             }
             $validated['attached_file_2'] = $request->file('attached_file_2')->store('certifications/' . $certification->vehicle_id, 'public');
+        } else {
+            $validated['attached_file_2'] = $certification->attached_file_2;
         }
 
         $certification->update($validated);
@@ -134,10 +140,42 @@ class CertificationController extends Controller
     {
         $certification = Certification::findOrFail($id);
         $path = $slot === 1 ? $certification->attached_file : $certification->attached_file_2;
-        if (!$path || !Storage::disk('public')->exists($path)) {
+        if (! $path || ! Storage::disk('public')->exists($path)) {
             abort(404);
         }
-        $filename = basename($path);
+        $filename = $this->readableFilename($certification, $slot, $path);
         return Storage::disk('public')->download($path, $filename, ['Content-Type' => Storage::disk('public')->mimeType($path)]);
+    }
+
+    /**
+     * Ver archivo en el navegador (inline) en lugar de descargar.
+     * Evita depender del symlink public/storage que puede dar 404 en Docker.
+     */
+    public function view(int $id, int $slot)
+    {
+        $certification = Certification::findOrFail($id);
+        $path = $slot === 1 ? $certification->attached_file : $certification->attached_file_2;
+        if (! $path || ! Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+        $filename = $this->readableFilename($certification, $slot, $path);
+        return Storage::disk('public')->response($path, $filename, [
+            'Content-Disposition' => 'inline; filename="'.str_replace('"', '%22', $filename).'"',
+        ]);
+    }
+
+    /**
+     * Genera un nombre de archivo legible: nombre de la certificación + sufijo si slot 2 + extensión.
+     */
+    private function readableFilename(Certification $certification, int $slot, string $path): string
+    {
+        $extension = pathinfo($path, PATHINFO_EXTENSION) ?: 'pdf';
+        $base = Str::slug($certification->name, '_');
+        if (strlen($base) === 0) {
+            $base = self::CERT_TYPES[$certification->type] ?? 'documento';
+            $base = Str::slug($base, '_');
+        }
+        $suffix = $slot === 2 ? '_reverso' : '';
+        return $base.$suffix.'.'.$extension;
     }
 }

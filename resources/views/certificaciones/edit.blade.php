@@ -74,7 +74,7 @@
                 <div>
                     <label for="attached_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Archivo escaneado (PDF, JPG, PNG)</label>
                     @if($certification->attached_file)
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Actual: <a href="{{ Storage::url($certification->attached_file) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Ver archivo</a></p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Actual: <a href="{{ route('certificaciones.view', [$certification->id, 1]) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Ver archivo</a></p>
                     @endif
                     <input type="file" id="attached_file" name="attached_file" accept=".pdf,.jpg,.jpeg,.png" class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300">
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Dejar vacío para mantener el actual</p>
@@ -82,7 +82,7 @@
                 <div>
                     <label for="attached_file_2" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Segundo archivo (reverso)</label>
                     @if($certification->attached_file_2)
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Actual: <a href="{{ Storage::url($certification->attached_file_2) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Ver archivo</a></p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Actual: <a href="{{ route('certificaciones.view', [$certification->id, 2]) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Ver archivo</a></p>
                     @endif
                     <input type="file" id="attached_file_2" name="attached_file_2" accept=".pdf,.jpg,.jpeg,.png" class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300">
                 </div>
