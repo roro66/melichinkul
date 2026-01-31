@@ -33,7 +33,16 @@ class DriverForm extends Component
     protected function rules(): array
     {
         $rules = [
-            'rut' => ['required', 'string', 'max:20'],
+            'rut' => [
+                'required',
+                'string',
+                'max:20',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! ChileanValidationHelper::validarRut($value)) {
+                        $fail(__('chile.rut', ['attribute' => 'RUT']));
+                    }
+                },
+            ],
             'full_name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -85,11 +94,6 @@ class DriverForm extends Component
 
     public function save(): mixed
     {
-        $this->rules['rut'][] = function ($attribute, $value, $fail) {
-            if (! ChileanValidationHelper::validarRut($value)) {
-                $fail(__('chile.rut', ['attribute' => 'RUT']));
-            }
-        };
         $this->validate();
 
         $data = [

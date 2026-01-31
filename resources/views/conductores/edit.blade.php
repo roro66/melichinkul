@@ -10,5 +10,9 @@
     </div>
 
     @livewire('conductores.driver-form', ['id' => $id])
+
+    <div class="mt-8">
+        @livewire('conductores.driver-documents', ['driverId' => $id])
+    </div>
 </div>
 @endsection

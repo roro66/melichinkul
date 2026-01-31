@@ -69,6 +69,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/conductores', [\App\Http\Controllers\DriverController::class, 'index'])->name('conductores.index')->middleware('permission:drivers.view');
     Route::get('/conductores/create', [\App\Http\Controllers\DriverController::class, 'create'])->name('conductores.create')->middleware('permission:drivers.create');
     Route::get('/conductores/{id}/edit', [\App\Http\Controllers\DriverController::class, 'edit'])->name('conductores.edit')->middleware('permission:drivers.edit');
+    Route::get('/conductores/{driver}/documentos/{document}/ver', [\App\Http\Controllers\DriverController::class, 'viewDocument'])->name('conductores.documentos.ver')->middleware('permission:drivers.view');
+    Route::get('/conductores/{driver}/documentos/{document}/descargar', [\App\Http\Controllers\DriverController::class, 'downloadDocument'])->name('conductores.documentos.descargar')->middleware('permission:drivers.view');
     Route::get('/conductores/{id}', [\App\Http\Controllers\DriverController::class, 'show'])->name('conductores.show')->middleware('permission:drivers.view');
     Route::delete('/conductores/{id}', [\App\Http\Controllers\DriverController::class, 'destroy'])->name('conductores.destroy')->middleware('permission:drivers.delete');
 

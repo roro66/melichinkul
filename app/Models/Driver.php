@@ -43,6 +43,11 @@ class Driver extends Model
         return $this->hasMany(Maintenance::class, "assigned_driver_id");
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(DriverDocument::class);
+    }
+
     public function hasValidLicense(): bool
     {
         return $this->license_expiration_date && $this->license_expiration_date->isFuture();

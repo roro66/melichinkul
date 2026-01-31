@@ -59,6 +59,24 @@
                 </div>
             @endif
 
+            @if($driver->documents->isNotEmpty())
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Documentos</h2>
+                    <ul class="space-y-2">
+                        @foreach($driver->documents as $doc)
+                            <li class="flex items-center justify-between gap-4 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                <span class="font-medium text-gray-900 dark:text-white">{{ $doc->name }}</span>
+                                <div class="flex gap-3 text-sm">
+                                    <a href="{{ route('conductores.documentos.ver', ['driver' => $driver->id, 'document' => $doc->id]) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Ver</a>
+                                    <a href="{{ route('conductores.documentos.descargar', ['driver' => $driver->id, 'document' => $doc->id]) }}" class="text-gray-600 dark:text-gray-400 hover:underline">Descargar</a>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Para agregar o eliminar documentos, edita el conductor.</p>
+                </div>
+            @endif
+
             <div>
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Vehículos asignados</h2>
                 @if($driver->assignedVehicles->isEmpty())

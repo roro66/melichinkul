@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Driver;
+use App\Models\DriverDocument;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Yajra\DataTables\Facades\DataTables;
 
 class DriverController extends Controller
@@ -91,8 +95,33 @@ class DriverController extends Controller
 
     public function show(int $id)
     {
-        $driver = Driver::with(['assignedVehicles', 'maintenances'])->findOrFail($id);
+        $driver = Driver::with(['assignedVehicles', 'maintenances', 'documents'])->findOrFail($id);
         return view('conductores.show', compact('driver'));
+    }
+
+    public function viewDocument(Driver $driver, DriverDocument $document): BinaryFileResponse
+    {
+        if ($document->driver_id !== $driver->id) {
+            abort(404);
+        }
+        if (! Storage::disk('public')->exists($document->file_path)) {
+            abort(404);
+        }
+        return response()->file(Storage::disk('public')->path($document->file_path), [
+            'Content-Type' => $document->isPdf() ? 'application/pdf' : 'image/' . pathinfo($document->file_path, PATHINFO_EXTENSION),
+        ]);
+    }
+
+    public function downloadDocument(Driver $driver, DriverDocument $document): StreamedResponse
+    {
+        if ($document->driver_id !== $driver->id) {
+            abort(404);
+        }
+        if (! Storage::disk('public')->exists($document->file_path)) {
+            abort(404);
+        }
+        $downloadName = \Illuminate\Support\Str::slug($document->name) . '.' . pathinfo($document->file_path, PATHINFO_EXTENSION);
+        return Storage::disk('public')->download($document->file_path, $downloadName);
     }
 
     public function edit(int $id)
