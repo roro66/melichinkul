@@ -37,8 +37,9 @@ class MaintenanceController extends Controller
 
         $prev = $start->copy()->subMonth();
         $next = $start->copy()->addMonth();
-        $now = now();
-        $canNext = $next->isBefore($now) || $next->month === $now->month;
+        // Permitir navegar hasta 24 meses en el futuro para ver mantenimientos programados
+        $maxFuture = now()->addMonths(24);
+        $canNext = $next->lte($maxFuture);
 
         return view('mantenimientos.calendario', compact('start', 'byDate', 'prev', 'next', 'canNext'));
     }
