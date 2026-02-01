@@ -5,7 +5,7 @@ window.Pusher = Pusher;
 
 const key = import.meta.env.VITE_REVERB_APP_KEY;
 const wsHost = import.meta.env.VITE_REVERB_HOST || 'localhost';
-const wsPort = import.meta.env.VITE_REVERB_PORT || 8080;
+const wsPort = import.meta.env.VITE_REVERB_PORT || 8002;
 const forceTLS = (import.meta.env.VITE_REVERB_SCHEME || 'http') === 'https';
 
 if (key) {

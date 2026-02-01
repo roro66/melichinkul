@@ -98,7 +98,7 @@ services:
       - REVERB_SCHEME=http
       - REDIS_HOST=redis
     ports:
-      - "8080:8080"
+      - "8002:8080"
     command: php artisan reverb:start --host=0.0.0.0 --port=8080
 
   # Procesa la cola (notificaciones por email, jobs)

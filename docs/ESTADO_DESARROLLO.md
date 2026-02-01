@@ -108,10 +108,10 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 - Rutas: `GET /notificaciones/{id}/leer`, `POST /notificaciones/marcar-todas-leidas`.
 
 ### 15. **Notificaciones en tiempo real (Laravel Reverb + Echo)** ✅
-- **Laravel Reverb:** servidor WebSockets (Pusher-compatible). Servicio `reverb` en Docker, puerto 8080.
+- **Laravel Reverb:** servidor WebSockets (Pusher-compatible). Servicio `reverb` en Docker, puerto expuesto 8002.
 - **Broadcasting:** notificaciones (alertas críticas, mantenimiento pendiente aprobación) se emiten por canal `broadcast` además de `database` y `mail`.
 - **Laravel Echo + pusher-js:** en el frontend se suscribe al canal privado `App.Models.User.{id}` y escucha eventos `.notification`. Al recibir una notificación: se actualiza el contador de la campana y se muestra un toast (SweetAlert2).
-- **Config:** `BROADCAST_CONNECTION=reverb`, variables `REVERB_*` en `.env`; en Docker el app usa `REVERB_HOST=reverb`; el navegador usa `VITE_REVERB_*` (host `localhost` si Reverb expone 8080). Rutas de broadcasting en `AppServiceProvider` (`Broadcast::routes()`).
+- **Config:** `BROADCAST_CONNECTION=reverb`, variables `REVERB_*` en `.env`; en Docker el app usa `REVERB_HOST=reverb`; el navegador usa `VITE_REVERB_*` (puerto 8002). Rutas de broadcasting en `AppServiceProvider` (`Broadcast::routes()`).
 
 ---
 
