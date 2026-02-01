@@ -21,7 +21,24 @@ class CriticalAlertsDigestNotification extends Notification implements ShouldQue
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database', 'broadcast'];
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        $alertIds = array_map(fn (Alert $a) => $a->id, $this->alerts);
+        $titles = array_map(fn (Alert $a) => $a->title, $this->alerts);
+
+        return [
+            'type' => 'critical_alerts_digest',
+            'alert_ids' => $alertIds,
+            'count' => count($this->alerts),
+            'message' => count($this->alerts) === 1
+                ? 'Se ha generado 1 alerta crítica.'
+                : 'Se han generado ' . count($this->alerts) . ' alertas críticas.',
+            'titles' => $titles,
+            'url' => route('alerts.index'),
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

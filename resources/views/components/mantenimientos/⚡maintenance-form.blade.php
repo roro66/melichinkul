@@ -2,9 +2,10 @@
 
 use App\Models\Maintenance;
 use App\Models\MaintenanceTemplate;
-use App\Models\Vehicle;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\Driver;
+use App\Notifications\MaintenancePendingApprovalNotification;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
@@ -174,6 +175,9 @@ new class extends Component
             if ($status === 'completed') {
                 $maintenance->processSparePartsUsage();
             }
+            if ($status === 'pending_approval') {
+                $this->notifySupervisorsPendingApproval($maintenance);
+            }
             session()->flash("success", $status === 'pending_approval'
                 ? "Mantenimiento actualizado. El costo supera el umbral de aprobación; quedó pendiente de aprobación."
                 : "Mantenimiento actualizado correctamente.");
@@ -187,6 +191,9 @@ new class extends Component
             }
             if ($status === 'completed') {
                 $maintenance->processSparePartsUsage();
+            }
+            if ($status === 'pending_approval') {
+                $this->notifySupervisorsPendingApproval($maintenance);
             }
             session()->flash("success", $status === 'pending_approval'
                 ? "Mantenimiento creado. El costo supera el umbral de aprobación; quedó pendiente de aprobación."
@@ -214,6 +221,16 @@ new class extends Component
             return redirect()->route("mantenimientos.show", $maintenance->id);
         }
         return redirect()->route("mantenimientos.index");
+    }
+
+    private function notifySupervisorsPendingApproval(Maintenance $maintenance): void
+    {
+        $recipients = User::role(['administrator', 'supervisor'])
+            ->where('active', true)
+            ->get();
+        foreach ($recipients as $user) {
+            $user->notify(new MaintenancePendingApprovalNotification($maintenance));
+        }
     }
 
     public function render()

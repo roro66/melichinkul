@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @auth
+    <meta name="auth-user-id" content="{{ auth()->id() }}">
+    @endauth
     <title>@yield('title', config('app.name', 'Melichinkul'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
@@ -585,7 +588,51 @@
                 </div>
                 @endcan
 
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <!-- Campana de notificaciones -->
+                    @auth
+                    @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
+                    <div class="relative group">
+                        <button type="button" id="notifications-toggle" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer z-50 relative" aria-label="Notificaciones" aria-expanded="false" aria-haspopup="true">
+                            <i class="fas fa-bell w-5 h-5"></i>
+                            @if($unreadCount > 0)
+                                <span class="absolute -top-0.5 -right-0.5 min-w-[1.25rem] h-5 px-1 inline-flex items-center justify-center rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
+                            @endif
+                        </button>
+                        <div id="notifications-dropdown" class="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden hidden">
+                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                <span class="font-semibold text-gray-900 dark:text-white">Notificaciones</span>
+                                @if($unreadCount > 0)
+                                    <form method="post" action="{{ route('notifications.readAll') }}" class="inline">
+                                        @csrf
+                                        <button type="submit" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Marcar todas leídas</button>
+                                    </form>
+                                @endif
+                            </div>
+                            <div class="max-h-80 overflow-y-auto">
+                                @forelse(auth()->user()->unreadNotifications()->latest()->take(15)->get() as $notification)
+                                    <a href="{{ route('notifications.read', $notification->id) }}" class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-0 text-left">
+                                        <p class="text-sm text-gray-900 dark:text-white">{{ $notification->data['message'] ?? 'Nueva notificación' }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </a>
+                                @empty
+                                    <p class="px-4 py-6 text-sm text-gray-500 dark:text-gray-400 text-center">No hay notificaciones nuevas</p>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                    (function() {
+                        var btn = document.getElementById('notifications-toggle');
+                        var dropdown = document.getElementById('notifications-dropdown');
+                        if (btn && dropdown) {
+                            btn.addEventListener('click', function(e) { e.stopPropagation(); dropdown.classList.toggle('hidden'); });
+                            document.addEventListener('click', function() { dropdown.classList.add('hidden'); });
+                            dropdown.addEventListener('click', function(e) { e.stopPropagation(); });
+                        }
+                    })();
+                    </script>
+                    @endauth
                     <!-- Toggle modo oscuro -->
                     <button id="theme-toggle" type="button" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer z-50 relative">
                         <svg id="theme-icon-light" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">

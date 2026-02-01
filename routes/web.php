@@ -18,6 +18,10 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Notificaciones in-app (campana)
+    Route::get('/notificaciones/{id}/leer', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notificaciones/marcar-todas-leidas', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+
     // Módulo Vehículos
     Route::get('/vehiculos-buscar', [\App\Http\Controllers\VehicleController::class, 'search'])->name('vehiculos.search')->middleware('permission:vehicles.view');
     Route::get('/vehiculos', [\App\Http\Controllers\VehicleController::class, 'index'])->name('vehiculos.index')->middleware('permission:vehicles.view');

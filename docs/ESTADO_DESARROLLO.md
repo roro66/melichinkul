@@ -1,7 +1,7 @@
 # Estado del Desarrollo - Melichinkul
 
-**Última actualización:** 2026-01-31  
-**Último commit:** (pendiente) - feat: módulo Auditoría (audit_logs, AuditService, integración en vehículos/mantenimientos/alertas)
+**Última actualización:** 2026-02-01  
+**Último commit:** feat(conductores): documentos con nombre legible + fix validación Livewire; feat(notificaciones): notificaciones in-app (Fase 3)
 
 ---
 
@@ -100,6 +100,19 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 - Badge junto al enlace "Alertas" en el menú: muestra total pendientes; fondo rojo si hay críticas.
 - Polling cada 30 segundos para actualizar el contador (fallback sin WebSockets).
 
+### 14. **Notificaciones in-app (Fase 3)** ✅
+- Tabla `notifications` (Laravel database channel): notificaciones por usuario, marcar como leída.
+- **Alertas críticas:** al generar alertas críticas (`alerts:generate`), se notifica por correo y se guarda notificación in-app para administradores y supervisores (`CriticalAlertsDigestNotification` con canales `mail`, `database` y `broadcast`).
+- **Mantenimiento pendiente de aprobación:** cuando un mantenimiento supera el umbral de costo y queda en `pending_approval`, se envía notificación in-app a administradores y supervisores (`MaintenancePendingApprovalNotification` con canales `database` y `broadcast`).
+- **Campana en el header:** icono de campana con contador de no leídas; dropdown con últimas 15 notificaciones, enlace a "Ver" (marca como leída y redirige a alertas o ficha del mantenimiento); opción "Marcar todas leídas".
+- Rutas: `GET /notificaciones/{id}/leer`, `POST /notificaciones/marcar-todas-leidas`.
+
+### 15. **Notificaciones en tiempo real (Laravel Reverb + Echo)** ✅
+- **Laravel Reverb:** servidor WebSockets (Pusher-compatible). Servicio `reverb` en Docker, puerto 8080.
+- **Broadcasting:** notificaciones (alertas críticas, mantenimiento pendiente aprobación) se emiten por canal `broadcast` además de `database` y `mail`.
+- **Laravel Echo + pusher-js:** en el frontend se suscribe al canal privado `App.Models.User.{id}` y escucha eventos `.notification`. Al recibir una notificación: se actualiza el contador de la campana y se muestra un toast (SweetAlert2).
+- **Config:** `BROADCAST_CONNECTION=reverb`, variables `REVERB_*` en `.env`; en Docker el app usa `REVERB_HOST=reverb`; el navegador usa `VITE_REVERB_*` (host `localhost` si Reverb expone 8080). Rutas de broadcasting en `AppServiceProvider` (`Broadcast::routes()`).
+
 ---
 
 ## 🔧 Configuraciones Técnicas
@@ -112,7 +125,6 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 
 ## 🚧 Pendientes (Plan Maestro – Fase 3 y posteriores)
 
-- **Notificaciones en tiempo real:** Laravel Echo + Broadcasting (Pusher/Redis), notificaciones push (badge en navegación ya implementado con polling 30 s)
 - **Reportes avanzados** de inventario/compras (opcional)
 - **Fase 4:** Caché inteligente, jobs asíncronos, análisis avanzados de costos, backup automático (búsqueda por patente en header ya implementada)
 - **Fase 5:** Optimizaciones BD, testing, documentación técnica y de usuario, preparación API REST
@@ -137,6 +149,7 @@ app/
 │   ├── VehicleController.php ✅
 │   ├── CertificationController.php ✅
 │   ├── InventoryMovementController.php ✅
+│   ├── NotificationController.php ✅
 │   └── AuditLogController.php ✅
 ├── Services/
 │   ├── AlertService.php ✅
@@ -155,6 +168,9 @@ app/
 │   ├── SparePart.php, Supplier.php ✅
 │   ├── Vehicle.php ✅
 │   └── AuditLog.php ✅
+├── Notifications/
+│   ├── CriticalAlertsDigestNotification.php ✅ (mail + database)
+│   └── MaintenancePendingApprovalNotification.php ✅ (database)
 ├── Console/Commands/
 │   └── GenerateAlertsCommand.php ✅ (incluye stock)
 └── database/seeders/
