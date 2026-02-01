@@ -71,7 +71,7 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 - **Alertas de stock**: stock_empty (crítica), stock_below_min (advertencia); cierre automático cuando stock OK
 
 ### 9. **Permisos por rol** ✅
-- **Spatie Laravel-Permission**: roles (administrator, supervisor, administrativo, technician, viewer) y permisos granulares por recurso (vehicles.*, maintenances.*, drivers.*, alerts.*, spare_parts.*, suppliers.*, purchases.*, inventory.view_movements, certifications.*, users.manage)
+- **Spatie Laravel-Permission**: roles (administrator, supervisor, administrativo, technician, viewer) y permisos granulares por recurso (vehicles.*, maintenances.*, drivers.*, alerts.*, spare_parts.*, suppliers.*, purchases.*, inventory.view_movements, certifications.*, reports.view, users.manage)
 - Rutas protegidas con middleware `permission:...`
 - Menú y botones (aprobar, editar, cerrar/posponer alertas) con `@can`
 - Seeder `RolesAndPermissionsSeeder` sincroniza usuarios existentes con Spatie
@@ -113,6 +113,28 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 - **Laravel Echo + pusher-js:** en el frontend se suscribe al canal privado `App.Models.User.{id}` y escucha eventos `.notification`. Al recibir una notificación: se actualiza el contador de la campana y se muestra un toast (SweetAlert2).
 - **Config:** `BROADCAST_CONNECTION=reverb`, variables `REVERB_*` en `.env`; en Docker el app usa `REVERB_HOST=reverb`; el navegador usa `VITE_REVERB_*` (puerto 8002). Rutas de broadcasting en `AppServiceProvider` (`Broadcast::routes()`).
 
+### 16. **Reportes avanzados** ✅
+- Ruta `GET /reportes` (permiso `reports.view`). Menú "Reportes" visible para roles con ese permiso (technician, viewer, administrativo, supervisor, administrator).
+- **Estadísticas (últimos 12 meses):**
+  - **Fallas por vehículo:** gráfico de barras horizontal (top 15) con cantidad de mantenimientos correctivos completados por vehículo.
+  - **Fallas por conductor:** gráfico de barras horizontal (top 15) con cantidad de correctivos donde el conductor estaba asignado al mantenimiento.
+  - **Tendencia de costos:** gráfico de líneas por mes (total, preventivo, correctivo, inspección).
+  - **Distribución por tipo:** gráfico doughnut con cantidad de mantenimientos completados por tipo (preventivo, correctivo, inspección).
+  - **Top 10 vehículos por costo total:** tabla con enlace a ficha del vehículo.
+- Cards de resumen: total fallas, costo por fallas, mantenimientos completados, costo total del período.
+- Chart.js (CDN) con soporte modo oscuro. Vista `reportes/index.blade.php`, controlador `ReportController`.
+
+### 17. **Flujo: programar mantenimiento preventivo y aviso al mecánico** ✅
+- **Programar mantenimiento preventivo:** (1) Desde **Mantenimientos** → **Nuevo Mantenimiento**, o (2) desde la ficha del **Vehículo** → pestaña Mantenimientos → **Nuevo Mantenimiento** (el vehículo queda pre-seleccionado). Tipo **Preventivo**, estado **Programado**, fecha programada y descripción obligatorios; opcional: técnico responsable, conductor asignado. Guardar.
+- **Aviso al mecánico:** al crear un mantenimiento en estado **Programado**, se envía notificación in-app (y email si el usuario tiene notificaciones activadas) a todos los usuarios con rol **Técnico** y al **técnico responsable** asignado si es otro usuario (`MaintenanceScheduledNotification`). La campana del header y el toast en tiempo real (Reverb) muestran el aviso.
+- **Dónde ver lo programado:** listado **Mantenimientos** (filtro por estado "Programado"), **Dashboard** (bloque "Próximos Mantenimientos"), **Calendario** (`/mantenimientos/calendario`), ficha del vehículo (pestaña Mantenimientos).
+
+### 18. **Pendientes prioritarios implementados** ✅
+- **Logs de acceso:** tabla `access_logs`, middleware `LogAccess` (solo GET no-AJAX), vista `/accesos` (permiso `audit.view`), menú "Accesos".
+- **Exportación PDF:** `barryvdh/laravel-dompdf`. Historial por vehículo (ficha vehículo → "Historial PDF"), Estado flota y Dashboard ejecutivo (Reportes → botones PDF).
+- **Calendario de mantenimientos:** `/mantenimientos/calendario`, menú "Calendario", vista mensual con enlaces a ficha del mantenimiento.
+- **Reportes automáticos por email:** comando `reports:send-monthly` (día 1 a las 07:00) a administrator y supervisor; notificación `MonthlyReportNotification`.
+
 ---
 
 ## 🔧 Configuraciones Técnicas
@@ -125,7 +147,7 @@ Sistema de gestión de mantenimiento de flotas vehiculares desarrollado con:
 
 ## 🚧 Pendientes (Plan Maestro – Fase 3 y posteriores)
 
-- **Reportes avanzados** de inventario/compras (opcional)
+- **Reportes avanzados** de inventario/compras (opcional; reportes de mantenimiento/fallas ya implementados)
 - **Fase 4:** Caché inteligente, jobs asíncronos, análisis avanzados de costos, backup automático (búsqueda por patente en header ya implementada)
 - **Fase 5:** Optimizaciones BD, testing, documentación técnica y de usuario, preparación API REST
 
@@ -150,6 +172,7 @@ app/
 │   ├── CertificationController.php ✅
 │   ├── InventoryMovementController.php ✅
 │   ├── NotificationController.php ✅
+│   ├── ReportController.php ✅
 │   └── AuditLogController.php ✅
 ├── Services/
 │   ├── AlertService.php ✅

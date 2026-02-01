@@ -9,6 +9,6 @@
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Registrar un nuevo mantenimiento</p>
     </div>
 
-    @livewire('mantenimientos.maintenance-form')
+    @livewire('mantenimientos.maintenance-form', ['vehicleId' => request('vehicle_id')])
 </div>
 @endsection

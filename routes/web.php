@@ -32,11 +32,13 @@ Route::middleware(['auth'])->group(function () {
         return view('vehiculos.edit', ['id' => $id]);
     })->name('vehiculos.edit')->middleware('permission:vehicles.edit');
     Route::get('/vehiculos/{id}', [\App\Http\Controllers\VehicleController::class, 'show'])->name('vehiculos.show')->middleware('permission:vehicles.view');
+    Route::get('/vehiculos/{id}/historial-pdf', [\App\Http\Controllers\VehicleController::class, 'exportHistorialPdf'])->name('vehiculos.historial-pdf')->middleware('permission:vehicles.view');
     Route::delete('/vehiculos/{id}', [\App\Http\Controllers\VehicleController::class, 'destroy'])->name('vehiculos.destroy')->middleware('permission:vehicles.delete');
     Route::post('/vehiculos/export/{format}', [\App\Http\Controllers\VehicleController::class, 'export'])->name('vehiculos.export')->middleware('permission:vehicles.export');
 
     // Módulo Mantenimientos
     Route::get('/mantenimientos', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('mantenimientos.index')->middleware('permission:maintenances.view');
+    Route::get('/mantenimientos/calendario', [\App\Http\Controllers\MaintenanceController::class, 'calendario'])->name('mantenimientos.calendario')->middleware('permission:maintenances.view');
     Route::post('/mantenimientos/{id}/aprobar', [\App\Http\Controllers\MaintenanceController::class, 'approve'])->name('mantenimientos.approve')->middleware('permission:maintenances.approve');
     Route::post('/mantenimientos/{id}/repuestos', [\App\Http\Controllers\MaintenanceController::class, 'addSparePart'])->name('mantenimientos.repuestos.add')->middleware('permission:maintenances.edit');
     Route::delete('/mantenimientos/{id}/repuestos/{pivotId}', [\App\Http\Controllers\MaintenanceController::class, 'removeSparePart'])->name('mantenimientos.repuestos.remove')->middleware('permission:maintenances.edit');
@@ -77,6 +79,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/conductores/{driver}/documentos/{document}/descargar', [\App\Http\Controllers\DriverController::class, 'downloadDocument'])->name('conductores.documentos.descargar')->middleware('permission:drivers.view');
     Route::get('/conductores/{id}', [\App\Http\Controllers\DriverController::class, 'show'])->name('conductores.show')->middleware('permission:drivers.view');
     Route::delete('/conductores/{id}', [\App\Http\Controllers\DriverController::class, 'destroy'])->name('conductores.destroy')->middleware('permission:drivers.delete');
+
+    // Reportes avanzados
+    Route::get('/reportes', [\App\Http\Controllers\ReportController::class, 'index'])->name('reportes.index')->middleware('permission:reports.view');
+    Route::get('/reportes/estado-flota-pdf', [\App\Http\Controllers\ReportController::class, 'estadoFlotaPdf'])->name('reportes.estado-flota-pdf')->middleware('permission:reports.view');
+    Route::get('/reportes/dashboard-ejecutivo-pdf', [\App\Http\Controllers\ReportController::class, 'dashboardEjecutivoPdf'])->name('reportes.dashboard-ejecutivo-pdf')->middleware('permission:reports.view');
 
     // Módulo Alertas
     Route::get('/alertas-resumen', [\App\Http\Controllers\AlertController::class, 'summary'])->name('alerts.summary')->middleware('permission:alerts.view');
@@ -129,4 +136,18 @@ Route::middleware(['auth'])->group(function () {
 
     // Auditoría (solo administrator y supervisor)
     Route::get('/auditoria', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit.index')->middleware('permission:audit.view');
+    Route::get('/accesos', [\App\Http\Controllers\AccessLogController::class, 'index'])->name('access_logs.index')->middleware('permission:audit.view');
+
+    // Roles y permisos (administrator y supervisor)
+    Route::get('/roles', [\App\Http\Controllers\RoleController::class, 'index'])->name('roles.index')->middleware('permission:roles.manage');
+    Route::get('/roles/{role}/edit', [\App\Http\Controllers\RoleController::class, 'edit'])->name('roles.edit')->middleware('permission:roles.manage');
+    Route::match(['put', 'patch'], '/roles/{role}', [\App\Http\Controllers\RoleController::class, 'update'])->name('roles.update')->middleware('permission:roles.manage');
+
+    // Gestión de usuarios (solo administrator)
+    Route::get('/usuarios', [\App\Http\Controllers\UserController::class, 'index'])->name('usuarios.index')->middleware('permission:users.manage');
+    Route::get('/usuarios/create', [\App\Http\Controllers\UserController::class, 'create'])->name('usuarios.create')->middleware('permission:users.manage');
+    Route::post('/usuarios', [\App\Http\Controllers\UserController::class, 'store'])->name('usuarios.store')->middleware('permission:users.manage');
+    Route::get('/usuarios/{usuario}/edit', [\App\Http\Controllers\UserController::class, 'edit'])->name('usuarios.edit')->middleware('permission:users.manage');
+    Route::match(['put', 'patch'], '/usuarios/{usuario}', [\App\Http\Controllers\UserController::class, 'update'])->name('usuarios.update')->middleware('permission:users.manage');
+    Route::delete('/usuarios/{usuario}', [\App\Http\Controllers\UserController::class, 'destroy'])->name('usuarios.destroy')->middleware('permission:users.manage');
 });

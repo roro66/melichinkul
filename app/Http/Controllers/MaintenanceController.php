@@ -19,6 +19,30 @@ class MaintenanceController extends Controller
         protected AuditService $audit
     ) {}
 
+    public function calendario(Request $request)
+    {
+        $year = (int) $request->get('year', now()->year);
+        $month = (int) $request->get('month', now()->month);
+        $start = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+
+        $maintenances = Maintenance::with('vehicle')
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->whereBetween('scheduled_date', [$start, $end])
+            ->orderBy('scheduled_date')
+            ->orderBy('id')
+            ->get();
+
+        $byDate = $maintenances->groupBy(fn ($m) => $m->scheduled_date?->format('Y-m-d'));
+
+        $prev = $start->copy()->subMonth();
+        $next = $start->copy()->addMonth();
+        $now = now();
+        $canNext = $next->isBefore($now) || $next->month === $now->month;
+
+        return view('mantenimientos.calendario', compact('start', 'byDate', 'prev', 'next', 'canNext'));
+    }
+
     public function index()
     {
         if (request()->ajax()) {

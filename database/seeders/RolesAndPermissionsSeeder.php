@@ -23,7 +23,9 @@ class RolesAndPermissionsSeeder extends Seeder
         'inventory' => ['view_movements'],
         'certifications' => ['view', 'create', 'edit', 'delete'],
         'users' => ['manage'],
+        'roles' => ['manage'],
         'audit' => ['view'],
+        'reports' => ['view'],
     ];
 
     /**
@@ -72,7 +74,7 @@ class RolesAndPermissionsSeeder extends Seeder
         // Administrator: all
         $roles['administrator']->syncPermissions($all);
 
-        // Supervisor: all except users.manage (includes audit.view)
+        // Supervisor: all except users.manage (includes audit.view, roles.manage)
         $roles['supervisor']->syncPermissions(
             array_filter($all, fn (string $p) => $p !== 'users.manage')
         );
@@ -97,6 +99,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'alerts.view',
             'spare_parts.view',
             'certifications.view',
+            'reports.view',
         ];
         $roles['technician']->syncPermissions($techPerms);
 
@@ -111,6 +114,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'purchases.view',
             'inventory.view_movements',
             'certifications.view',
+            'reports.view',
         ];
         $roles['viewer']->syncPermissions($viewPerms);
     }

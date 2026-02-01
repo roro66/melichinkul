@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\Driver;
 use App\Notifications\MaintenancePendingApprovalNotification;
+use App\Notifications\MaintenanceScheduledNotification;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
@@ -70,7 +71,7 @@ new class extends Component
         "evidence_photo.max" => "La foto no debe superar 10 MB.",
     ];
 
-    public function mount($id = null)
+    public function mount($id = null, $vehicleId = null)
     {
         if ($id) {
             $maintenance = Maintenance::findOrFail($id);
@@ -94,6 +95,8 @@ new class extends Component
             $this->responsible_technician_id = $maintenance->responsible_technician_id;
             $this->assigned_driver_id = $maintenance->assigned_driver_id;
             $this->observations = $maintenance->observations;
+        } elseif ($vehicleId) {
+            $this->vehicle_id = $vehicleId;
         }
     }
 
@@ -195,6 +198,9 @@ new class extends Component
             if ($status === 'pending_approval') {
                 $this->notifySupervisorsPendingApproval($maintenance);
             }
+            if ($status === 'scheduled') {
+                $this->notifyTechniciansScheduled($maintenance);
+            }
             session()->flash("success", $status === 'pending_approval'
                 ? "Mantenimiento creado. El costo supera el umbral de aprobación; quedó pendiente de aprobación."
                 : "Mantenimiento creado correctamente.");
@@ -230,6 +236,22 @@ new class extends Component
             ->get();
         foreach ($recipients as $user) {
             $user->notify(new MaintenancePendingApprovalNotification($maintenance));
+        }
+    }
+
+    /** Notifica a técnicos y al responsable asignado cuando se programa un mantenimiento. */
+    private function notifyTechniciansScheduled(Maintenance $maintenance): void
+    {
+        $recipients = User::role('technician')->where('active', true)->get();
+        $responsibleId = $maintenance->responsible_technician_id;
+        if ($responsibleId && ! $recipients->contains('id', $responsibleId)) {
+            $responsible = User::find($responsibleId);
+            if ($responsible && $responsible->active) {
+                $recipients = $recipients->push($responsible);
+            }
+        }
+        foreach ($recipients as $user) {
+            $user->notify(new MaintenanceScheduledNotification($maintenance));
         }
     }
 

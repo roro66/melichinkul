@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Vehicle;
 use App\Exports\VehiclesExport;
 use App\Services\AuditService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
@@ -205,5 +206,16 @@ class VehicleController extends Controller
             default:
                 return redirect()->back()->with('error', 'Formato de exportación no válido');
         }
+    }
+
+    public function exportHistorialPdf($id)
+    {
+        $vehicle = Vehicle::with(['maintenances' => fn ($q) => $q->orderBy('scheduled_date', 'desc')])
+            ->findOrFail($id);
+        $maintenances = $vehicle->maintenances;
+
+        $pdf = Pdf::loadView('pdf.historial-vehiculo', compact('vehicle', 'maintenances'));
+        $filename = 'historial-' . $vehicle->license_plate . '-' . now()->format('Y-m-d') . '.pdf';
+        return $pdf->download($filename);
     }
 }
