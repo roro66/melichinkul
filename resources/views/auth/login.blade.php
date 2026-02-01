@@ -31,11 +31,6 @@
                 <div class="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg mb-6 w-full">
                     <img id="login-logo-light" src="{{ asset('images/logo.png') }}" alt="{{ config('app.name', 'Melichinkul') }}" class="w-full h-auto max-w-md mx-auto">
                     <img id="login-logo-dark" src="{{ asset('images/logo-dark.png') }}" alt="{{ config('app.name', 'Melichinkul') }}" class="w-full h-auto max-w-md mx-auto hidden">
-                    <div class="w-full overflow-x-auto flex justify-center">
-                        <p class="font-bold tracking-wide uppercase mt-2 -mb-2" style="font-size: 5rem; line-height: 1.1; white-space: nowrap; color: #b45309;">
-                            Control de flotas
-                        </p>
-                    </div>
                 </div>
             </div>
             <form class="mt-8 space-y-6" method="POST" action="{{ route('login') }}">

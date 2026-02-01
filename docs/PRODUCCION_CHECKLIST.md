@@ -144,3 +144,48 @@ En producción se sirven los archivos de `public/build`; no hace falta Vite en m
 | Backups y mail real               | Recomendado |
 
 Si cumples lo obligatorio y revisas lo recomendado, la app está **lista para moverla a producción** desde el punto de vista de configuración y seguridad básica. Ajusta rutas, dominios y servicios (BD, Redis, mail, Reverb) según tu entorno real.
+
+---
+
+## Después del primer despliegue
+
+### Cambiar la contraseña del administrador
+
+El seeder crea un usuario `admin@melichinkul.cl` con contraseña `password`. **Cámbiala en cuanto accedas.**
+
+Desde el servidor (o dentro del contenedor `app`):
+
+```bash
+docker compose exec app php artisan tinker
+```
+
+En Tinker:
+
+```php
+$u = \App\Models\User::where('email', 'admin@melichinkul.cl')->first();
+$u->password = bcrypt('TuNuevaContraseñaSegura');
+$u->save();
+exit
+```
+
+O bien cambia la contraseña desde la aplicación si ya tienes una opción de “Mi perfil” o “Cambiar contraseña”.
+
+### Revisar el worker de cola
+
+Si los correos o jobs no se procesan, comprueba que el contenedor `queue` esté en marcha y sin reinicios constantes:
+
+```bash
+docker compose ps
+docker compose logs queue --tail=100
+```
+
+Si se reinicia mucho, revisa `storage/logs/laravel.log` y la configuración de Redis (`REDIS_HOST`, `QUEUE_CONNECTION=redis`). Reiniciar el worker:
+
+```bash
+docker compose restart queue
+```
+
+### Correo real y dominio
+
+- Para enviar correos reales: configura en `.env` un SMTP (SendGrid, Mailgun, etc.) y sustituye los valores de Mailpit; ver “Mail en producción” más arriba.
+- Para un acceso más seguro y profesional: configura un dominio y HTTPS (proxy inverso con Nginx/Caddy y certificado, o servicio gestionado).
