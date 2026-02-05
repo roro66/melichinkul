@@ -21,20 +21,13 @@
 
 ## Historial de Git
 
-La contraseña de PostgreSQL **sí estuvo** en commits anteriores del archivo `docs/PLAN_MAESTRO_SISTEMA_MANTENIMIENTO_FLOTAS.md` (desde el commit inicial). Si el repo ya se ha pusheado a GitHub, esa contraseña queda en el historial remoto.
+La contraseña de PostgreSQL había aparecido en commits anteriores en `docs/PLAN_MAESTRO_SISTEMA_MANTENIMIENTO_FLOTAS.md`. **El repositorio nunca fue público**, por lo que no hubo exposición externa.
 
-### Recomendaciones
+Se **purgó el historial** con `git filter-branch`: en todos los commits se reemplazó la contraseña por `***`, se eliminaron los refs de backup y se hizo `git push --force origin main`. El historial en GitHub ya no contiene la contraseña.
 
-1. **Rotar credenciales** (recomendado si el repo es o será público):
-   - Cambiar la contraseña del usuario PostgreSQL en desarrollo y producción.
-   - Actualizar `.env` y `docs/CONFIGURACION_ENTORNO.md` (local) con la nueva contraseña.
-   - Considerar rotar el PAT de GitHub (revocar el actual y crear uno nuevo) y la contraseña SSH del servidor si quieres máxima precaución.
+### Antes de hacer el repo público
 
-2. **Purgar el historial** (opcional, para que la contraseña antigua no aparezca en clones):
-   - Instalar [git-filter-repo](https://github.com/newren/git-filter-repo): `pip install git-filter-repo`.
-   - Crear un archivo `replacements.txt` con una línea: `@Postgresql1966#==>***`
-   - Ejecutar:  
-     `git filter-repo --replace-text replacements.txt --path docs/PLAN_MAESTRO_SISTEMA_MANTENIMIENTO_FLOTAS.md --force`
-   - **Importante:** Esto reescribe el historial. Si ya hay pusheado a GitHub, hará falta `git push --force origin main`. Coordinar con cualquier otro colaborador.
+- **Rotar credenciales** (recomendado): cambiar contraseña de PostgreSQL en desarrollo y producción, actualizar `.env` y tu documentación local. Opcionalmente rotar PAT de GitHub y contraseña SSH del servidor.
+- Con la purga hecha, no es necesario volver a reescribir historial.
 
 Este archivo puede eliminarse o mantenerse como referencia interna; no contiene secretos.

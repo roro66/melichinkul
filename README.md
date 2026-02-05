@@ -3,6 +3,8 @@
 Sistema de gestión de flotas para contratista de Lipigas (Chile).  
 **Laravel 12 · Livewire 4 · PHP 8.2 · PostgreSQL · Docker**
 
+**Licencia:** [MIT](LICENSE)
+
 ---
 
 ## Arranque rápido (Docker, sin Sail)
