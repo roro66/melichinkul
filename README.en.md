@@ -1,5 +1,7 @@
 # Melichinkul
 
+<p align="center"><img src="https://raw.githubusercontent.com/roro66/melichinkul/main/public/images/logo.png" alt="Melichinkul" width="280"></p>
+
 Fleet management system for vehicles, trucks and machinery. Maintenance, drivers, certifications, alerts and reporting.
 
 **Stack:** Laravel 12 · Livewire 4 · PHP 8.2 · PostgreSQL · Docker

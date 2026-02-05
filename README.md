@@ -1,5 +1,7 @@
 # Melichinkul
 
+<p align="center"><img src="https://raw.githubusercontent.com/roro66/melichinkul/main/public/images/logo.png" alt="Melichinkul" width="280"></p>
+
 Sistema de control de flotas de vehículos, camiones y maquinaria. Gestión de mantenimientos, conductores, certificaciones, alertas y reportes.
 
 **Stack:** Laravel 12 · Livewire 4 · PHP 8.2 · PostgreSQL · Docker
