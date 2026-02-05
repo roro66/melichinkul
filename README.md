@@ -1,9 +1,11 @@
 # Melichinkul
 
-Sistema de gestión de flotas para contratista de Lipigas (Chile).  
-**Laravel 12 · Livewire 4 · PHP 8.2 · PostgreSQL · Docker**
+Sistema de control de flotas de vehículos, camiones y maquinaria. Gestión de mantenimientos, conductores, certificaciones, alertas y reportes.
 
-**Licencia:** [MIT](LICENSE)
+**Stack:** Laravel 12 · Livewire 4 · PHP 8.2 · PostgreSQL · Docker
+
+**Licencia:** [MIT](LICENSE)  
+**English:** [README.en.md](README.en.md)
 
 ---
 
