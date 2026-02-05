@@ -9,7 +9,7 @@ Sistema de gestión de flotas para contratista de Lipigas (Chile).
 
 1. **PostgreSQL en el host**  
    - Crear BD: `melichinkul_db`  
-   - Misma usuario/contraseña que Sover3MP (ver `docs/CONFIGURACION_ENTORNO.md`).
+   - Configurar en `.env`: `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
 
 2. **Variables de entorno**
    ```bash
@@ -35,7 +35,7 @@ Sistema de gestión de flotas para contratista de Lipigas (Chile).
 ## Git y GitHub
 
 - Repo: `https://github.com/roro66/melichinkul.git`  
-- PAT: usar el mismo que Sover3MP (ver `docs/CONFIGURACION_ENTORNO.md`).
+- Para push/pull: configurar autenticación (PAT en la URL del remoto o SSH).
 
 ```bash
 git remote add origin https://[TU_PAT]@github.com/roro66/melichinkul.git
@@ -47,8 +47,8 @@ git push -u origin main
 
 ## Documentos
 
-- `docs/CONFIGURACION_ENTORNO.md` — Entorno, Docker, Git, GitHub, Mailpit.  
-- `docs/PLAN_MAESTRO_SISTEMA_MANTENIMIENTO_FLOTAS.md` — Alcance y diseño.
+- `docs/PLAN_MAESTRO_SISTEMA_MANTENIMIENTO_FLOTAS.md` — Alcance y diseño.  
+- Documentación local de entorno (Docker, BD, Git) puede mantenerse fuera del repo por seguridad.
 
 ---
 

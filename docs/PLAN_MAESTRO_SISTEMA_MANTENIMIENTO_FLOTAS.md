@@ -175,7 +175,7 @@ La empresa contratista de Lipigas necesita un sistema centralizado para:
 - **Puerto**: `5432`
 - **Base de datos**: `melichinkul_db` (nueva base de datos exclusiva para la aplicación)
 - **Usuario**: `admin`
-- **Contraseña**: `***`
+- **Contraseña**: configurar en `.env` (no incluir credenciales reales en documentación)
 
 **Nota importante**: Se creará una nueva base de datos `melichinkul_db` en el PostgreSQL existente. El contenedor de Laravel debe conectarse usando `host.docker.internal` en lugar de un contenedor PostgreSQL separado.
 
@@ -208,7 +208,7 @@ DB_HOST=host.docker.internal
 DB_PORT=5432
 DB_DATABASE=melichinkul_db
 DB_USERNAME=admin
-DB_PASSWORD=***
+DB_PASSWORD=***  # Configurar en .env; no subir credenciales al repositorio
 ```
 
 **Ventajas:**
@@ -3142,7 +3142,7 @@ protected function schedule(Schedule $schedule)
   DB_PORT=5432
   DB_DATABASE=melichinkul_db
   DB_USERNAME=admin
-  DB_PASSWORD=***
+  DB_PASSWORD=***  # Configurar en .env; no subir credenciales al repositorio
   ```
 - Preparar configuración para despliegue en producción:
   - Opción 1: Docker Compose en servidor (similar a desarrollo)
