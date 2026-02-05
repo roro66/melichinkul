@@ -49,10 +49,9 @@ git push -u origin main
 
 ---
 
-## Documentos
+## Documentación
 
-- `docs/PLAN_MAESTRO_SISTEMA_MANTENIMIENTO_FLOTAS.md` — Alcance y diseño.  
-- Documentación local de entorno (Docker, BD, Git) puede mantenerse fuera del repo por seguridad.
+La documentación de alcance, entorno y convenciones se mantiene fuera del repositorio (no incluida en el repo público).
 
 ---
 

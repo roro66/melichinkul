@@ -51,8 +51,7 @@ git push -u origin main
 
 ## Documentation
 
-- `docs/PLAN_MAESTRO_SISTEMA_MANTENIMIENTO_FLOTAS.md` — Scope and design (Spanish).  
-- Local environment docs (Docker, DB, Git) can be kept outside the repo for security.
+Scope, environment and conventions documentation is kept outside the repository (not included in the public repo).
 
 ---
 
