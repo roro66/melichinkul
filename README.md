@@ -66,3 +66,13 @@ La documentación de alcance, entorno y convenciones se mantiene fuera del repos
 | mailpit  | 8025, 1025 | Correo en desarrollo |
 
 PostgreSQL se usa el del host vía `host.docker.internal`.
+
+---
+
+## ¿Te resultó útil?
+
+Si este proyecto te sirve y quieres apoyar su desarrollo, puedes hacer una donación por PayPal:
+
+**[Donar con PayPal](https://www.paypal.com/donate/?hosted_button_id=4WY2DYMZL2HBW)**
+
+Gracias por tu interés y por tu apoyo.

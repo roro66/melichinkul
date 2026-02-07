@@ -66,3 +66,13 @@ Scope, environment and conventions documentation is kept outside the repository 
 | mailpit | 8025, 1025 | Mail in development |
 
 PostgreSQL runs on the host; use `host.docker.internal` to connect from containers.
+
+---
+
+## Found it useful?
+
+If this project helps you and you’d like to support its development, you can donate via PayPal:
+
+**[Donate with PayPal](https://www.paypal.com/donate/?hosted_button_id=4WY2DYMZL2HBW)**
+
+Thank you for your interest and support.
