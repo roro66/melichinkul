@@ -182,6 +182,22 @@ class VehicleController extends Controller
         return view('vehiculos.show', compact('vehicle', 'stats', 'upcomingMaintenances'));
     }
 
+    public function fichaCompleta($id)
+    {
+        $vehicle = Vehicle::with([
+            'category',
+            'currentDriver',
+            'certifications' => fn ($q) => $q->orderBy('expiration_date', 'asc'),
+            'maintenances' => fn ($q) => $q->orderBy('scheduled_date', 'desc')->orderBy('end_date', 'desc'),
+            'maintenances.responsibleTechnician',
+        ])->findOrFail($id);
+
+        $lastMaintenance = $vehicle->maintenances->where('status', 'completed')->first();
+        $nextMaintenance = $vehicle->maintenances->whereIn('status', ['scheduled', 'in_progress'])->sortBy('scheduled_date')->first();
+
+        return view('vehiculos.ficha-completa', compact('vehicle', 'lastMaintenance', 'nextMaintenance'));
+    }
+
     public function export(Request $request, $format)
     {
         // Obtener filtros de la petición

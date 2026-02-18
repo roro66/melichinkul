@@ -8,7 +8,15 @@ const wsHost = import.meta.env.VITE_REVERB_HOST || 'localhost';
 const wsPort = import.meta.env.VITE_REVERB_PORT || 8002;
 const forceTLS = (import.meta.env.VITE_REVERB_SCHEME || 'http') === 'https';
 
-if (key) {
+// No conectar Echo si el host es solo accesible dentro de Docker (ej. "reverb")
+// El navegador no puede resolver "reverb"; usar en producción VITE_REVERB_HOST=IP_PÚBLICA y rebuild
+const hostReachableFromBrowser = typeof window !== 'undefined' && (
+    wsHost === 'localhost' ||
+    wsHost === '127.0.0.1' ||
+    wsHost === window.location.hostname
+);
+
+if (key && hostReachableFromBrowser) {
     window.Echo = new Echo({
         broadcaster: 'reverb',
         key,

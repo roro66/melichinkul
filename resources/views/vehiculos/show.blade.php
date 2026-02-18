@@ -15,6 +15,10 @@
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150">
                 <i class="fas fa-file-pdf mr-2"></i> Historial PDF
             </a>
+            <a href="{{ route('vehiculos.ficha-completa', $vehicle->id) }}"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150">
+                Ficha completa
+            </a>
             <a href="{{ route('vehiculos.edit', $vehicle->id) }}" 
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors duration-150">
                 <i class="fas fa-edit mr-2"></i> Editar
@@ -66,6 +70,12 @@
         <div class="p-6 min-h-[32rem]">
             <!-- Pestaña: Resumen -->
             <div x-show="activeTab === 'resumen'" class="space-y-6">
+                <!-- Ficha completa: enlace visible en el contenido -->
+                <a href="{{ route('vehiculos.ficha-completa', $vehicle->id) }}" class="flex items-center justify-center gap-3 w-full py-4 px-6 rounded-lg border-2 border-indigo-600 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors duration-150 font-semibold">
+                    <span class="text-2xl" aria-hidden="true">📋</span>
+                    <span>Ver ficha completa del vehículo (registro tipo planilla)</span>
+                </a>
+
                 <!-- Información General -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">

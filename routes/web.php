@@ -33,6 +33,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('vehiculos.edit')->middleware('permission:vehicles.edit');
     Route::get('/vehiculos/{id}', [\App\Http\Controllers\VehicleController::class, 'show'])->name('vehiculos.show')->middleware('permission:vehicles.view');
     Route::get('/vehiculos/{id}/historial-pdf', [\App\Http\Controllers\VehicleController::class, 'exportHistorialPdf'])->name('vehiculos.historial-pdf')->middleware('permission:vehicles.view');
+    Route::get('/vehiculos/{id}/ficha-completa', [\App\Http\Controllers\VehicleController::class, 'fichaCompleta'])->name('vehiculos.ficha-completa')->middleware('permission:vehicles.view');
     Route::delete('/vehiculos/{id}', [\App\Http\Controllers\VehicleController::class, 'destroy'])->name('vehiculos.destroy')->middleware('permission:vehicles.delete');
     Route::post('/vehiculos/export/{format}', [\App\Http\Controllers\VehicleController::class, 'export'])->name('vehiculos.export')->middleware('permission:vehicles.export');
 
