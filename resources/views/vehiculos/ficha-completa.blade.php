@@ -49,9 +49,7 @@
 
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-2">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 pb-1 mb-2">Elementos de seguridad</h3>
-            @if($vehicle->safety_last_inspection_date)
-            <p class="text-sm mb-2"><span class="text-gray-500 dark:text-gray-400">Última inspección:</span> <span class="font-medium">{{ $vehicle->safety_last_inspection_date->format('d-m-Y') }}</span></p>
-            @endif
+            <p class="text-sm mb-2"><span class="text-gray-500 dark:text-gray-400">Última inspección:</span> <span class="font-medium">{{ $vehicle->safety_last_inspection_date ? $vehicle->safety_last_inspection_date->format('d-m-Y') : '—' }}</span></p>
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Gata:</span> {{ $vehicle->safety_gata ?? 'Sin información' }}</p>
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Llave rueda:</span> {{ $vehicle->safety_llave_rueda ?? 'Sin información' }}</p>
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Triángulo:</span> {{ $vehicle->safety_triangulo ?? 'Sin información' }}</p>

@@ -190,6 +190,22 @@
                     </div>
                 </div>
                 @endif
+
+                <!-- Elementos de seguridad (como en la planilla) -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Elementos de seguridad</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Última inspección:</span>
+                            <p class="text-sm text-gray-900 dark:text-white">{{ $vehicle->safety_last_inspection_date ? $vehicle->safety_last_inspection_date->format('d/m/Y') : '—' }}</p>
+                        </div>
+                        <div><span class="text-sm font-medium text-gray-500 dark:text-gray-400">Gata:</span> <span class="text-sm text-gray-900 dark:text-white">{{ $vehicle->safety_gata ?? '—' }}</span></div>
+                        <div><span class="text-sm font-medium text-gray-500 dark:text-gray-400">Llave rueda:</span> <span class="text-sm text-gray-900 dark:text-white">{{ $vehicle->safety_llave_rueda ?? '—' }}</span></div>
+                        <div><span class="text-sm font-medium text-gray-500 dark:text-gray-400">Triángulo:</span> <span class="text-sm text-gray-900 dark:text-white">{{ $vehicle->safety_triangulo ?? '—' }}</span></div>
+                        <div><span class="text-sm font-medium text-gray-500 dark:text-gray-400">Botiquín:</span> <span class="text-sm text-gray-900 dark:text-white">{{ $vehicle->safety_botiquin ?? '—' }}</span></div>
+                        <div><span class="text-sm font-medium text-gray-500 dark:text-gray-400">Gancho de arrastre:</span> <span class="text-sm text-gray-900 dark:text-white">{{ $vehicle->safety_gancho_arrastre ?? '—' }}</span></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Pestaña: Mantenimientos -->

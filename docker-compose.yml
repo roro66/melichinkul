@@ -13,6 +13,7 @@ services:
     volumes:
       - ./:/var/www/html
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - /home/rodrigo/Descargas:/descargas
     networks:
       - melichinkul_network
     extra_hosts:
