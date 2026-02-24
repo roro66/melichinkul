@@ -19,15 +19,19 @@
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Tipo:</span> {{ $vehicle->category->name ?? '—' }}</p>
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Chasis:</span> {{ $vehicle->chassis_number ?? '—' }}</p>
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Modelo:</span> {{ $vehicle->brand }} {{ $vehicle->model }} ({{ $vehicle->year ?? '—' }})</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">RUT propietario:</span> —</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Tarjeta combustible:</span> —</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">GPS:</span> —</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Medida neumáticos:</span> —</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">RUT para trámites:</span> {{ $vehicle->rut_tramites ?? '—' }}</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">RUT propietario:</span> {{ $vehicle->rut_propietario ?? '—' }}</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Tarjeta combustible:</span> {{ $vehicle->tarjeta_combustible ? 'Sí' : 'No' }}</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">GPS:</span> {{ $vehicle->gps ? 'Sí' : 'No' }}</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Medida neumáticos:</span> {{ $vehicle->tire_size ?? '—' }}</p>
         </div>
 
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-2">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 pb-1 mb-2">Kilometraje y mantenciones</h3>
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Kilometraje:</span> <strong>{{ number_format($vehicle->current_mileage ?? 0, 0, ',', '.') }}</strong></p>
+            @if($vehicle->mileage_updated_at)
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Fecha KM:</span> {{ $vehicle->mileage_updated_at->format('d/m/Y') }}</p>
+            @endif
             <p class="text-sm flex items-center gap-2">
                 <span class="text-gray-500 dark:text-gray-400">Próxima mantención:</span>
                 @if($nextMaintenance)
@@ -37,19 +41,19 @@
                     <span>—</span>
                 @endif
             </p>
-            <p class="text-sm flex items-center gap-2"><span class="text-gray-500 dark:text-gray-400">Próxima alineación y balanceo:</span> —</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Próxima alineación y balanceo:</span> {{ $nextAlignmentKm !== null ? number_format($nextAlignmentKm, 0, ',', '.') . ' km' : '—' }}</p>
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Última mantención:</span> {{ $lastMaintenance ? number_format($lastMaintenance->mileage_at_maintenance ?? 0, 0, ',', '.') : '—' }}</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Último cambio de neumáticos:</span> —</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Última alineación y balanceo:</span> —</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Último cambio de neumáticos:</span> {{ $lastTireChangeKm !== null ? number_format($lastTireChangeKm, 0, ',', '.') : '—' }}</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Última alineación y balanceo:</span> {{ $lastAlignmentKm !== null ? number_format($lastAlignmentKm, 0, ',', '.') : '—' }}</p>
         </div>
 
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-2">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 pb-1 mb-2">Elementos de seguridad</h3>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Gata:</span> Sin información</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Llave rueda:</span> Sin información</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Triángulo:</span> Sin información</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Botiquín:</span> Sin información</p>
-            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Gancho de arrastre:</span> Sin información</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Gata:</span> {{ $vehicle->safety_gata ?? 'Sin información' }}</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Llave rueda:</span> {{ $vehicle->safety_llave_rueda ?? 'Sin información' }}</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Triángulo:</span> {{ $vehicle->safety_triangulo ?? 'Sin información' }}</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Botiquín:</span> {{ $vehicle->safety_botiquin ?? 'Sin información' }}</p>
+            <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Gancho de arrastre:</span> {{ $vehicle->safety_gancho_arrastre ?? 'Sin información' }}</p>
         </div>
     </div>
 

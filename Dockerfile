@@ -4,8 +4,9 @@ RUN apt-get update && apt-get install -y \
     git curl unzip \
     libpq-dev \
     libpng-dev libjpeg-dev libfreetype6-dev \
+    libzip-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) pdo pdo_pgsql pgsql gd opcache pcntl \
+    && docker-php-ext-install -j$(nproc) pdo pdo_pgsql pgsql gd opcache pcntl zip \
     && pecl install redis \
     && docker-php-ext-enable redis
 

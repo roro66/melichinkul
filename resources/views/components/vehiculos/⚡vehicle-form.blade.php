@@ -17,15 +17,26 @@ new class extends Component
     public $year = "";
     public $engine_number = "";
     public $chassis_number = "";
+    public $rut_tramites = "";
+    public $rut_propietario = "";
+    public $tarjeta_combustible = false;
+    public $gps = false;
+    public $tire_size = "";
     public $category_id = "";
     public $fuel_type = "gasoline";
     public $status = "active";
     public $current_mileage = 0;
     public $current_hours = 0;
+    public $mileage_updated_at = "";
     public $current_driver_id = "";
     public $incorporation_date = "";
     public $purchase_value = "";
     public $observations = "";
+    public $safety_gata = "";
+    public $safety_llave_rueda = "";
+    public $safety_triangulo = "";
+    public $safety_botiquin = "";
+    public $safety_gancho_arrastre = "";
 
     protected $rules = [
         "license_plate" => ["required", "string", "max:255"],
@@ -43,6 +54,17 @@ new class extends Component
         "incorporation_date" => ["required", "date"],
         "purchase_value" => ["nullable", "integer", "min:0"],
         "observations" => ["nullable", "string"],
+        "rut_tramites" => ["nullable", "string", "max:32"],
+        "rut_propietario" => ["nullable", "string", "max:32"],
+        "tarjeta_combustible" => ["nullable", "boolean"],
+        "gps" => ["nullable", "boolean"],
+        "tire_size" => ["nullable", "string", "max:64"],
+        "mileage_updated_at" => ["nullable", "date"],
+        "safety_gata" => ["nullable", "string", "max:128"],
+        "safety_llave_rueda" => ["nullable", "string", "max:128"],
+        "safety_triangulo" => ["nullable", "string", "max:128"],
+        "safety_botiquin" => ["nullable", "string", "max:128"],
+        "safety_gancho_arrastre" => ["nullable", "string", "max:128"],
     ];
 
     protected $messages = [
@@ -65,15 +87,26 @@ new class extends Component
             $this->year = $vehicle->year;
             $this->engine_number = $vehicle->engine_number;
             $this->chassis_number = $vehicle->chassis_number;
+            $this->rut_tramites = $vehicle->rut_tramites ?? "";
+            $this->rut_propietario = $vehicle->rut_propietario ?? "";
+            $this->tarjeta_combustible = (bool) $vehicle->tarjeta_combustible;
+            $this->gps = (bool) $vehicle->gps;
+            $this->tire_size = $vehicle->tire_size ?? "";
             $this->category_id = $vehicle->category_id;
             $this->fuel_type = $vehicle->fuel_type;
             $this->status = $vehicle->status;
             $this->current_mileage = $vehicle->current_mileage;
             $this->current_hours = $vehicle->current_hours;
+            $this->mileage_updated_at = $vehicle->mileage_updated_at?->format("Y-m-d") ?? "";
             $this->current_driver_id = $vehicle->current_driver_id;
             $this->incorporation_date = $vehicle->incorporation_date?->format("Y-m-d");
             $this->purchase_value = $vehicle->purchase_value;
-            $this->observations = $vehicle->observations;
+            $this->observations = $vehicle->observations ?? "";
+            $this->safety_gata = $vehicle->safety_gata ?? "";
+            $this->safety_llave_rueda = $vehicle->safety_llave_rueda ?? "";
+            $this->safety_triangulo = $vehicle->safety_triangulo ?? "";
+            $this->safety_botiquin = $vehicle->safety_botiquin ?? "";
+            $this->safety_gancho_arrastre = $vehicle->safety_gancho_arrastre ?? "";
         }
     }
 
@@ -104,14 +137,25 @@ new class extends Component
             "year" => $this->year,
             "engine_number" => $this->engine_number ?: null,
             "chassis_number" => $this->chassis_number ?: null,
+            "rut_tramites" => $this->rut_tramites ?: null,
+            "rut_propietario" => $this->rut_propietario ?: null,
+            "tarjeta_combustible" => (bool) $this->tarjeta_combustible,
+            "gps" => (bool) $this->gps,
+            "tire_size" => $this->tire_size ?: null,
             "category_id" => $this->category_id ?: null,
             "fuel_type" => $this->fuel_type,
             "status" => $this->status,
             "current_mileage" => $this->current_mileage ?: 0,
             "current_hours" => $this->current_hours ?: 0,
+            "mileage_updated_at" => $this->mileage_updated_at ?: null,
             "incorporation_date" => $this->incorporation_date,
             "purchase_value" => $this->purchase_value ?: null,
             "observations" => $this->observations ?: null,
+            "safety_gata" => $this->safety_gata ?: null,
+            "safety_llave_rueda" => $this->safety_llave_rueda ?: null,
+            "safety_triangulo" => $this->safety_triangulo ?: null,
+            "safety_botiquin" => $this->safety_botiquin ?: null,
+            "safety_gancho_arrastre" => $this->safety_gancho_arrastre ?: null,
         ];
 
         $assignmentService = app(AssignmentService::class);

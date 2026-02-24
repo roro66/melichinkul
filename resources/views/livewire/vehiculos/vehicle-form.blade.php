@@ -127,10 +127,58 @@
             </div>
 
             <div>
+                <label for="rut_tramites" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    RUT para trámites
+                </label>
+                <input type="text" id="rut_tramites" wire:model="rut_tramites" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="12.345.678-9">
+            </div>
+
+            <div>
+                <label for="rut_propietario" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    RUT propietario
+                </label>
+                <input type="text" id="rut_propietario" wire:model="rut_propietario" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="12.345.678-9">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tarjeta combustible</label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" wire:model="tarjeta_combustible" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Sí</span>
+                </label>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">GPS</label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" wire:model="gps" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Sí</span>
+                </label>
+            </div>
+
+            <div>
+                <label for="tire_size" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Medida neumáticos
+                </label>
+                <input type="text" id="tire_size" wire:model="tire_size" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="195/65R15">
+            </div>
+
+            <div>
                 <label for="kilometraje_actual" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Kilometraje Actual
                 </label>
                 <input type="number" id="current_mileage" wire:model="current_mileage" step="0.01" min="0" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <div>
+                <label for="mileage_updated_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Fecha KM (fecha del kilometraje actual)
+                </label>
+                <input type="date" id="mileage_updated_at" wire:model="mileage_updated_at" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
@@ -148,6 +196,37 @@
                 </label>
                 <input type="number" id="purchase_value" wire:model="purchase_value" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+        </div>
+
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Elementos de seguridad</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="safety_gata" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gata</label>
+                    <input type="text" id="safety_gata" wire:model="safety_gata" placeholder="Ej: Sí - Revisado el 20-04-23"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="safety_llave_rueda" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Llave rueda</label>
+                    <input type="text" id="safety_llave_rueda" wire:model="safety_llave_rueda" placeholder="Ej: Sí"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="safety_triangulo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Triángulo</label>
+                    <input type="text" id="safety_triangulo" wire:model="safety_triangulo" placeholder="Ej: Sí"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="safety_botiquin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Botiquín</label>
+                    <input type="text" id="safety_botiquin" wire:model="safety_botiquin" placeholder="Ej: Sí"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="safety_gancho_arrastre" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gancho de arrastre</label>
+                    <input type="text" id="safety_gancho_arrastre" wire:model="safety_gancho_arrastre" placeholder="Ej: Sí"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
             </div>
         </div>
 

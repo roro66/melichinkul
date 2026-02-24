@@ -18,24 +18,38 @@ class Vehicle extends Model
         'year',
         'engine_number',
         'chassis_number',
+        'rut_tramites',
+        'rut_propietario',
+        'tarjeta_combustible',
+        'gps',
+        'tire_size',
         'category_id',
         'fuel_type',
         'status',
         'current_mileage',
         'current_hours',
+        'mileage_updated_at',
         'current_driver_id',
         'incorporation_date',
         'purchase_value',
         'observations',
+        'safety_gata',
+        'safety_llave_rueda',
+        'safety_triangulo',
+        'safety_botiquin',
+        'safety_gancho_arrastre',
     ];
 
     protected function casts(): array
     {
         return [
             'incorporation_date' => 'date',
+            'mileage_updated_at' => 'date',
             'current_mileage' => 'decimal:2',
             'current_hours' => 'decimal:2',
             'purchase_value' => 'integer',
+            'tarjeta_combustible' => 'boolean',
+            'gps' => 'boolean',
         ];
     }
 

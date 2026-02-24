@@ -17,6 +17,8 @@ class CertificationController extends Controller
         'technical_review' => 'Revisión Técnica',
         'soap' => 'SOAP',
         'analisis_gases' => 'Análisis de Gases',
+        'extintor_cabina' => 'Extintor Cabina',
+        'extintor_chasis' => 'Extintor Chasis',
         'seguro_adicional' => 'Seguro Adicional',
         'certificado_grua' => 'Certificado Grúa',
         'certificado_carga' => 'Certificado de Carga',

@@ -85,19 +85,27 @@ class VehicleController extends Controller
                     return "<span class='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {$color}'>{$statusText}</span>";
                 })
                 ->addColumn('actions', function ($vehicle) {
+                    $fichaUrl = route('vehiculos.ficha-completa', $vehicle->id);
+                    $showUrl = route('vehiculos.show', $vehicle->id);
+                    $editUrl = route('vehiculos.edit', $vehicle->id);
                     return "
-                        <div class='flex justify-end space-x-3'>
-                            <a href='" . route('vehiculos.show', $vehicle->id) . "' 
+                        <div class='flex justify-end items-center gap-2 flex-wrap'>
+                            <a href='" . e($fichaUrl) . "' 
+                               class='inline-flex items-center justify-center w-8 h-8 rounded-md text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors'
+                               title='Ir a ver detalles'>
+                                <i class='fas fa-file-alt' aria-hidden='true'></i>
+                            </a>
+                            <a href='" . e($showUrl) . "' 
                                class='text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 transition-colors duration-150'
                                title='Ver detalles'>
                                 <i class='fas fa-eye'></i>
                             </a>
-                            <a href='" . route('vehiculos.edit', $vehicle->id) . "' 
+                            <a href='" . e($editUrl) . "' 
                                class='text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 transition-colors duration-150'
                                title='Editar'>
                                 <i class='fas fa-edit'></i>
                             </a>
-                            <button onclick='deleteVehicle(" . $vehicle->id . ")' 
+                            <button onclick='deleteVehicle(" . (int) $vehicle->id . ")' 
                                     class='text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors duration-150 cursor-pointer bg-transparent border-none'
                                     title='Eliminar'>
                                 <i class='fas fa-trash-alt'></i>
@@ -182,6 +190,9 @@ class VehicleController extends Controller
         return view('vehiculos.show', compact('vehicle', 'stats', 'upcomingMaintenances'));
     }
 
+    /** Kilómetros entre alineaciones/balanceo (para calcular próxima). */
+    private const ALIGNMENT_INTERVAL_KM = 20000;
+
     public function fichaCompleta($id)
     {
         $vehicle = Vehicle::with([
@@ -192,10 +203,35 @@ class VehicleController extends Controller
             'maintenances.responsibleTechnician',
         ])->findOrFail($id);
 
-        $lastMaintenance = $vehicle->maintenances->where('status', 'completed')->first();
+        $completed = $vehicle->maintenances->where('status', 'completed');
+        $lastMaintenance = $completed->first();
         $nextMaintenance = $vehicle->maintenances->whereIn('status', ['scheduled', 'in_progress'])->sortBy('scheduled_date')->first();
 
-        return view('vehiculos.ficha-completa', compact('vehicle', 'lastMaintenance', 'nextMaintenance'));
+        // Último cambio de neumáticos y última alineación/balanceo (por descripción)
+        $lastTireChange = $completed->first(function ($m) {
+            $d = mb_strtolower($m->work_description ?? '');
+            return str_contains($d, 'neumático') || str_contains($d, 'neumatico');
+        });
+        $lastAlignment = $completed->first(function ($m) {
+            $d = mb_strtolower($m->work_description ?? '');
+            return str_contains($d, 'alineación') || str_contains($d, 'alineacion') || str_contains($d, 'balanceo');
+        });
+
+        $lastTireChangeKm = $lastTireChange ? ($lastTireChange->mileage_at_maintenance ?? null) : null;
+        $lastAlignmentKm = $lastAlignment ? ($lastAlignment->mileage_at_maintenance ?? null) : null;
+        $currentKm = (float) ($vehicle->current_mileage ?? 0);
+        $nextAlignmentKm = $lastAlignmentKm !== null
+            ? $lastAlignmentKm + self::ALIGNMENT_INTERVAL_KM
+            : null;
+
+        return view('vehiculos.ficha-completa', compact(
+            'vehicle',
+            'lastMaintenance',
+            'nextMaintenance',
+            'lastTireChangeKm',
+            'lastAlignmentKm',
+            'nextAlignmentKm'
+        ));
     }
 
     public function export(Request $request, $format)
