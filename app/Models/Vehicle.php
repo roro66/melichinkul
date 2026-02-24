@@ -38,6 +38,7 @@ class Vehicle extends Model
         'safety_triangulo',
         'safety_botiquin',
         'safety_gancho_arrastre',
+        'safety_last_inspection_date',
     ];
 
     protected function casts(): array
@@ -45,6 +46,7 @@ class Vehicle extends Model
         return [
             'incorporation_date' => 'date',
             'mileage_updated_at' => 'date',
+            'safety_last_inspection_date' => 'date',
             'current_mileage' => 'decimal:2',
             'current_hours' => 'decimal:2',
             'purchase_value' => 'integer',

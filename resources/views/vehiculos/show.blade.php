@@ -217,7 +217,7 @@
                                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Estado</th>
                                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Descripción</th>
                                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Costo</th>
-                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Técnico</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Técnico / taller</th>
                                     <th class="px-6 py-4 text-right text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
@@ -251,10 +251,14 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                        ${{ number_format($maintenance->total_cost, 0, ',', '.') }}
+                                        @if($maintenance->total_cost !== null && (int) $maintenance->total_cost > 0)
+                                            ${{ number_format((int) $maintenance->total_cost, 0, ',', '.') }}
+                                        @else
+                                            —
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $maintenance->responsibleTechnician->name ?? '-' }}
+                                        {{ $maintenance->workshop_supplier ?? $maintenance->responsibleTechnician?->name ?? '—' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{{ route('mantenimientos.show', $maintenance->id) }}" 

@@ -49,6 +49,9 @@
 
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-2">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 pb-1 mb-2">Elementos de seguridad</h3>
+            @if($vehicle->safety_last_inspection_date)
+            <p class="text-sm mb-2"><span class="text-gray-500 dark:text-gray-400">Última inspección:</span> <span class="font-medium">{{ $vehicle->safety_last_inspection_date->format('d-m-Y') }}</span></p>
+            @endif
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Gata:</span> {{ $vehicle->safety_gata ?? 'Sin información' }}</p>
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Llave rueda:</span> {{ $vehicle->safety_llave_rueda ?? 'Sin información' }}</p>
             <p class="text-sm"><span class="text-gray-500 dark:text-gray-400">Triángulo:</span> {{ $vehicle->safety_triangulo ?? 'Sin información' }}</p>
@@ -122,12 +125,22 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($vehicle->maintenances as $m)
+                    @php
+                        $costoValor = (int) ($m->total_cost ?? 0);
+                        $mecanicoTexto = trim((string) ($m->workshop_supplier ?? $m->responsibleTechnician?->name ?? ''));
+                        if ($costoValor <= 0 && $mecanicoTexto !== '' && preg_match('/^[\d.,\s]+$/', $mecanicoTexto)) {
+                            $parsed = str_replace(['.', ' '], '', $mecanicoTexto);
+                            $parsed = str_replace(',', '.', $parsed);
+                            $costoValor = (int) round((float) $parsed);
+                            $mecanicoTexto = '';
+                        }
+                    @endphp
                     <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td class="px-4 py-2 text-gray-900 dark:text-white">{{ $m->end_date?->format('d-m-Y') ?? $m->scheduled_date?->format('d-m-Y') ?? '—' }}</td>
                         <td class="px-4 py-2 text-gray-700 dark:text-gray-300">{{ $m->mileage_at_maintenance ? number_format($m->mileage_at_maintenance, 0, ',', '.') : '—' }}</td>
                         <td class="px-4 py-2 text-gray-900 dark:text-white">{{ $m->work_description ?? '—' }}</td>
-                        <td class="px-4 py-2 text-gray-700 dark:text-gray-300">{{ $m->workshop_supplier ?? $m->responsibleTechnician?->name ?? '—' }}</td>
-                        <td class="px-4 py-2 text-right text-gray-900 dark:text-white">${{ number_format($m->total_cost ?? 0, 0, ',', '.') }}</td>
+                        <td class="px-4 py-2 text-gray-700 dark:text-gray-300">{{ $mecanicoTexto !== '' ? $mecanicoTexto : '—' }}</td>
+                        <td class="px-4 py-2 text-right text-gray-900 dark:text-white">{{ $costoValor > 0 ? '$'.number_format($costoValor, 0, ',', '.') : '—' }}</td>
                         <td class="px-4 py-2 text-gray-600 dark:text-gray-400">{{ Str::limit($m->observations ?? '—', 40) }}</td>
                     </tr>
                     @empty

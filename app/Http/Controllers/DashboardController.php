@@ -35,9 +35,9 @@ class DashboardController extends Controller
             ->whereYear('end_date', now()->year)
             ->sum('total_cost');
 
-        // Costos últimos 6 meses para gráfico
+        // Costos últimos 48 meses para gráfico (incluye datos importados de planilla que pueden ser antiguos)
         $costos_mensuales = [];
-        for ($i = 5; $i >= 0; $i--) {
+        for ($i = 47; $i >= 0; $i--) {
             $fecha = now()->subMonths($i);
             $mes_nombre = $fecha->format('M Y');
             $costo = Maintenance::where('status', 'completed')

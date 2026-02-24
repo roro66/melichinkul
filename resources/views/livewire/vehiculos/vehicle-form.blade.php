@@ -201,6 +201,11 @@
 
         <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
             <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Elementos de seguridad</h4>
+            <div class="mb-4">
+                <label for="safety_last_inspection_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Última inspección elementos de seguridad</label>
+                <input type="date" id="safety_last_inspection_date" wire:model="safety_last_inspection_date"
+                    class="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="safety_gata" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gata</label>

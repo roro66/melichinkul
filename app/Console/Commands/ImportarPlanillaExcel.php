@@ -104,7 +104,7 @@ class ImportarPlanillaExcel extends Command
             $vehicle->tarjeta_combustible = $this->siNoABool($this->celda($row, 7));
             $vehicle->gps = $this->siNoABool($this->celda($row, 8));
             $vehicle->tire_size = $this->valorONull($row, 9);
-            $vehicle->current_mileage = (float) ($this->celda($row, 16) ?: 0);
+            $vehicle->current_mileage = (float) ($this->parseNumeroChileno($this->celda($row, 16)) ?: 0);
             $vehicle->mileage_updated_at = $this->fechaDesdeCelda($this->celda($row, 17));
             $vehicle->category_id = $categoryId;
             $vehicle->fuel_type = 'diesel';
@@ -180,6 +180,7 @@ class ImportarPlanillaExcel extends Command
         $vehicle->safety_triangulo = $this->valorONullArray($sheetRows, 14, 7);
         $vehicle->safety_botiquin = $this->valorONullArray($sheetRows, 15, 7);
         $vehicle->safety_gancho_arrastre = $this->valorONullArray($sheetRows, 16, 7);
+        $vehicle->safety_last_inspection_date = $this->fechaInspeccionSeguridadDesdeFilas($sheetRows);
         $vehicle->save();
     }
 
@@ -235,13 +236,13 @@ class ImportarPlanillaExcel extends Command
                 continue;
             }
             $km = $this->celda($row, 2);
-            $mecanico = $this->celda($row, 7);
-            $costo = (int) preg_replace('/\D/', '', (string) $this->celda($row, 8));
-            $obs = $this->celda($row, 9);
-            if ($km === 'No registra' || $km === null) {
+            $mecanico = $this->celda($row, 6);
+            $costo = (int) (float) ($this->parseNumeroChileno($this->celda($row, 7)) ?: 0);
+            $obs = $this->celda($row, 8);
+            if ($km === 'No registra' || $km === null || $km === '') {
                 $km = null;
             } else {
-                $km = (float) preg_replace('/\D/', '', (string) $km);
+                $km = (float) ($this->parseNumeroChileno($km) ?: 0);
             }
             Maintenance::create([
                 'vehicle_id' => $vehicle->id,
@@ -294,6 +295,49 @@ class ImportarPlanillaExcel extends Command
         return $s;
     }
 
+    /**
+     * Obtiene la fecha de última inspección de elementos de seguridad desde la columna "Revisado el dd-mm-yy".
+     * Busca en las filas 12-16 (Gata, Llave rueda, etc.) la primera celda con texto tipo "Revisado el 20-04-23".
+     */
+    private function fechaInspeccionSeguridadDesdeFilas(array $sheetRows): ?Carbon
+    {
+        for ($rowIdx = 12; $rowIdx <= 16; $rowIdx++) {
+            $row = $sheetRows[$rowIdx] ?? [];
+            $texto = $this->celda($row, 8);
+            if ($texto === null || $texto === '') {
+                continue;
+            }
+            $date = $this->parseFechaRevisadoEl(trim((string) $texto));
+            if ($date) {
+                return $date;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Parsea una cadena tipo "Revisado el 20-04-23" o "20-04-23" a Carbon (d-m-y).
+     */
+    private function parseFechaRevisadoEl(string $texto): ?Carbon
+    {
+        if (preg_match('/(\d{1,2})-(\d{1,2})-(\d{2,4})\b/', $texto, $m)) {
+            $d = (int) $m[1];
+            $mes = (int) $m[2];
+            $y = (int) $m[3];
+            if ($y < 100) {
+                $y += $y >= 50 ? 1900 : 2000;
+            }
+            try {
+                return Carbon::createFromDate($y, $mes, $d);
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
     private function siNoABool(mixed $v): bool
     {
         if ($v === null || $v === '') {
@@ -325,5 +369,44 @@ class ImportarPlanillaExcel extends Command
     private function normalizarPatente(string $patente): string
     {
         return strtoupper(trim(preg_replace('/\s+/', '', $patente)));
+    }
+
+    /**
+     * Parsea un número en formato chileno: punto como separador de miles, coma como decimal.
+     * Ej: "330.970" -> 330970, "1.234,56" -> 1234.56
+     * Si Excel devuelve float (ej. 330.97 cuando en la celda se ve 330.970), se corrige a 330970.
+     */
+    private function parseNumeroChileno(mixed $v): ?float
+    {
+        if ($v === null || $v === '') {
+            return null;
+        }
+        if (is_int($v)) {
+            return (float) $v;
+        }
+        if (is_float($v)) {
+            if ($v >= 100 && $v < 1000 && $v != floor($v)) {
+                return round($v * 1000);
+            }
+            return $v;
+        }
+        $s = trim((string) $v);
+        if ($s === '') {
+            return null;
+        }
+        if (preg_match('/^\d{1,3},\d{3}$/', $s)) {
+            return (float) str_replace(',', '', $s);
+        }
+        if (preg_match('/^\d{1,3},\d{2}$/', $s)) {
+            $parts = explode(',', $s);
+            $antes = (int) $parts[0];
+            $despues = (int) $parts[1];
+            if ($antes >= 100 && $despues < 100) {
+                return (float) ($antes * 1000 + $despues * 10);
+            }
+        }
+        $s = str_replace('.', '', $s);
+        $s = str_replace(',', '.', $s);
+        return $s === '' ? null : (float) $s;
     }
 }

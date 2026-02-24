@@ -37,6 +37,7 @@ new class extends Component
     public $safety_triangulo = "";
     public $safety_botiquin = "";
     public $safety_gancho_arrastre = "";
+    public $safety_last_inspection_date = "";
 
     protected $rules = [
         "license_plate" => ["required", "string", "max:255"],
@@ -65,6 +66,7 @@ new class extends Component
         "safety_triangulo" => ["nullable", "string", "max:128"],
         "safety_botiquin" => ["nullable", "string", "max:128"],
         "safety_gancho_arrastre" => ["nullable", "string", "max:128"],
+        "safety_last_inspection_date" => ["nullable", "date"],
     ];
 
     protected $messages = [
@@ -107,6 +109,7 @@ new class extends Component
             $this->safety_triangulo = $vehicle->safety_triangulo ?? "";
             $this->safety_botiquin = $vehicle->safety_botiquin ?? "";
             $this->safety_gancho_arrastre = $vehicle->safety_gancho_arrastre ?? "";
+            $this->safety_last_inspection_date = $vehicle->safety_last_inspection_date?->format("Y-m-d") ?? "";
         }
     }
 
@@ -156,6 +159,7 @@ new class extends Component
             "safety_triangulo" => $this->safety_triangulo ?: null,
             "safety_botiquin" => $this->safety_botiquin ?: null,
             "safety_gancho_arrastre" => $this->safety_gancho_arrastre ?: null,
+            "safety_last_inspection_date" => $this->safety_last_inspection_date ?: null,
         ];
 
         $assignmentService = app(AssignmentService::class);

@@ -142,7 +142,7 @@
         <!-- Gráfico de Costos -->
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
             <div class="px-8 py-8">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Costos de Mantenimiento (Últimos 6 Meses)</h2>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Costos de Mantenimiento (Últimos 4 años)</h2>
                 <div style="position: relative; height: 450px; padding: 30px 20px;">
                     <canvas id="costChart"></canvas>
                 </div>
@@ -466,13 +466,15 @@
             // Gráfico de Costos Mensuales
             const costCtx = document.getElementById('costChart');
             if (costCtx && !costCtx.chart) {
+            const costData = {!! json_encode(array_column($costos_mensuales, 'costo')) !!};
+            const costMax = Math.max(...costData, 1);
             costCtx.chart = new Chart(costCtx, {
                 type: 'line',
                 data: {
                     labels: {!! json_encode(array_column($costos_mensuales, 'mes')) !!},
                     datasets: [{
                         label: 'Costo Mensual',
-                        data: {!! json_encode(array_column($costos_mensuales, 'costo')) !!},
+                        data: costData,
                         borderColor: '#4f46e5',
                         backgroundColor: 'rgba(79, 70, 229, 0.1)',
                         tension: 0.4,
@@ -521,6 +523,7 @@
                     scales: {
                         y: {
                             beginAtZero: true,
+                            suggestedMax: costMax,
                             ticks: {
                                 color: colors.textColor,
                                 font: {
@@ -559,12 +562,13 @@
                             ticks: {
                                 color: colors.textColor,
                                 font: {
-                                    size: 14,
+                                    size: 12,
                                     weight: '500'
                                 },
                                 padding: 15,
                                 maxRotation: 45,
-                                minRotation: 45
+                                minRotation: 45,
+                                maxTicksLimit: 24
                             },
                             grid: {
                                 color: colors.gridColor,
