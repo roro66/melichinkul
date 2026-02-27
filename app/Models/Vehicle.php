@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Vehicle extends Model
@@ -78,6 +79,16 @@ class Vehicle extends Model
     public function alerts(): HasMany
     {
         return $this->hasMany(Alert::class, 'vehicle_id');
+    }
+
+    public function mileageReadings(): HasMany
+    {
+        return $this->hasMany(VehicleMileageReading::class);
+    }
+
+    public function latestMileageReading(): HasOne
+    {
+        return $this->hasOne(VehicleMileageReading::class)->latestOfMany('recorded_at');
     }
 
     public function hasValidTechnicalReview(): bool

@@ -3,14 +3,8 @@
  * Incluye: confirmaciones, mensajes flash, modo oscuro
  */
 
-// Detectar modo oscuro
-function getColorScheme() {
-    return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-}
-
-// Configuración base para todos los SweetAlert
+// Configuración base para todos los SweetAlert (sin colorScheme: no es param válido en SweetAlert2)
 const swalConfig = {
-    colorScheme: getColorScheme(),
     allowOutsideClick: false,
     allowEscapeKey: true,
     customClass: {
@@ -50,30 +44,49 @@ window.swalConfirmDelete = function(title = '¿Estás seguro?', text = 'Esta acc
  * @param {number} timer - Tiempo en ms (default: 3000)
  */
 window.swalSuccess = function(message, timer = 3000) {
-    return Swal.fire({
+    const isToast = timer > 0;
+    const baseOpts = {
         title: '¡Éxito!',
         text: message,
         icon: 'success',
         timer: timer,
-        showConfirmButton: timer === 0,
-        toast: timer > 0,
-        position: timer > 0 ? 'top-end' : 'center',
-        ...swalConfig
-    });
+        showConfirmButton: !isToast,
+        toast: isToast,
+        position: isToast ? 'top-end' : 'center',
+        allowEscapeKey: true,
+        customClass: swalConfig.customClass
+    };
+    // Para modales (no toast), incluir allowOutsideClick. Para toasts, no incluir (incompatible)
+    if (!isToast) {
+        baseOpts.allowOutsideClick = false;
+    }
+    return Swal.fire(baseOpts);
 };
 
 /**
  * Mensaje de error
  * @param {string} message - Mensaje a mostrar
+ * @param {number} timer - Si > 0, muestra como toast y se cierra automáticamente (ms)
  */
-window.swalError = function(message) {
-    return Swal.fire({
+window.swalError = function(message, timer = 0) {
+    const isToast = timer > 0;
+    const opts = {
         title: 'Error',
         text: message,
         icon: 'error',
         confirmButtonColor: '#dc2626',
-        ...swalConfig
-    });
+        allowEscapeKey: true,
+        customClass: swalConfig.customClass
+    };
+    if (isToast) {
+        opts.timer = timer;
+        opts.showConfirmButton = false;
+        opts.toast = true;
+        opts.position = 'top-end';
+    } else {
+        opts.allowOutsideClick = false;
+    }
+    return Swal.fire(opts);
 };
 
 /**
@@ -104,15 +117,7 @@ window.swalInfo = function(message) {
     });
 };
 
-// Observar cambios en el modo oscuro
-const swalThemeObserver = new MutationObserver(function() {
-    // Los nuevos SweetAlert usarán el modo correcto automáticamente
-    swalConfig.colorScheme = getColorScheme();
-});
-swalThemeObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['class']
-});
+// El modo oscuro de los SweetAlert se hereda del body/html (clase dark) vía CSS en app.blade
 
 // Escuchar eventos de Livewire para mostrar mensajes flash con SweetAlert
 document.addEventListener('livewire:init', () => {

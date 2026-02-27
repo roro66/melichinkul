@@ -37,6 +37,15 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/vehiculos/{id}', [\App\Http\Controllers\VehicleController::class, 'destroy'])->name('vehiculos.destroy')->middleware('permission:vehicles.delete');
     Route::post('/vehiculos/export/{format}', [\App\Http\Controllers\VehicleController::class, 'export'])->name('vehiculos.export')->middleware('permission:vehicles.export');
 
+    // Kilometraje (lecturas semanales, gráficos)
+    Route::get('/kilometraje', [\App\Http\Controllers\MileageController::class, 'index'])->name('kilometraje.index')->middleware('permission:mileage.view');
+    Route::post('/kilometraje', [\App\Http\Controllers\MileageController::class, 'store'])->name('kilometraje.store')->middleware('permission:mileage.create');
+    Route::get('/kilometraje/import', [\App\Http\Controllers\MileageController::class, 'importForm'])->name('kilometraje.import')->middleware('permission:mileage.import');
+    Route::post('/kilometraje/import', [\App\Http\Controllers\MileageController::class, 'importProcess'])->name('kilometraje.import.process')->middleware('permission:mileage.import');
+    Route::get('/kilometraje/graficos', [\App\Http\Controllers\MileageController::class, 'charts'])->name('kilometraje.charts')->middleware('permission:mileage.view');
+    Route::get('/kilometraje/grafico-vehiculo/{vehicle}', [\App\Http\Controllers\MileageController::class, 'chartDataVehicle'])->name('kilometraje.chart.vehicle')->middleware('permission:mileage.view');
+    Route::get('/kilometraje/grafico-comparar', [\App\Http\Controllers\MileageController::class, 'chartDataCompare'])->name('kilometraje.chart.compare')->middleware('permission:mileage.view');
+
     // Módulo Mantenimientos
     Route::get('/mantenimientos', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('mantenimientos.index')->middleware('permission:maintenances.view');
     Route::get('/mantenimientos/calendario', [\App\Http\Controllers\MaintenanceController::class, 'calendario'])->name('mantenimientos.calendario')->middleware('permission:maintenances.view');

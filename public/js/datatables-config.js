@@ -17,7 +17,7 @@ window.initDataTable = function(tableId, options = {}) {
         pageLength: 25,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
         language: {
-            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+            url: "/vendor/datatables/i18n/es-ES.json"
         },
         dom: "Bflrtip",
         buttons: [

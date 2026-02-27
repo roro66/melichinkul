@@ -19,6 +19,12 @@
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150">
                 Ficha completa
             </a>
+            @can('mileage.view')
+            <a href="{{ route('kilometraje.charts', ['vehicle_id' => $vehicle->id]) }}"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150">
+                <i class="fas fa-chart-line mr-2"></i> Km vs tiempo
+            </a>
+            @endcan
             <a href="{{ route('vehiculos.edit', $vehicle->id) }}" 
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors duration-150">
                 <i class="fas fa-edit mr-2"></i> Editar
