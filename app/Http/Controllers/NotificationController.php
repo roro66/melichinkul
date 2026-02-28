@@ -6,11 +6,6 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     public function markAsRead(string $id)
     {
         $notification = auth()->user()->unreadNotifications()->findOrFail($id);
