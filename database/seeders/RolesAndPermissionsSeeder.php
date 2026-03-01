@@ -22,7 +22,7 @@ class RolesAndPermissionsSeeder extends Seeder
         'purchases' => ['view', 'create', 'edit', 'delete', 'receive', 'export'],
         'inventory' => ['view_movements'],
         'certifications' => ['view', 'create', 'edit', 'delete'],
-        'mileage' => ['view', 'create', 'import'],
+        'mileage' => ['view', 'create', 'edit', 'import'],
         'users' => ['manage'],
         'roles' => ['manage'],
         'audit' => ['view'],
@@ -101,7 +101,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'spare_parts.view',
             'certifications.view',
             'reports.view',
-            'mileage.view', 'mileage.create',
+            'mileage.view', 'mileage.create', 'mileage.edit',
         ];
         $roles['technician']->syncPermissions($techPerms);
 

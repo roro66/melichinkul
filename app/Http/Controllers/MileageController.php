@@ -225,6 +225,107 @@ class MileageController extends Controller
     }
 
     /**
+     * Listado de lecturas de kilometraje (filtrable por vehículo).
+     */
+    public function readingsIndex(Request $request)
+    {
+        $vehicleId = $request->input('vehicle_id');
+        $vehicles = Vehicle::whereIn('status', ['active', 'maintenance'])
+            ->orderBy('license_plate')
+            ->get(['id', 'license_plate', 'brand', 'model']);
+
+        $query = VehicleMileageReading::with(['vehicle:id,license_plate,brand,model', 'recorder:id,name'])
+            ->orderBy('recorded_at', 'desc')
+            ->orderBy('vehicle_id');
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $readings = $query->paginate(30)->withQueryString();
+
+        return view('kilometraje.readings', [
+            'readings' => $readings,
+            'vehicles' => $vehicles,
+            'selectedVehicleId' => $vehicleId ? (int) $vehicleId : null,
+        ]);
+    }
+
+    /**
+     * Formulario para editar una lectura.
+     */
+    public function editReading(VehicleMileageReading $reading)
+    {
+        $reading->load('vehicle');
+        $prev = $reading->vehicle->mileageReadings()
+            ->where('recorded_at', '<', $reading->recorded_at)
+            ->orderBy('recorded_at', 'desc')
+            ->first();
+        $next = $reading->vehicle->mileageReadings()
+            ->where('recorded_at', '>', $reading->recorded_at)
+            ->orderBy('recorded_at', 'asc')
+            ->first();
+
+        return view('kilometraje.edit-reading', [
+            'reading' => $reading,
+            'minMileage' => $prev ? (float) $prev->mileage : 0,
+            'maxMileage' => $next ? (float) $next->mileage : null,
+        ]);
+    }
+
+    /**
+     * Actualizar una lectura (con validación de integridad).
+     */
+    public function updateReading(Request $request, VehicleMileageReading $reading)
+    {
+        $prev = $reading->vehicle->mileageReadings()
+            ->where('recorded_at', '<', $reading->recorded_at)
+            ->orderBy('recorded_at', 'desc')
+            ->first();
+        $next = $reading->vehicle->mileageReadings()
+            ->where('recorded_at', '>', $reading->recorded_at)
+            ->orderBy('recorded_at', 'asc')
+            ->first();
+
+        $minMileage = $prev ? (float) $prev->mileage : 0;
+        $maxMileage = $next ? (float) $next->mileage : null;
+
+        $rules = [
+            'mileage' => ['required', 'numeric', 'min:' . max(0, $minMileage)],
+        ];
+        if ($maxMileage !== null) {
+            $rules['mileage'][] = 'max:' . $maxMileage;
+        }
+
+        $validated = $request->validate($rules, [
+            'mileage.min' => 'El kilometraje debe ser al menos :min (lectura anterior: ' . number_format($minMileage, 0, ',', '.') . ' km).',
+            'mileage.max' => 'El kilometraje no puede superar :max (lectura siguiente: ' . number_format($maxMileage, 0, ',', '.') . ' km).',
+        ]);
+
+        $newMileage = (float) $validated['mileage'];
+        $vehicle = $reading->vehicle;
+        $isLatestReading = ! $next;
+
+        DB::transaction(function () use ($reading, $newMileage, $vehicle, $isLatestReading) {
+            $reading->update([
+                'mileage' => $newMileage,
+                'recorded_by' => auth()->id(),
+            ]);
+
+            if ($isLatestReading) {
+                $vehicle->update([
+                    'current_mileage' => $newMileage,
+                    'mileage_updated_at' => $reading->recorded_at,
+                ]);
+            }
+        });
+
+        return redirect()
+            ->route('kilometraje.readings', ['vehicle_id' => $vehicle->id])
+            ->with('success', 'Lectura corregida correctamente.');
+    }
+
+    /**
      * Página de gráficos de kilometraje.
      */
     public function charts(Request $request)

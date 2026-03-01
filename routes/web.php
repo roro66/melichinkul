@@ -42,6 +42,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/kilometraje', [\App\Http\Controllers\MileageController::class, 'store'])->name('kilometraje.store')->middleware('permission:mileage.create');
     Route::get('/kilometraje/import', [\App\Http\Controllers\MileageController::class, 'importForm'])->name('kilometraje.import')->middleware('permission:mileage.import');
     Route::post('/kilometraje/import', [\App\Http\Controllers\MileageController::class, 'importProcess'])->name('kilometraje.import.process')->middleware('permission:mileage.import');
+    Route::get('/kilometraje/lecturas', [\App\Http\Controllers\MileageController::class, 'readingsIndex'])->name('kilometraje.readings')->middleware('permission:mileage.view');
+    Route::get('/kilometraje/lecturas/{reading}/editar', [\App\Http\Controllers\MileageController::class, 'editReading'])->name('kilometraje.readings.edit')->middleware('permission:mileage.edit');
+    Route::put('/kilometraje/lecturas/{reading}', [\App\Http\Controllers\MileageController::class, 'updateReading'])->name('kilometraje.readings.update')->middleware('permission:mileage.edit');
     Route::get('/kilometraje/graficos', [\App\Http\Controllers\MileageController::class, 'charts'])->name('kilometraje.charts')->middleware('permission:mileage.view');
     Route::get('/kilometraje/grafico-vehiculo/{vehicle}', [\App\Http\Controllers\MileageController::class, 'chartDataVehicle'])->name('kilometraje.chart.vehicle')->middleware('permission:mileage.view');
     Route::get('/kilometraje/grafico-comparar', [\App\Http\Controllers\MileageController::class, 'chartDataCompare'])->name('kilometraje.chart.compare')->middleware('permission:mileage.view');

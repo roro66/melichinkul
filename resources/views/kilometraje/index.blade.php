@@ -10,6 +10,10 @@
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Ingreso rápido semanal de lecturas del tacómetro</p>
         </div>
         <div class="flex flex-wrap gap-3">
+            <a href="{{ route('kilometraje.readings') }}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                <i class="fas fa-list mr-2"></i> Ver lecturas
+            </a>
             <a href="{{ route('kilometraje.charts') }}"
                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <i class="fas fa-chart-line mr-2"></i> Gráficos
