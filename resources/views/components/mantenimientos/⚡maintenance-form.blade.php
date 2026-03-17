@@ -5,8 +5,10 @@ use App\Models\MaintenanceTemplate;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\Driver;
+use App\Notifications\MaintenanceAssignedToTechnicianNotification;
+use App\Notifications\MaintenanceCreatedSupervisorNotification;
 use App\Notifications\MaintenancePendingApprovalNotification;
-use App\Notifications\MaintenanceScheduledNotification;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
@@ -39,34 +41,47 @@ new class extends Component
     public $evidence_invoice = null;
     public $evidence_photo = null;
 
-    protected $rules = [
-        "vehicle_id" => ["required", "exists:vehicles,id"],
-        "type" => ["required", "string", "in:preventive,corrective,inspection"],
-        "status" => ["required", "string", "in:scheduled,in_progress,completed,pending_approval,cancelled"],
-        "scheduled_date" => ["required", "date"],
-        "start_date" => ["nullable", "date"],
-        "end_date" => ["nullable", "date"],
-        "mileage_at_maintenance" => ["nullable", "numeric", "min:0"],
-        "hours_at_maintenance" => ["nullable", "numeric", "min:0"],
-        "entry_reason" => ["nullable", "string"],
-        "work_description" => ["required", "string"],
-        "work_performed" => ["nullable", "string"],
-        "parts_cost" => ["nullable", "integer", "min:0"],
-        "labor_cost" => ["nullable", "integer", "min:0"],
-        "total_cost" => ["nullable", "integer", "min:0"],
-        "hours_worked" => ["nullable", "numeric", "min:0"],
-        "workshop_supplier" => ["nullable", "string", "max:255"],
-        "responsible_technician_id" => ["nullable", "exists:users,id"],
-        "assigned_driver_id" => ["nullable", "exists:drivers,id"],
-        "observations" => ["nullable", "string"],
-        "evidence_invoice" => ["nullable", "file", "mimes:pdf,jpg,jpeg,png", "max:10240"],
-        "evidence_photo" => ["nullable", "file", "mimes:pdf,jpg,jpeg,png", "max:10240"],
-    ];
+    protected function rules(): array
+    {
+        $technicianIds = User::role("technician")
+            ->where("active", true)
+            ->pluck("id")
+            ->all();
+        $technicianRule = count($technicianIds) > 0
+            ? [Rule::in($technicianIds)]
+            : [Rule::in([-1])];
+
+        return [
+            "vehicle_id" => ["required", "exists:vehicles,id"],
+            "type" => ["required", "string", "in:preventive,corrective,inspection"],
+            "status" => ["required", "string", "in:scheduled,in_progress,completed,pending_approval,cancelled"],
+            "scheduled_date" => ["required", "date"],
+            "start_date" => ["nullable", "date"],
+            "end_date" => ["nullable", "date"],
+            "mileage_at_maintenance" => ["nullable", "numeric", "min:0"],
+            "hours_at_maintenance" => ["nullable", "numeric", "min:0"],
+            "entry_reason" => ["nullable", "string"],
+            "work_description" => ["required", "string"],
+            "work_performed" => ["nullable", "string"],
+            "parts_cost" => ["nullable", "integer", "min:0"],
+            "labor_cost" => ["nullable", "integer", "min:0"],
+            "total_cost" => ["nullable", "integer", "min:0"],
+            "hours_worked" => ["nullable", "numeric", "min:0"],
+            "workshop_supplier" => ["nullable", "string", "max:255"],
+            "responsible_technician_id" => array_merge(["required"], $technicianRule),
+            "assigned_driver_id" => ["nullable", "exists:drivers,id"],
+            "observations" => ["nullable", "string"],
+            "evidence_invoice" => ["nullable", "file", "mimes:pdf,jpg,jpeg,png", "max:10240"],
+            "evidence_photo" => ["nullable", "file", "mimes:pdf,jpg,jpeg,png", "max:10240"],
+        ];
+    }
 
     protected $messages = [
         "vehicle_id.required" => "El vehículo es obligatorio.",
         "work_description.required" => "La descripción del trabajo es obligatoria.",
         "scheduled_date.required" => "La fecha programada es obligatoria.",
+        "responsible_technician_id.required" => "Debe asignar un técnico responsable (mecánico).",
+        "responsible_technician_id.in" => "Seleccione un técnico mecánico activo.",
         "evidence_invoice.max" => "El documento no debe superar 10 MB.",
         "evidence_photo.max" => "La foto no debe superar 10 MB.",
     ];
@@ -133,6 +148,10 @@ new class extends Component
 
     public function save()
     {
+        if ($this->maintenanceId && ! auth()->user()->can('maintenances.edit')) {
+            abort(403, 'No tienes permiso para editar el mantenimiento completo.');
+        }
+
         $this->validate();
 
         $status = $this->status;
@@ -167,7 +186,7 @@ new class extends Component
             "total_cost" => $this->total_cost ?: 0,
             "hours_worked" => $this->hours_worked ?: null,
             "workshop_supplier" => $this->workshop_supplier ?: null,
-            "responsible_technician_id" => $this->responsible_technician_id ?: null,
+            "responsible_technician_id" => $this->responsible_technician_id,
             "assigned_driver_id" => $this->assigned_driver_id ?: null,
             "observations" => $this->observations ?: null,
         ];
@@ -198,9 +217,8 @@ new class extends Component
             if ($status === 'pending_approval') {
                 $this->notifySupervisorsPendingApproval($maintenance);
             }
-            if ($status === 'scheduled') {
-                $this->notifyTechniciansScheduled($maintenance);
-            }
+            $maintenance->load('responsibleTechnician');
+            $this->notifyOnMaintenanceCreated($maintenance);
             session()->flash("success", $status === 'pending_approval'
                 ? "Mantenimiento creado. El costo supera el umbral de aprobación; quedó pendiente de aprobación."
                 : "Mantenimiento creado correctamente.");
@@ -239,26 +257,24 @@ new class extends Component
         }
     }
 
-    /** Notifica a técnicos y al responsable asignado cuando se programa un mantenimiento. */
-    private function notifyTechniciansScheduled(Maintenance $maintenance): void
+    /** Técnico asignado + supervisores al crear mantenimiento. */
+    private function notifyOnMaintenanceCreated(Maintenance $maintenance): void
     {
-        $recipients = User::role('technician')->where('active', true)->get();
-        $responsibleId = $maintenance->responsible_technician_id;
-        if ($responsibleId && ! $recipients->contains('id', $responsibleId)) {
-            $responsible = User::find($responsibleId);
-            if ($responsible && $responsible->active) {
-                $recipients = $recipients->push($responsible);
-            }
+        $tech = User::find($maintenance->responsible_technician_id);
+        if ($tech && ($tech->active ?? true)) {
+            $tech->notify(new MaintenanceAssignedToTechnicianNotification($maintenance));
         }
-        foreach ($recipients as $user) {
-            $user->notify(new MaintenanceScheduledNotification($maintenance));
+
+        $supervisors = User::role('supervisor')->where('active', true)->get();
+        foreach ($supervisors as $user) {
+            $user->notify(new MaintenanceCreatedSupervisorNotification($maintenance));
         }
     }
 
     public function render()
     {
         $vehicles = Vehicle::where("status", "!=", "decommissioned")->orderBy("license_plate")->get();
-        $technicians = User::role(['technician', 'administrator'])->orderBy('name')->get();
+        $technicians = User::role('technician')->where('active', true)->orderBy('name')->get();
         $drivers = Driver::where("active", true)->orderBy("full_name")->get();
         $templates = MaintenanceTemplate::orderBy('name')->get();
         $maintenance = $this->maintenanceId ? Maintenance::find($this->maintenanceId) : null;

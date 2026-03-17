@@ -14,7 +14,7 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     private const PERMISSIONS = [
         'vehicles' => ['view', 'create', 'edit', 'delete', 'export'],
-        'maintenances' => ['view', 'create', 'edit', 'delete', 'approve', 'export'],
+        'maintenances' => ['view', 'create', 'edit', 'delete', 'approve', 'export', 'record_work', 'pending_tasks'],
         'drivers' => ['view', 'create', 'edit', 'delete'],
         'alerts' => ['view', 'close', 'snooze'],
         'spare_parts' => ['view', 'create', 'edit', 'delete', 'adjust_stock'],
@@ -92,10 +92,10 @@ class RolesAndPermissionsSeeder extends Seeder
         });
         $roles['administrativo']->syncPermissions($adminPerms);
 
-        // Technician: view + maintenances/drivers create+edit, no delete/approve/export
+        // Technician: crear mantenimientos, registrar trabajo realizado, ver tareas; sin edición completa ni borrar
         $techPerms = [
             'vehicles.view',
-            'maintenances.view', 'maintenances.create', 'maintenances.edit',
+            'maintenances.view', 'maintenances.create', 'maintenances.record_work', 'maintenances.pending_tasks',
             'drivers.view',
             'alerts.view',
             'spare_parts.view',

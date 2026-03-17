@@ -52,6 +52,11 @@ Route::middleware(['auth'])->group(function () {
     // Módulo Mantenimientos
     Route::get('/mantenimientos', [\App\Http\Controllers\MaintenanceController::class, 'index'])->name('mantenimientos.index')->middleware('permission:maintenances.view');
     Route::get('/mantenimientos/calendario', [\App\Http\Controllers\MaintenanceController::class, 'calendario'])->name('mantenimientos.calendario')->middleware('permission:maintenances.view');
+    Route::get('/mantenimientos/tareas-pendientes', [\App\Http\Controllers\MaintenanceController::class, 'pendingTasks'])->name('mantenimientos.tareas-pendientes')->middleware('permission:maintenances.pending_tasks');
+    Route::get('/mantenimientos/{maintenance}/registrar-trabajo', [\App\Http\Controllers\MaintenanceController::class, 'showRegistrarTrabajo'])->name('mantenimientos.registrar-trabajo')->middleware('permission:maintenances.record_work');
+    Route::post('/mantenimientos/{maintenance}/registrar-trabajo', [\App\Http\Controllers\MaintenanceController::class, 'storeRegistrarTrabajo'])->name('mantenimientos.registrar-trabajo.store')->middleware('permission:maintenances.record_work');
+    Route::post('/mantenimientos/{maintenance}/registrar-trabajo/repuestos', [\App\Http\Controllers\MaintenanceController::class, 'addSparePartTechnician'])->name('mantenimientos.registrar-trabajo.repuestos.add')->middleware('permission:maintenances.record_work');
+    Route::delete('/mantenimientos/{maintenance}/registrar-trabajo/repuestos/{pivotId}', [\App\Http\Controllers\MaintenanceController::class, 'removeSparePartTechnician'])->name('mantenimientos.registrar-trabajo.repuestos.remove')->middleware('permission:maintenances.record_work');
     Route::post('/mantenimientos/{id}/aprobar', [\App\Http\Controllers\MaintenanceController::class, 'approve'])->name('mantenimientos.approve')->middleware('permission:maintenances.approve');
     Route::post('/mantenimientos/{id}/repuestos', [\App\Http\Controllers\MaintenanceController::class, 'addSparePart'])->name('mantenimientos.repuestos.add')->middleware('permission:maintenances.edit');
     Route::delete('/mantenimientos/{id}/repuestos/{pivotId}', [\App\Http\Controllers\MaintenanceController::class, 'removeSparePart'])->name('mantenimientos.repuestos.remove')->middleware('permission:maintenances.edit');

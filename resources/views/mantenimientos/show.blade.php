@@ -36,6 +36,14 @@
                 Editar
             </a>
             @endcan
+            @can('maintenances.record_work')
+            @if((int) auth()->id() === (int) $maintenance->responsible_technician_id && !in_array($maintenance->status, ['completed', 'cancelled'], true))
+            <a href="{{ route('mantenimientos.registrar-trabajo', $maintenance) }}"
+                class="inline-flex items-center px-4 py-2 border border-amber-500 dark:border-amber-600 text-sm font-medium rounded-md text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors duration-150">
+                <i class="fas fa-wrench mr-2"></i> Trabajos realizados
+            </a>
+            @endif
+            @endcan
             <a href="{{ route('mantenimientos.index') }}" 
                 class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150">
                 Volver

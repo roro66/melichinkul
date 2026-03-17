@@ -12,6 +12,7 @@ use App\Services\AuditService;
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MaintenanceController extends Controller
 {
@@ -125,25 +126,23 @@ class MaintenanceController extends Controller
                     return $maintenance->scheduled_date ? $maintenance->scheduled_date->format('d/m/Y') : 'Sin fecha';
                 })
                 ->addColumn('actions', function ($maintenance) {
-                    return "
-                        <div class='flex justify-end space-x-3'>
-                            <a href='" . route('mantenimientos.show', $maintenance->id) . "' 
-                               class='text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 transition-colors duration-150'
-                               title='Ver detalles'>
-                                <i class='fas fa-eye'></i>
-                            </a>
-                            <a href='" . route('mantenimientos.edit', $maintenance->id) . "' 
-                               class='text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 transition-colors duration-150'
-                               title='Editar'>
-                                <i class='fas fa-edit'></i>
-                            </a>
-                            <button onclick='deleteMaintenance(" . $maintenance->id . ")' 
-                                    class='text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors duration-150 cursor-pointer bg-transparent border-none'
-                                    title='Eliminar'>
-                                <i class='fas fa-trash-alt'></i>
-                            </button>
-                        </div>
-                    ";
+                    $user = auth()->user();
+                    $html = "<div class='flex justify-end flex-wrap gap-2 items-center'>";
+                    $html .= "<a href='" . route('mantenimientos.show', $maintenance->id) . "' class='text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300' title='Ver'><i class='fas fa-eye'></i></a>";
+                    if ($user->can('maintenances.edit')) {
+                        $html .= "<a href='" . route('mantenimientos.edit', $maintenance->id) . "' class='text-blue-600 dark:text-blue-400 hover:text-blue-900' title='Editar'><i class='fas fa-edit'></i></a>";
+                    }
+                    if ($user->can('maintenances.record_work')
+                        && (int) $maintenance->responsible_technician_id === (int) $user->id
+                        && ! in_array($maintenance->status, ['completed', 'cancelled'], true)) {
+                        $html .= "<a href='" . route('mantenimientos.registrar-trabajo', $maintenance) . "' class='text-amber-600 dark:text-amber-400 hover:text-amber-800 text-xs font-medium whitespace-nowrap' title='Trabajos realizados'><i class='fas fa-wrench mr-1'></i>Trabajo</a>";
+                    }
+                    if ($user->can('maintenances.delete')) {
+                        $html .= "<button type='button' onclick='deleteMaintenance(" . $maintenance->id . ")' class='text-red-600 dark:text-red-400 hover:text-red-900 cursor-pointer bg-transparent border-none p-0' title='Eliminar'><i class='fas fa-trash-alt'></i></button>";
+                    }
+                    $html .= '</div>';
+
+                    return $html;
                 })
                 ->rawColumns(['vehicle_info', 'type_badge', 'status_badge', 'actions'])
                 ->make(true);
@@ -181,8 +180,142 @@ class MaintenanceController extends Controller
         return redirect()->back()->with('success', 'Mantenimiento aprobado correctamente.');
     }
 
+    public function pendingTasks(Request $request)
+    {
+        if (! $request->user()->can('maintenances.pending_tasks')) {
+            abort(403);
+        }
+
+        $query = Maintenance::with(['vehicle', 'responsibleTechnician'])
+            ->whereNotIn('status', ['completed', 'cancelled']);
+
+        $isTechnicianOnly = $request->user()->hasRole('technician')
+            && ! $request->user()->hasAnyRole(['administrator', 'supervisor', 'administrativo']);
+
+        if ($isTechnicianOnly) {
+            $query->where('responsible_technician_id', $request->user()->id);
+        }
+
+        $maintenances = $query
+            ->orderByRaw("CASE status WHEN 'in_progress' THEN 1 WHEN 'pending_approval' THEN 2 WHEN 'scheduled' THEN 3 ELSE 4 END")
+            ->orderBy('scheduled_date')
+            ->orderBy('id')
+            ->paginate(30)
+            ->withQueryString();
+
+        return view('mantenimientos.tareas-pendientes', compact('maintenances'));
+    }
+
+    public function showRegistrarTrabajo(Request $request, Maintenance $maintenance)
+    {
+        $this->assertTechnicianCanRecordWork($request, $maintenance);
+
+        $maintenance->load(['maintenanceSpareParts.sparePart', 'vehicle']);
+        $spareParts = SparePart::where('active', true)->orderBy('code')->get();
+
+        return view('mantenimientos.registrar-trabajo', compact('maintenance', 'spareParts'));
+    }
+
+    public function storeRegistrarTrabajo(Request $request, Maintenance $maintenance)
+    {
+        $this->assertTechnicianCanRecordWork($request, $maintenance);
+
+        $validated = $request->validate([
+            'work_performed' => ['nullable', 'string', 'max:65535'],
+            'parts_cost' => ['nullable', 'integer', 'min:0'],
+            'labor_cost' => ['nullable', 'integer', 'min:0'],
+            'total_cost' => ['nullable', 'integer', 'min:0'],
+            'hours_worked' => ['nullable', 'numeric', 'min:0'],
+            'observations' => ['nullable', 'string', 'max:65535'],
+            'evidence_invoice' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+            'evidence_photo' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+        ]);
+
+        $data = [
+            'work_performed' => $validated['work_performed'] ?? null,
+            'parts_cost' => (int) ($validated['parts_cost'] ?? 0),
+            'labor_cost' => (int) ($validated['labor_cost'] ?? 0),
+            'total_cost' => (int) ($validated['total_cost'] ?? 0),
+            'hours_worked' => $validated['hours_worked'] ?? null,
+            'observations' => $validated['observations'] ?? null,
+        ];
+
+        if ($request->hasFile('evidence_invoice')) {
+            if ($maintenance->evidence_invoice_path && Storage::disk('public')->exists($maintenance->evidence_invoice_path)) {
+                Storage::disk('public')->delete($maintenance->evidence_invoice_path);
+            }
+            $data['evidence_invoice_path'] = $request->file('evidence_invoice')->store('maintenances/' . $maintenance->id, 'public');
+        }
+        if ($request->hasFile('evidence_photo')) {
+            if ($maintenance->evidence_photo_path && Storage::disk('public')->exists($maintenance->evidence_photo_path)) {
+                Storage::disk('public')->delete($maintenance->evidence_photo_path);
+            }
+            $data['evidence_photo_path'] = $request->file('evidence_photo')->store('maintenances/' . $maintenance->id, 'public');
+        }
+
+        $maintenance->update($data);
+
+        return redirect()
+            ->route('mantenimientos.show', $maintenance->id)
+            ->with('success', 'Datos del trabajo guardados correctamente.');
+    }
+
+    public function addSparePartTechnician(Request $request, Maintenance $maintenance)
+    {
+        $this->assertTechnicianCanRecordWork($request, $maintenance);
+
+        $validated = $request->validate([
+            'spare_part_id' => 'required|exists:spare_parts,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $existing = MaintenanceSparePart::where('maintenance_id', $maintenance->id)
+            ->where('spare_part_id', $validated['spare_part_id'])
+            ->first();
+        if ($existing) {
+            $existing->increment('quantity', $validated['quantity']);
+        } else {
+            MaintenanceSparePart::create([
+                'maintenance_id' => $maintenance->id,
+                'spare_part_id' => $validated['spare_part_id'],
+                'quantity' => $validated['quantity'],
+            ]);
+        }
+
+        return redirect()
+            ->route('mantenimientos.registrar-trabajo', $maintenance)
+            ->with('success', 'Repuesto agregado.');
+    }
+
+    public function removeSparePartTechnician(Request $request, Maintenance $maintenance, int $pivotId)
+    {
+        $this->assertTechnicianCanRecordWork($request, $maintenance);
+
+        MaintenanceSparePart::where('maintenance_id', $maintenance->id)->where('id', $pivotId)->delete();
+
+        return redirect()
+            ->route('mantenimientos.registrar-trabajo', $maintenance)
+            ->with('success', 'Repuesto quitado.');
+    }
+
+    private function assertTechnicianCanRecordWork(Request $request, Maintenance $maintenance): void
+    {
+        if (! $request->user()->can('maintenances.record_work')) {
+            abort(403);
+        }
+        if (in_array($maintenance->status, ['completed', 'cancelled'], true)) {
+            abort(403, 'Este mantenimiento ya está cerrado.');
+        }
+        if ((int) $maintenance->responsible_technician_id !== (int) $request->user()->id) {
+            abort(403, 'Solo el técnico asignado puede registrar los trabajos realizados.');
+        }
+    }
+
     public function destroy($id)
     {
+        if (! auth()->user()->can('maintenances.delete')) {
+            abort(403);
+        }
         try {
             $maintenance = Maintenance::with('vehicle')->findOrFail($id);
             $vehicleInfo = $maintenance->vehicle ? $maintenance->vehicle->license_plate : 'N/A';
