@@ -26,6 +26,12 @@
                             <option value="{{ $s->id }}" {{ old('supplier_id', $purchase->supplier_id) == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
                         @endforeach
                     </select>
+                    @can('suppliers.create')
+                        <button type="button" id="btn-new-supplier-purchase"
+                            class="purchase-quick-create-link mt-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 underline-offset-2 hover:underline text-left bg-transparent border-0 cursor-pointer p-0 w-fit focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 rounded-sm">
+                            + Nuevo proveedor
+                        </button>
+                    @endcan
                     @error('supplier_id')<p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
                 </div>
                 <div>
@@ -84,25 +90,35 @@
     </div>
 </div>
 
+@include('compras.partials.quick-create-purchase')
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const tbody = document.getElementById('items-tbody');
     const addBtn = document.getElementById('add-item-row');
-    const spareParts = @json($spareParts->map(fn($p) => ['id' => $p->id, 'code' => $p->code, 'description' => $p->description]));
+    let spareParts = @json($spareParts->map(fn($p) => ['id' => $p->id, 'code' => $p->code, 'description' => $p->description]));
+    window.__purchaseSpareParts = spareParts;
+    const canCreateSpare = @json(auth()->user()->can('spare_parts.create'));
     const initialItems = @json($itemsSource ?? []);
 
     function addRow(index, data = {}) {
         const tr = document.createElement('tr');
         tr.className = 'item-row';
         tr.dataset.index = index;
-        const options = spareParts.map(p => `<option value="${p.id}" ${(data.spare_part_id == p.id || data.spare_part_id === String(p.id)) ? 'selected' : ''}>${p.code} - ${p.description}</option>`).join('');
+        const options = spareParts.map(p => `<option value="${p.id}" ${(data.spare_part_id == p.id || data.spare_part_id === String(p.id)) ? 'selected' : ''}>${p.code} — ${p.description}</option>`).join('');
+        const spareBtnHtml = canCreateSpare
+            ? '<button type="button" class="btn-quick-new-spare purchase-quick-create-link mt-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 underline-offset-2 hover:underline text-left bg-transparent border-0 cursor-pointer p-0 w-fit focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 rounded-sm">+ Nuevo repuesto</button>'
+            : '';
         tr.innerHTML = `
             <td class="px-3 py-2">
-                <select name="items[${index}][spare_part_id]" class="item-spare-part w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
-                    <option value="">Seleccione repuesto</option>
-                    ${options}
-                </select>
+                <div class="flex flex-col">
+                    <select name="items[${index}][spare_part_id]" class="item-spare-part w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
+                        <option value="">Seleccione repuesto</option>
+                        ${options}
+                    </select>
+                    ${spareBtnHtml}
+                </div>
             </td>
             <td class="px-3 py-2">
                 <input type="number" name="items[${index}][quantity]" min="1" value="${data.quantity ?? ''}" placeholder="0"

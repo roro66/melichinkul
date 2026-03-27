@@ -11,6 +11,7 @@ use App\Models\Stock;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -267,5 +268,65 @@ class PurchaseController extends Controller
             'csv' => Excel::download(new PurchasesExport($filters), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV),
             default => redirect()->back()->with('error', 'Formato de exportación no válido'),
         };
+    }
+
+    /** Creación rápida de proveedor desde el formulario de compra (JSON). */
+    public function quickStoreSupplier(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'rut' => ['nullable', 'string', 'max:32'],
+            'contact_name' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:64'],
+            'email' => ['nullable', 'email', 'max:255'],
+        ]);
+
+        $supplier = Supplier::create([
+            'name' => $validated['name'],
+            'rut' => $validated['rut'] ?? null,
+            'contact_name' => $validated['contact_name'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'address' => null,
+            'active' => true,
+        ]);
+
+        return response()->json([
+            'id' => $supplier->id,
+            'name' => $supplier->name,
+        ]);
+    }
+
+    /** Creación rápida de repuesto desde el formulario de compra (JSON). */
+    public function quickStoreSparePart(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:64', 'unique:spare_parts,code'],
+            'description' => ['required', 'string', 'max:255'],
+            'brand' => ['nullable', 'string', 'max:255'],
+            'category' => ['required', 'string', Rule::in(array_keys(SparePart::CATEGORIES))],
+            'reference_price' => ['nullable', 'integer', 'min:0'],
+            'has_expiration' => ['sometimes', 'boolean'],
+        ]);
+
+        $ref = array_key_exists('reference_price', $validated) && $validated['reference_price'] !== null
+            ? (int) $validated['reference_price']
+            : null;
+
+        $sparePart = SparePart::create([
+            'code' => $validated['code'],
+            'description' => $validated['description'],
+            'brand' => $validated['brand'] ?? null,
+            'category' => $validated['category'],
+            'reference_price' => $ref,
+            'has_expiration' => $request->boolean('has_expiration'),
+            'active' => true,
+        ]);
+
+        return response()->json([
+            'id' => $sparePart->id,
+            'code' => $sparePart->code,
+            'description' => $sparePart->description,
+        ]);
     }
 }

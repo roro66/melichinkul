@@ -142,6 +142,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/compras/{id}', [\App\Http\Controllers\PurchaseController::class, 'destroy'])->name('compras.destroy')->middleware('permission:purchases.delete');
     Route::post('/compras/{id}/recibir', [\App\Http\Controllers\PurchaseController::class, 'receive'])->name('compras.receive')->middleware('permission:purchases.receive');
     Route::post('/compras/export/{format}', [\App\Http\Controllers\PurchaseController::class, 'export'])->name('compras.export')->middleware('permission:purchases.export');
+    Route::post('/compras/quick-supplier', [\App\Http\Controllers\PurchaseController::class, 'quickStoreSupplier'])->name('compras.quick-supplier')->middleware('permission:suppliers.create');
+    Route::post('/compras/quick-spare-part', [\App\Http\Controllers\PurchaseController::class, 'quickStoreSparePart'])->name('compras.quick-spare-part')->middleware('permission:spare_parts.create');
 
     // Módulo Certificaciones
     Route::get('/vehiculos/{vehicleId}/certificaciones/create', [\App\Http\Controllers\CertificationController::class, 'create'])->name('certificaciones.create')->middleware('permission:certifications.create');
