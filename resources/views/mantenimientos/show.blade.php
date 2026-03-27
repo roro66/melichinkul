@@ -157,7 +157,8 @@
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Proveedor</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Documento</th>
                             <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Cantidad</th>
-                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Valor</th>
+                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">P. unit.</th>
+                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Subtotal</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Comprobante</th>
                             @can('maintenances.edit')
                             @if($maintenance->status !== 'completed' && $maintenance->status !== 'cancelled')
@@ -179,6 +180,7 @@
                                 <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">{{ $item->supplier_name }}</td>
                                 <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">{{ $item->document_number }}</td>
                                 <td class="px-4 py-2 text-sm text-gray-900 dark:text-white text-right">{{ $item->quantity }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-white text-right">${{ number_format((int) $item->unit_price, 0, ',', '.') }}</td>
                                 <td class="px-4 py-2 text-sm text-gray-900 dark:text-white text-right">${{ number_format((int) $item->line_total, 0, ',', '.') }}</td>
                                 <td class="px-4 py-2 text-sm">
                                     @if($item->document_image_path)
@@ -203,6 +205,7 @@
                                     <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">—</td>
                                     <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">—</td>
                                     <td class="px-4 py-2 text-sm text-gray-900 dark:text-white text-right">{{ $pivot->quantity }}</td>
+                                    <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-right">—</td>
                                     <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-right">—</td>
                                     <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">—</td>
                                     @can('maintenances.edit')

@@ -33,6 +33,14 @@ class AuditLogController extends Controller
                 ->addColumn('action_label', function (AuditLog $log) {
                     $labels = [
                         'delete_vehicle' => 'Eliminar vehículo',
+                        'create_maintenance' => 'Crear mantenimiento',
+                        'update_maintenance' => 'Editar mantenimiento',
+                        'sync_maintenance_purchase_items' => 'Sincronizar repuestos/compras (modal)',
+                        'record_work_maintenance' => 'Registrar trabajo (técnico)',
+                        'add_maintenance_spare_part' => 'Agregar repuesto de bodega',
+                        'remove_maintenance_spare_part' => 'Quitar repuesto de bodega',
+                        'check_maintenance_checklist' => 'Marcar ítem checklist',
+                        'uncheck_maintenance_checklist' => 'Desmarcar ítem checklist',
                         'approve_maintenance' => 'Aprobar mantenimiento',
                         'delete_maintenance' => 'Eliminar mantenimiento',
                         'close_alert' => 'Cerrar alerta',

@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MaintenancePurchaseItem extends Model
 {
+    protected static function booted(): void
+    {
+        static::saving(function (MaintenancePurchaseItem $item): void {
+            $qty = max(1, (int) $item->quantity);
+            $item->quantity = $qty;
+            $item->line_total = (int) $item->unit_price * $qty;
+        });
+    }
+
     protected $fillable = [
         'maintenance_id',
         'spare_part_id',

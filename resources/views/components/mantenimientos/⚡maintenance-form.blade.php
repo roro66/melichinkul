@@ -12,6 +12,7 @@ use App\Models\Driver;
 use App\Notifications\MaintenanceAssignedToTechnicianNotification;
 use App\Notifications\MaintenanceCreatedSupervisorNotification;
 use App\Notifications\MaintenancePendingApprovalNotification;
+use App\Services\AuditService;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -271,6 +272,12 @@ new class extends Component
         $this->validatePurchaseItemsBusinessRules();
         $this->recalculatePartsCostFromItems();
 
+        $wasEdit = (bool) $this->maintenanceId;
+        $oldAuditSnapshot = null;
+        if ($wasEdit) {
+            $oldAuditSnapshot = Maintenance::findOrFail($this->maintenanceId)->only($this->maintenanceAuditKeys());
+        }
+
         $status = $this->status;
         $totalCost = (int) ($this->total_cost ?? 0);
         $threshold = (int) config('maintenance.approval_threshold', 500_000);
@@ -368,10 +375,91 @@ new class extends Component
             ]);
         }
 
+        $this->auditMaintenanceSaved($maintenance, $wasEdit, $oldAuditSnapshot);
+
         if (! $this->maintenanceId && $maintenance->id) {
             return redirect()->route("mantenimientos.show", $maintenance->id);
         }
         return redirect()->route("mantenimientos.index");
+    }
+
+    /** @return list<string> */
+    private function maintenanceAuditKeys(): array
+    {
+        return [
+            "vehicle_id", "type", "status", "scheduled_date", "start_date", "end_date",
+            "mileage_at_maintenance", "hours_at_maintenance", "entry_reason", "work_description",
+            "work_performed", "parts_cost", "labor_cost", "total_cost", "hours_worked",
+            "workshop_supplier", "responsible_technician_id", "assigned_driver_id", "observations",
+            "evidence_invoice_path", "evidence_photo_path",
+        ];
+    }
+
+    private function auditMaintenanceSaved(Maintenance $maintenance, bool $wasEdit, ?array $oldAuditSnapshot): void
+    {
+        $audit = app(AuditService::class);
+        $keys = $this->maintenanceAuditKeys();
+        $saved = Maintenance::with("vehicle")->findOrFail($maintenance->id);
+        $final = $saved->only($keys);
+        $plate = $saved->vehicle?->license_plate ?? "N/A";
+
+        if ($wasEdit) {
+            $diff = $audit->diffTracked($oldAuditSnapshot ?? [], $final, $keys);
+            if ($diff !== null) {
+                [$oldVals, $newVals] = $diff;
+                $audit->log(
+                    "update_maintenance",
+                    "Maintenance",
+                    $saved->id,
+                    "Mantenimiento #{$saved->id} actualizado (vehículo: {$plate})",
+                    $oldVals,
+                    $newVals
+                );
+            }
+        } else {
+            $audit->log(
+                "create_maintenance",
+                "Maintenance",
+                $saved->id,
+                "Mantenimiento #{$saved->id} creado (vehículo: {$plate})",
+                null,
+                $final
+            );
+        }
+
+        if (! $this->hasPurchaseItemsTable()) {
+            return;
+        }
+
+        $lines = $saved->purchaseItems()
+            ->orderBy("id")
+            ->get()
+            ->map(fn ($i) => [
+                "id" => $i->id,
+                "spare_part_id" => $i->spare_part_id,
+                "product_name" => $i->product_name,
+                "supplier_name" => $i->supplier_name,
+                "document_number" => $i->document_number,
+                "quantity" => $i->quantity,
+                "unit_price" => $i->unit_price,
+                "line_total" => $i->line_total,
+                "has_document_image" => (bool) $i->document_image_path,
+            ])
+            ->values()
+            ->all();
+
+        $audit->log(
+            "sync_maintenance_purchase_items",
+            "Maintenance",
+            $saved->id,
+            "Líneas repuestos/compras sincronizadas en mantenimiento #{$saved->id} (" . count($lines) . " líneas)",
+            null,
+            [
+                "lines" => $lines,
+                "parts_cost" => (int) $saved->parts_cost,
+                "total_cost" => (int) $saved->total_cost,
+            ]
+        );
     }
 
     private function notifySupervisorsPendingApproval(Maintenance $maintenance): void
@@ -484,14 +572,16 @@ new class extends Component
 
             $this->purchaseItems = $lines;
             foreach ($this->purchaseItems as $idx => $line) {
-                $lineTotal = (int) ($line["line_total"] ?? 0);
+                $unitPrice = (int) ($line["unit_price"] ?? 0);
+                $quantity = max(1, (int) ($line["quantity"] ?? 1));
+                $lineTotal = $unitPrice * $quantity;
                 $lineData = [
                     "spare_part_id" => $line["spare_part_id"] ?: null,
                     "product_name" => trim((string) ($line["product_name"] ?? "")),
                     "supplier_name" => trim((string) ($line["supplier_name"] ?? "")),
                     "document_number" => trim((string) ($line["document_number"] ?? "")),
-                    "unit_price" => (int) ($line["unit_price"] ?? 0),
-                    "quantity" => max(1, (int) ($line["quantity"] ?? 1)),
+                    "unit_price" => $unitPrice,
+                    "quantity" => $quantity,
                     "line_total" => $lineTotal,
                 ];
 

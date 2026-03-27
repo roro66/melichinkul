@@ -53,4 +53,43 @@ class AuditService
             newValues: $newValues
         );
     }
+
+    /**
+     * @param  array<string, mixed>  $old
+     * @param  array<string, mixed>  $new
+     * @param  list<string>  $keys
+     * @return array{0: array<string, mixed>, 1: array<string, mixed>}|null
+     */
+    public function diffTracked(array $old, array $new, array $keys): ?array
+    {
+        $oldOut = [];
+        $newOut = [];
+        foreach ($keys as $key) {
+            $a = $old[$key] ?? null;
+            $b = $new[$key] ?? null;
+            if ($this->auditValuesEqual($a, $b)) {
+                continue;
+            }
+            $oldOut[$key] = $a;
+            $newOut[$key] = $b;
+        }
+
+        if ($oldOut === []) {
+            return null;
+        }
+
+        return [$oldOut, $newOut];
+    }
+
+    private function auditValuesEqual(mixed $a, mixed $b): bool
+    {
+        if ($a instanceof \DateTimeInterface) {
+            $a = $a->format('Y-m-d');
+        }
+        if ($b instanceof \DateTimeInterface) {
+            $b = $b->format('Y-m-d');
+        }
+
+        return $a == $b;
+    }
 }

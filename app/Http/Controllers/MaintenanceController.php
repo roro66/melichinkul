@@ -220,6 +220,8 @@ class MaintenanceController extends Controller
     {
         $this->assertTechnicianCanRecordWork($request, $maintenance);
 
+        $maintenance->loadMissing('vehicle');
+
         $validated = $request->validate([
             'work_performed' => ['nullable', 'string', 'max:65535'],
             'parts_cost' => ['nullable', 'integer', 'min:0'],
@@ -253,7 +255,25 @@ class MaintenanceController extends Controller
             $data['evidence_photo_path'] = $request->file('evidence_photo')->store('maintenances/' . $maintenance->id, 'public');
         }
 
+        $keys = ['work_performed', 'parts_cost', 'labor_cost', 'total_cost', 'hours_worked', 'observations', 'evidence_invoice_path', 'evidence_photo_path'];
+        $old = $maintenance->only($keys);
+
         $maintenance->update($data);
+        $maintenance->refresh();
+        $new = $maintenance->only($keys);
+        $diff = $this->audit->diffTracked($old, $new, $keys);
+        if ($diff !== null) {
+            [$oldVals, $newVals] = $diff;
+            $plate = $maintenance->vehicle?->license_plate ?? 'N/A';
+            $this->audit->log(
+                'record_work_maintenance',
+                'Maintenance',
+                $maintenance->id,
+                'Registro de trabajo en mantenimiento #' . $maintenance->id . ' (vehículo: ' . $plate . ')',
+                $oldVals,
+                $newVals
+            );
+        }
 
         return redirect()
             ->route('mantenimientos.show', $maintenance->id)
@@ -274,13 +294,29 @@ class MaintenanceController extends Controller
             ->first();
         if ($existing) {
             $existing->increment('quantity', $validated['quantity']);
+            $pivot = $existing->fresh();
         } else {
-            MaintenanceSparePart::create([
+            $pivot = MaintenanceSparePart::create([
                 'maintenance_id' => $maintenance->id,
                 'spare_part_id' => $validated['spare_part_id'],
                 'quantity' => $validated['quantity'],
             ]);
         }
+
+        $sp = SparePart::find($validated['spare_part_id']);
+        $this->audit->log(
+            'add_maintenance_spare_part',
+            'Maintenance',
+            $maintenance->id,
+            'Repuesto (bodega) agregado por técnico en mantenimiento #' . $maintenance->id . ': ' . ($sp?->code ?? 'ID ' . $validated['spare_part_id']),
+            null,
+            [
+                'spare_part_id' => (int) $validated['spare_part_id'],
+                'code' => $sp?->code,
+                'quantity_added' => (int) $validated['quantity'],
+                'line_quantity' => (int) $pivot->quantity,
+            ]
+        );
 
         return redirect()
             ->route('mantenimientos.registrar-trabajo', $maintenance)
@@ -291,7 +327,23 @@ class MaintenanceController extends Controller
     {
         $this->assertTechnicianCanRecordWork($request, $maintenance);
 
+        $pivot = MaintenanceSparePart::where('maintenance_id', $maintenance->id)->where('id', $pivotId)->first();
+        $oldVals = $pivot ? [
+            'pivot_id' => $pivot->id,
+            'spare_part_id' => $pivot->spare_part_id,
+            'quantity' => $pivot->quantity,
+        ] : [];
+
         MaintenanceSparePart::where('maintenance_id', $maintenance->id)->where('id', $pivotId)->delete();
+
+        $this->audit->log(
+            'remove_maintenance_spare_part',
+            'Maintenance',
+            $maintenance->id,
+            'Repuesto (bodega) quitado por técnico en mantenimiento #' . $maintenance->id,
+            $oldVals ?: null,
+            null
+        );
 
         return redirect()
             ->route('mantenimientos.registrar-trabajo', $maintenance)
@@ -358,13 +410,29 @@ class MaintenanceController extends Controller
             ->first();
         if ($existing) {
             $existing->increment('quantity', $validated['quantity']);
+            $pivot = $existing->fresh();
         } else {
-            MaintenanceSparePart::create([
+            $pivot = MaintenanceSparePart::create([
                 'maintenance_id' => $id,
                 'spare_part_id' => $validated['spare_part_id'],
                 'quantity' => $validated['quantity'],
             ]);
         }
+
+        $sp = SparePart::find($validated['spare_part_id']);
+        $this->audit->log(
+            'add_maintenance_spare_part',
+            'Maintenance',
+            $id,
+            'Repuesto (bodega) agregado en mantenimiento #' . $id . ': ' . ($sp?->code ?? 'ID ' . $validated['spare_part_id']),
+            null,
+            [
+                'spare_part_id' => (int) $validated['spare_part_id'],
+                'code' => $sp?->code,
+                'quantity_added' => (int) $validated['quantity'],
+                'line_quantity' => (int) $pivot->quantity,
+            ]
+        );
 
         return redirect()->back()->with('success', 'Repuesto agregado al mantenimiento.');
     }
@@ -376,7 +444,23 @@ class MaintenanceController extends Controller
             return redirect()->back()->with('error', 'No se pueden quitar repuestos de un mantenimiento completado o cancelado.');
         }
 
+        $pivot = MaintenanceSparePart::where('maintenance_id', $id)->where('id', $pivotId)->first();
+        $oldVals = $pivot ? [
+            'pivot_id' => $pivot->id,
+            'spare_part_id' => $pivot->spare_part_id,
+            'quantity' => $pivot->quantity,
+        ] : [];
+
         MaintenanceSparePart::where('maintenance_id', $id)->where('id', $pivotId)->delete();
+
+        $this->audit->log(
+            'remove_maintenance_spare_part',
+            'Maintenance',
+            $id,
+            'Repuesto (bodega) quitado del mantenimiento #' . $id,
+            $oldVals ?: null,
+            null
+        );
 
         return redirect()->back()->with('success', 'Repuesto quitado del mantenimiento.');
     }
@@ -399,6 +483,15 @@ class MaintenanceController extends Controller
 
         if ($completion) {
             $completion->delete();
+            $this->audit->log(
+                'uncheck_maintenance_checklist',
+                'Maintenance',
+                $id,
+                'Checklist desmarcado en mantenimiento #' . $id . ': ' . $item->name,
+                ['maintenance_checklist_item_id' => $itemId, 'name' => $item->name],
+                null
+            );
+
             return redirect()->back()->with('success', 'Ítem desmarcado.');
         }
 
@@ -408,6 +501,16 @@ class MaintenanceController extends Controller
             'completed_at' => now(),
             'completed_by_id' => auth()->id(),
         ]);
+
+        $this->audit->log(
+            'check_maintenance_checklist',
+            'Maintenance',
+            $id,
+            'Checklist marcado en mantenimiento #' . $id . ': ' . $item->name,
+            null,
+            ['maintenance_checklist_item_id' => $itemId, 'name' => $item->name]
+        );
+
         return redirect()->back()->with('success', 'Ítem marcado como completado.');
     }
 
