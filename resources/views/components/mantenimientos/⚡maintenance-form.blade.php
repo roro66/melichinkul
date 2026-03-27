@@ -1,7 +1,11 @@
 <?php
 
 use App\Models\Maintenance;
+use App\Models\MaintenancePurchaseItem;
 use App\Models\MaintenanceTemplate;
+use App\Models\InventoryMovement;
+use App\Models\SparePart;
+use App\Models\Stock;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\Driver;
@@ -11,6 +15,8 @@ use App\Notifications\MaintenancePendingApprovalNotification;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 new class extends Component
@@ -40,6 +46,7 @@ new class extends Component
     public $observations = "";
     public $evidence_invoice = null;
     public $evidence_photo = null;
+    public array $purchaseItems = [];
 
     protected function rules(): array
     {
@@ -73,6 +80,15 @@ new class extends Component
             "observations" => ["nullable", "string"],
             "evidence_invoice" => ["nullable", "file", "mimes:pdf,jpg,jpeg,png", "max:10240"],
             "evidence_photo" => ["nullable", "file", "mimes:pdf,jpg,jpeg,png", "max:10240"],
+            "purchaseItems" => ["array"],
+            "purchaseItems.*.id" => ["nullable", "integer"],
+            "purchaseItems.*.spare_part_id" => ["nullable", "exists:spare_parts,id"],
+            "purchaseItems.*.product_name" => ["nullable", "string", "max:255"],
+            "purchaseItems.*.supplier_name" => ["nullable", "string", "max:255"],
+            "purchaseItems.*.document_number" => ["nullable", "string", "max:255"],
+            "purchaseItems.*.unit_price" => ["nullable", "integer", "min:0"],
+            "purchaseItems.*.quantity" => ["nullable", "integer", "min:1"],
+            "purchaseItems.*.document_image" => ["nullable", "file", "mimes:pdf,jpg,jpeg,png", "max:10240"],
         ];
     }
 
@@ -110,8 +126,30 @@ new class extends Component
             $this->responsible_technician_id = $maintenance->responsible_technician_id;
             $this->assigned_driver_id = $maintenance->assigned_driver_id;
             $this->observations = $maintenance->observations;
+            if ($this->hasPurchaseItemsTable()) {
+                $this->purchaseItems = $maintenance->purchaseItems()
+                    ->orderBy("id")
+                    ->get()
+                    ->map(fn ($item) => [
+                        "id" => $item->id,
+                        "spare_part_id" => $item->spare_part_id,
+                        "product_name" => $item->product_name,
+                        "supplier_name" => $item->supplier_name,
+                        "document_number" => $item->document_number,
+                        "unit_price" => (int) $item->unit_price,
+                        "quantity" => (int) $item->quantity,
+                        "line_total" => (int) $item->line_total,
+                        "document_image_path" => $item->document_image_path,
+                        "document_image" => null,
+                    ])->toArray();
+            }
         } elseif ($vehicleId) {
             $this->vehicle_id = $vehicleId;
+        }
+        if (empty($this->purchaseItems)) {
+            $this->addPurchaseItemRow();
+        } else {
+            $this->recalculatePartsCostFromItems();
         }
     }
 
@@ -141,9 +179,86 @@ new class extends Component
         $this->calculateTotalCost();
     }
 
+    public function updatedPurchaseItems($value, string $name): void
+    {
+        if (! preg_match('/^(\d+)\./', $name, $matches)) {
+            return;
+        }
+        $index = (int) $matches[1];
+        if (! isset($this->purchaseItems[$index])) {
+            return;
+        }
+
+        if (str_ends_with($name, '.spare_part_id')) {
+            $sparePartId = $this->purchaseItems[$index]["spare_part_id"] ?? null;
+            if ($sparePartId) {
+                $sparePart = SparePart::find($sparePartId);
+                if ($sparePart) {
+                    $this->purchaseItems[$index]["product_name"] = $sparePart->description ?: $sparePart->code;
+                    if (empty($this->purchaseItems[$index]["unit_price"])) {
+                        $this->purchaseItems[$index]["unit_price"] = (int) ($sparePart->reference_price ?? 0);
+                    }
+                }
+            }
+        }
+
+        if (str_ends_with($name, '.unit_price') || str_ends_with($name, '.quantity') || str_ends_with($name, '.spare_part_id')) {
+            $this->recalculateItemLineTotal($index);
+            $this->recalculatePartsCostFromItems();
+        }
+    }
+
     public function calculateTotalCost()
     {
         $this->total_cost = ($this->parts_cost ?? 0) + ($this->labor_cost ?? 0);
+    }
+
+    public function addPurchaseItemRow(): void
+    {
+        $this->purchaseItems[] = [
+            "id" => null,
+            "spare_part_id" => null,
+            "product_name" => "",
+            "supplier_name" => "",
+            "document_number" => "",
+            "unit_price" => 0,
+            "quantity" => 1,
+            "line_total" => 0,
+            "document_image_path" => null,
+            "document_image" => null,
+        ];
+    }
+
+    public function removePurchaseItemRow(int $index): void
+    {
+        if (! isset($this->purchaseItems[$index])) {
+            return;
+        }
+        unset($this->purchaseItems[$index]);
+        $this->purchaseItems = array_values($this->purchaseItems);
+        if (empty($this->purchaseItems)) {
+            $this->addPurchaseItemRow();
+        }
+        $this->recalculatePartsCostFromItems();
+    }
+
+    private function recalculateItemLineTotal(int $index): void
+    {
+        $unitPrice = (int) ($this->purchaseItems[$index]["unit_price"] ?? 0);
+        $quantity = max(1, (int) ($this->purchaseItems[$index]["quantity"] ?? 1));
+        $this->purchaseItems[$index]["quantity"] = $quantity;
+        $this->purchaseItems[$index]["line_total"] = $unitPrice * $quantity;
+    }
+
+    private function recalculatePartsCostFromItems(): void
+    {
+        $partsTotal = 0;
+        foreach ($this->purchaseItems as $idx => $item) {
+            $this->recalculateItemLineTotal($idx);
+            $partsTotal += (int) ($this->purchaseItems[$idx]["line_total"] ?? 0);
+        }
+        $this->parts_cost = $partsTotal;
+        $this->calculateTotalCost();
     }
 
     public function save()
@@ -153,6 +268,8 @@ new class extends Component
         }
 
         $this->validate();
+        $this->validatePurchaseItemsBusinessRules();
+        $this->recalculatePartsCostFromItems();
 
         $status = $this->status;
         $totalCost = (int) ($this->total_cost ?? 0);
@@ -241,6 +358,16 @@ new class extends Component
             $maintenance->update($evidenceData);
         }
 
+        if ($this->hasPurchaseItemsTable()) {
+            $this->syncPurchaseItems($maintenance);
+            $maintenance->refresh();
+            $partsCost = (int) $maintenance->purchaseItems()->sum("line_total");
+            $maintenance->update([
+                "parts_cost" => $partsCost,
+                "total_cost" => $partsCost + (int) ($maintenance->labor_cost ?? 0),
+            ]);
+        }
+
         if (! $this->maintenanceId && $maintenance->id) {
             return redirect()->route("mantenimientos.show", $maintenance->id);
         }
@@ -278,6 +405,7 @@ new class extends Component
         $drivers = Driver::where("active", true)->orderBy("full_name")->get();
         $templates = MaintenanceTemplate::orderBy('name')->get();
         $maintenance = $this->maintenanceId ? Maintenance::find($this->maintenanceId) : null;
+        $spareParts = SparePart::where("active", true)->orderBy("code")->get();
 
         return view("livewire.mantenimientos.maintenance-form", [
             "vehicles" => $vehicles,
@@ -285,7 +413,170 @@ new class extends Component
             "drivers" => $drivers,
             "templates" => $templates,
             "maintenance" => $maintenance,
+            "spareParts" => $spareParts,
         ]);
+    }
+
+    private function validatePurchaseItemsBusinessRules(): void
+    {
+        foreach ($this->purchaseItems as $idx => $item) {
+            $sparePartId = $item["spare_part_id"] ?? null;
+            $productName = trim((string) ($item["product_name"] ?? ""));
+            $supplierName = trim((string) ($item["supplier_name"] ?? ""));
+            $documentNumber = trim((string) ($item["document_number"] ?? ""));
+            $unitPrice = (int) ($item["unit_price"] ?? 0);
+            $quantity = (int) ($item["quantity"] ?? 0);
+            $hasImage = ! empty($item["document_image"]) || ! empty($item["document_image_path"]);
+            $hasAnyData = $sparePartId || $productName !== "" || $supplierName !== "" || $documentNumber !== "" || $unitPrice > 0 || $quantity > 0 || $hasImage;
+
+            if (! $hasAnyData) {
+                continue;
+            }
+            if (! $sparePartId && $productName === "") {
+                $this->addError("purchaseItems.$idx.product_name", "Debe seleccionar repuesto de bodega o indicar un producto manual.");
+            }
+            if ($supplierName === "") {
+                $this->addError("purchaseItems.$idx.supplier_name", "Proveedor obligatorio.");
+            }
+            if ($documentNumber === "") {
+                $this->addError("purchaseItems.$idx.document_number", "Número de documento obligatorio.");
+            }
+            if ($quantity < 1) {
+                $this->addError("purchaseItems.$idx.quantity", "La cantidad debe ser al menos 1.");
+            }
+        }
+
+        if (! empty($this->getErrorBag()->toArray())) {
+            throw \Illuminate\Validation\ValidationException::withMessages($this->getErrorBag()->toArray());
+        }
+    }
+
+    private function syncPurchaseItems(Maintenance $maintenance): void
+    {
+        DB::transaction(function () use ($maintenance) {
+            $lines = collect($this->purchaseItems)
+                ->filter(function ($item) {
+                    $sparePartId = $item["spare_part_id"] ?? null;
+                    $productName = trim((string) ($item["product_name"] ?? ""));
+                    $supplierName = trim((string) ($item["supplier_name"] ?? ""));
+                    $documentNumber = trim((string) ($item["document_number"] ?? ""));
+                    $unitPrice = (int) ($item["unit_price"] ?? 0);
+                    $quantity = (int) ($item["quantity"] ?? 0);
+                    $hasImage = ! empty($item["document_image"]) || ! empty($item["document_image_path"]);
+                    return $sparePartId || $productName !== "" || $supplierName !== "" || $documentNumber !== "" || $unitPrice > 0 || $quantity > 0 || $hasImage;
+                })
+                ->values()
+                ->all();
+
+            $existingItems = $maintenance->purchaseItems()->get()->keyBy("id");
+            $incomingIds = collect($lines)->pluck("id")->filter()->map(fn ($id) => (int) $id)->all();
+            $deleteIds = $existingItems->keys()->diff($incomingIds);
+
+            foreach ($deleteIds as $deleteId) {
+                $toDelete = $existingItems->get($deleteId);
+                if ($toDelete && $toDelete->document_image_path && Storage::disk("public")->exists($toDelete->document_image_path)) {
+                    Storage::disk("public")->delete($toDelete->document_image_path);
+                }
+            }
+
+            $this->rollbackPurchaseStockMovements($maintenance);
+            $maintenance->purchaseItems()->whereIn("id", $deleteIds)->delete();
+
+            $this->purchaseItems = $lines;
+            foreach ($this->purchaseItems as $idx => $line) {
+                $lineTotal = (int) ($line["line_total"] ?? 0);
+                $lineData = [
+                    "spare_part_id" => $line["spare_part_id"] ?: null,
+                    "product_name" => trim((string) ($line["product_name"] ?? "")),
+                    "supplier_name" => trim((string) ($line["supplier_name"] ?? "")),
+                    "document_number" => trim((string) ($line["document_number"] ?? "")),
+                    "unit_price" => (int) ($line["unit_price"] ?? 0),
+                    "quantity" => max(1, (int) ($line["quantity"] ?? 1)),
+                    "line_total" => $lineTotal,
+                ];
+
+                $purchaseItem = null;
+                $itemId = (int) ($line["id"] ?? 0);
+                if ($itemId && $existingItems->has($itemId)) {
+                    $purchaseItem = $existingItems->get($itemId);
+                    $purchaseItem->update($lineData);
+                } else {
+                    $purchaseItem = $maintenance->purchaseItems()->create($lineData);
+                }
+
+                if (! empty($line["document_image"])) {
+                    if ($purchaseItem->document_image_path && Storage::disk("public")->exists($purchaseItem->document_image_path)) {
+                        Storage::disk("public")->delete($purchaseItem->document_image_path);
+                    }
+                    $purchaseItem->update([
+                        "document_image_path" => $line["document_image"]->store("maintenances/" . $maintenance->id . "/purchase-items", "public"),
+                    ]);
+                }
+
+                $this->purchaseItems[$idx]["id"] = $purchaseItem->id;
+                $this->purchaseItems[$idx]["document_image_path"] = $purchaseItem->document_image_path;
+            }
+
+            $this->applyPurchaseStockMovements($maintenance);
+        });
+    }
+
+    private function rollbackPurchaseStockMovements(Maintenance $maintenance): void
+    {
+        $purchaseItemIds = $maintenance->purchaseItems()->pluck("id")->all();
+        if (empty($purchaseItemIds)) {
+            return;
+        }
+
+        $movements = InventoryMovement::where("reference_type", MaintenancePurchaseItem::class)
+            ->whereIn("reference_id", $purchaseItemIds)
+            ->get();
+
+        foreach ($movements as $movement) {
+            $stock = Stock::firstOrCreate(
+                ["spare_part_id" => $movement->spare_part_id],
+                ["quantity" => 0, "min_stock" => null, "location" => null]
+            );
+            $stock->increment("quantity", -1 * (int) $movement->quantity);
+            $movement->delete();
+        }
+    }
+
+    private function applyPurchaseStockMovements(Maintenance $maintenance): void
+    {
+        $itemsWithStock = $maintenance->purchaseItems()
+            ->whereNotNull("spare_part_id")
+            ->where("quantity", ">", 0)
+            ->get();
+
+        foreach ($itemsWithStock as $item) {
+            $qty = -1 * (int) $item->quantity;
+            $stock = Stock::firstOrCreate(
+                ["spare_part_id" => $item->spare_part_id],
+                ["quantity" => 0, "min_stock" => null, "location" => null]
+            );
+            $stock->increment("quantity", $qty);
+
+            InventoryMovement::create([
+                "spare_part_id" => $item->spare_part_id,
+                "type" => InventoryMovement::TYPE_USE,
+                "quantity" => $qty,
+                "reference_type" => MaintenancePurchaseItem::class,
+                "reference_id" => $item->id,
+                "user_id" => auth()->id(),
+                "notes" => "Uso registrado en edición de mantenimiento #" . $maintenance->id,
+                "movement_date" => now()->toDateString(),
+            ]);
+        }
+    }
+
+    private function hasPurchaseItemsTable(): bool
+    {
+        try {
+            return Schema::hasTable("maintenance_purchase_items");
+        } catch (\Throwable) {
+            return false;
+        }
     }
 };
 ?>

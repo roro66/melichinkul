@@ -1,5 +1,5 @@
 <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-    <form wire:submit="save" class="space-y-6">
+    <form wire:submit="save" x-data="{ purchaseModalOpen: false }" class="space-y-6">
         @if(!$maintenance && $templates->isNotEmpty())
         <div class="p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
             <label for="template_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usar plantilla</label>
@@ -138,28 +138,28 @@
         <!-- Costos -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
-                <label for="costo_repuestos" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Costo Repuestos
+                <label for="parts_cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Total Repuestos
                 </label>
-                <input type="number" id="parts_cost" wire:model.live="parts_cost" min="0" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <input type="number" id="parts_cost" wire:model.live="parts_cost" min="0" readonly
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
             <div>
-                <label for="costo_mano_obra" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Costo Mano de Obra
+                <label for="labor_cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Mano de obra
                 </label>
                 <input type="number" id="labor_cost" wire:model.live="labor_cost" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
 
             <div>
-                <label for="costo_total" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label for="total_cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Costo Total
                 </label>
-                <input type="number" id="total_cost" wire:model.live="total_cost" min="0"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Se calcula automáticamente con repuestos + mano de obra; puedes editarlo si necesitas incluir otros costos.</p>
+                <input type="number" id="total_cost" wire:model.live="total_cost" min="0" readonly
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Se calcula automáticamente con repuestos + mano de obra.</p>
             </div>
 
             <div>
@@ -168,6 +168,18 @@
                 </label>
                 <input type="number" id="hours_worked" wire:model="hours_worked" step="0.01" min="0" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+        </div>
+        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/40">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Detalle de repuestos y documentos</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Gestiona items de bodega y manuales en un modal tipo factura.</p>
+                </div>
+                <button type="button" @click="purchaseModalOpen = true"
+                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg text-sm">
+                    Ver / Editar formulario
+                </button>
             </div>
         </div>
 
@@ -272,6 +284,140 @@
                 class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg transition-colors duration-150">
                 {{ $maintenanceId ? "Actualizar" : "Crear" }} Mantenimiento
             </button>
+        </div>
+
+        <!-- Modal: Repuestos dinámicos -->
+        <div x-show="purchaseModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-white/70 dark:bg-black/80 backdrop-blur-[2px]" @click="purchaseModalOpen = false"></div>
+            <div class="relative w-[96vw] max-w-[96vw] max-h-[94vh] overflow-hidden rounded-xl bg-white dark:bg-gray-900 border-2 border-indigo-200 dark:border-indigo-700 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-indigo-100 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Repuestos y documentos de compra</h3>
+                    <button type="button" @click="purchaseModalOpen = false" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 overflow-auto max-h-[calc(94vh-144px)] space-y-4">
+                    <div class="flex justify-end">
+                        <button type="button" wire:click="addPurchaseItemRow"
+                            class="inline-flex items-center px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm">
+                            <i class="fas fa-plus mr-2"></i>Agregar línea
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                            <thead class="bg-gray-50 dark:bg-gray-900">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">Repuesto bodega (opcional)</th>
+                                    <th class="px-3 py-2 text-left">Producto</th>
+                                    <th class="px-3 py-2 text-left">Proveedor</th>
+                                    <th class="px-3 py-2 text-left">N° documento</th>
+                                    <th class="px-3 py-2 text-right">Precio</th>
+                                    <th class="px-3 py-2 text-right">Cantidad</th>
+                                    <th class="px-3 py-2 text-right">Subtotal</th>
+                                    <th class="px-3 py-2 text-left">Imagen</th>
+                                    <th class="px-3 py-2 w-12"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach($purchaseItems as $index => $line)
+                                    <tr>
+                                        <td class="px-3 py-2 align-top min-w-[240px]">
+                                            <select wire:model.live="purchaseItems.{{ $index }}.spare_part_id"
+                                                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700">
+                                                <option value="">Manual (sin bodega)</option>
+                                                @foreach($spareParts as $sp)
+                                                    <option value="{{ $sp->id }}">{{ $sp->code }} - {{ $sp->description }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td class="px-3 py-2 align-top min-w-[220px]">
+                                            <input type="text" wire:model.live="purchaseItems.{{ $index }}.product_name"
+                                                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                                                placeholder="Nombre producto">
+                                            @error("purchaseItems.$index.product_name")
+                                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </td>
+                                        <td class="px-3 py-2 align-top min-w-[180px]">
+                                            <input type="text" wire:model.live="purchaseItems.{{ $index }}.supplier_name"
+                                                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                                                placeholder="Proveedor">
+                                            @error("purchaseItems.$index.supplier_name")
+                                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </td>
+                                        <td class="px-3 py-2 align-top min-w-[160px]">
+                                            <input type="text" wire:model.live="purchaseItems.{{ $index }}.document_number"
+                                                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                                                placeholder="Factura/Boleta/Guía">
+                                            @error("purchaseItems.$index.document_number")
+                                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </td>
+                                        <td class="px-3 py-2 align-top min-w-[130px]">
+                                            <input type="number" min="0" wire:model.live="purchaseItems.{{ $index }}.unit_price"
+                                                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-right">
+                                            @error("purchaseItems.$index.unit_price")
+                                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </td>
+                                        <td class="px-3 py-2 align-top min-w-[110px]">
+                                            <input type="number" min="1" wire:model.live="purchaseItems.{{ $index }}.quantity"
+                                                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-right">
+                                            @error("purchaseItems.$index.quantity")
+                                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </td>
+                                        <td class="px-3 py-2 align-top min-w-[130px] text-right font-semibold text-gray-900 dark:text-white">
+                                            ${{ number_format((int) ($line['line_total'] ?? 0), 0, ',', '.') }}
+                                        </td>
+                                        <td class="px-3 py-2 align-top min-w-[220px]">
+                                            @if(!empty($line['document_image_path']))
+                                                <a href="{{ Storage::url($line['document_image_path']) }}" target="_blank" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline block mb-1">
+                                                    Ver archivo actual
+                                                </a>
+                                            @endif
+                                            <input type="file" wire:model="purchaseItems.{{ $index }}.document_image" accept=".pdf,.jpg,.jpeg,.png"
+                                                class="w-full text-xs">
+                                            @error("purchaseItems.$index.document_image")
+                                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </td>
+                                        <td class="px-3 py-2 align-top text-right">
+                                            <button type="button" wire:click="removePurchaseItemRow({{ $index }})"
+                                                class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="bg-gray-50 dark:bg-gray-900">
+                                <tr>
+                                    <td colspan="6" class="px-3 py-2 text-right font-semibold">Total repuestos</td>
+                                    <td class="px-3 py-2 text-right font-bold text-gray-900 dark:text-white">
+                                        ${{ number_format((int) $parts_cost, 0, ',', '.') }}
+                                    </td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-indigo-100 dark:border-indigo-800 bg-gray-50 dark:bg-gray-800/70">
+                    <button type="button" @click="purchaseModalOpen = false"
+                        class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-sm">
+                        Cerrar
+                    </button>
+                    <button type="button" @click="purchaseModalOpen = false"
+                        class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
         </div>
     </form>
 </div>

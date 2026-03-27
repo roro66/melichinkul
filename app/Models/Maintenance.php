@@ -87,6 +87,11 @@ class Maintenance extends Model
         return $this->hasMany(MaintenanceSparePart::class);
     }
 
+    public function purchaseItems(): HasMany
+    {
+        return $this->hasMany(MaintenancePurchaseItem::class);
+    }
+
     public function checklistCompletions(): HasMany
     {
         return $this->hasMany(MaintenanceChecklistCompletion::class);

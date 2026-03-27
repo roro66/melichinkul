@@ -5,7 +5,13 @@
 @section('content')
 <div class="space-y-6">
     @php
-        $maintenance = \App\Models\Maintenance::with(['vehicle', 'responsibleTechnician', 'assignedDriver', 'approvedBy', 'maintenanceSpareParts.sparePart', 'checklistCompletions.completedBy'])->findOrFail($id);
+        $hasPurchaseItemsTable = \Illuminate\Support\Facades\Schema::hasTable('maintenance_purchase_items');
+        $with = ['vehicle', 'responsibleTechnician', 'assignedDriver', 'approvedBy', 'maintenanceSpareParts.sparePart', 'checklistCompletions.completedBy'];
+        if ($hasPurchaseItemsTable) {
+            $with[] = 'purchaseItems.sparePart';
+        }
+        $maintenance = \App\Models\Maintenance::with($with)->findOrFail($id);
+        $purchaseItems = $hasPurchaseItemsTable ? $maintenance->purchaseItems : collect();
         $spareParts = \App\Models\SparePart::where('active', true)->orderBy('code')->get();
         $checklistItems = $maintenance->getChecklistItemsForMaintenance();
         $completedItemIds = $maintenance->checklistCompletions->pluck('maintenance_checklist_item_id')->all();
@@ -140,7 +146,7 @@
     <!-- Repuestos utilizados -->
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Repuestos utilizados</h2>
-        @if($maintenance->maintenanceSpareParts->isEmpty())
+        @if($purchaseItems->isEmpty() && $maintenance->maintenanceSpareParts->isEmpty())
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">No hay repuestos registrados. Al completar el mantenimiento se descontará el stock.</p>
         @else
             <div class="overflow-x-auto mb-4">
@@ -148,7 +154,11 @@
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Repuesto</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Proveedor</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Documento</th>
                             <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Cantidad</th>
+                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Valor</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Comprobante</th>
                             @can('maintenances.edit')
                             @if($maintenance->status !== 'completed' && $maintenance->status !== 'cancelled')
                                 <th class="px-4 py-2 w-20"></th>
@@ -157,26 +167,58 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
-                        @foreach($maintenance->maintenanceSpareParts as $pivot)
+                        @foreach($purchaseItems as $item)
                             <tr>
                                 <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">
-                                    <a href="{{ route('repuestos.show', $pivot->sparePart->id) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ $pivot->sparePart->code }}</a>
-                                    - {{ $pivot->sparePart->description }}
+                                    @if($item->sparePart)
+                                        <a href="{{ route('repuestos.show', $item->sparePart->id) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ $item->sparePart->code }}</a> - {{ $item->product_name }}
+                                    @else
+                                        {{ $item->product_name }}
+                                    @endif
                                 </td>
-                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-white text-right">{{ $pivot->quantity }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">{{ $item->supplier_name }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">{{ $item->document_number }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-white text-right">{{ $item->quantity }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-white text-right">${{ number_format((int) $item->line_total, 0, ',', '.') }}</td>
+                                <td class="px-4 py-2 text-sm">
+                                    @if($item->document_image_path)
+                                        <a href="{{ Storage::url($item->document_image_path) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Ver</a>
+                                    @else
+                                        <span class="text-gray-500 dark:text-gray-400">—</span>
+                                    @endif
+                                </td>
                                 @can('maintenances.edit')
                                 @if($maintenance->status !== 'completed' && $maintenance->status !== 'cancelled')
-                                    <td class="px-4 py-2">
-                                        <form action="{{ route('mantenimientos.repuestos.remove', [$maintenance->id, $pivot->id]) }}" method="POST" class="inline" onsubmit="return confirm('¿Quitar este repuesto del mantenimiento?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm" title="Quitar"><i class="fas fa-times"></i></button>
-                                        </form>
-                                    </td>
+                                    <td class="px-4 py-2"></td>
                                 @endif
                                 @endcan
                             </tr>
                         @endforeach
+                        @if($purchaseItems->isEmpty())
+                            @foreach($maintenance->maintenanceSpareParts as $pivot)
+                                <tr>
+                                    <td class="px-4 py-2 text-sm text-gray-900 dark:text-white">
+                                        <a href="{{ route('repuestos.show', $pivot->sparePart->id) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ $pivot->sparePart->code }}</a> - {{ $pivot->sparePart->description }}
+                                    </td>
+                                    <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">—</td>
+                                    <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">—</td>
+                                    <td class="px-4 py-2 text-sm text-gray-900 dark:text-white text-right">{{ $pivot->quantity }}</td>
+                                    <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-right">—</td>
+                                    <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">—</td>
+                                    @can('maintenances.edit')
+                                    @if($maintenance->status !== 'completed' && $maintenance->status !== 'cancelled')
+                                        <td class="px-4 py-2">
+                                            <form action="{{ route('mantenimientos.repuestos.remove', [$maintenance->id, $pivot->id]) }}" method="POST" class="inline" onsubmit="return confirm('¿Quitar este repuesto del mantenimiento?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm" title="Quitar"><i class="fas fa-times"></i></button>
+                                            </form>
+                                        </td>
+                                    @endif
+                                    @endcan
+                                </tr>
+                            @endforeach
+                        @endif
                     </tbody>
                 </table>
             </div>
