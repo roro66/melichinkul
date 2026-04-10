@@ -5,8 +5,8 @@ use App\Models\MaintenancePurchaseItem;
 use App\Models\MaintenanceTemplate;
 use App\Models\InventoryMovement;
 use App\Models\SparePart;
-use App\Models\Stock;
 use App\Models\Supplier;
+use App\Models\Stock;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\Driver;
@@ -49,6 +49,8 @@ new class extends Component
     public $evidence_invoice = null;
     public $evidence_photo = null;
     public array $purchaseItems = [];
+
+    public bool $purchaseItemsModalOpen = false;
 
     public bool $quickSupplierModalOpen = false;
 
@@ -271,172 +273,6 @@ new class extends Component
             $this->addPurchaseItemRow();
         }
         $this->recalculatePartsCostFromItems();
-    }
-
-    public function openQuickSupplierModal(int $lineIndex): void
-    {
-        if (! auth()->user()->can("suppliers.create")) {
-            abort(403);
-        }
-        if (! isset($this->purchaseItems[$lineIndex])) {
-            return;
-        }
-        $this->quickSupplierLineIndex = $lineIndex;
-        $this->reset(
-            "quickSupplierName",
-            "quickSupplierRut",
-            "quickSupplierContactName",
-            "quickSupplierPhone",
-            "quickSupplierEmail"
-        );
-        $this->quickSupplierModalOpen = true;
-    }
-
-    public function closeQuickSupplierModal(): void
-    {
-        $this->quickSupplierModalOpen = false;
-        $this->quickSupplierLineIndex = null;
-        $this->reset(
-            "quickSupplierName",
-            "quickSupplierRut",
-            "quickSupplierContactName",
-            "quickSupplierPhone",
-            "quickSupplierEmail"
-        );
-    }
-
-    public function saveQuickSupplier(): void
-    {
-        if (! auth()->user()->can("suppliers.create")) {
-            abort(403);
-        }
-        if ($this->quickSupplierLineIndex === null || ! isset($this->purchaseItems[$this->quickSupplierLineIndex])) {
-            $this->closeQuickSupplierModal();
-
-            return;
-        }
-
-        $validated = $this->validate(
-            [
-                "quickSupplierName" => ["required", "string", "max:255"],
-                "quickSupplierRut" => ["nullable", "string", "max:32"],
-                "quickSupplierContactName" => ["nullable", "string", "max:255"],
-                "quickSupplierPhone" => ["nullable", "string", "max:64"],
-                "quickSupplierEmail" => ["nullable", "email", "max:255"],
-            ],
-            [],
-            [
-                "quickSupplierName" => "nombre",
-                "quickSupplierRut" => "RUT",
-                "quickSupplierContactName" => "contacto",
-                "quickSupplierPhone" => "teléfono",
-                "quickSupplierEmail" => "correo",
-            ]
-        );
-
-        Supplier::create([
-            "name" => $validated["quickSupplierName"],
-            "rut" => $validated["quickSupplierRut"] ?: null,
-            "contact_name" => $validated["quickSupplierContactName"] ?: null,
-            "phone" => $validated["quickSupplierPhone"] ?: null,
-            "email" => $validated["quickSupplierEmail"] ?: null,
-            "address" => null,
-            "active" => true,
-        ]);
-
-        $idx = $this->quickSupplierLineIndex;
-        $this->purchaseItems[$idx]["supplier_name"] = $validated["quickSupplierName"];
-        $this->closeQuickSupplierModal();
-    }
-
-    public function openQuickSparePartModal(int $lineIndex): void
-    {
-        if (! auth()->user()->can("spare_parts.create")) {
-            abort(403);
-        }
-        if (! isset($this->purchaseItems[$lineIndex])) {
-            return;
-        }
-        $this->quickSparePartLineIndex = $lineIndex;
-        $this->reset(
-            "quickSpareCode",
-            "quickSpareDescription",
-            "quickSpareBrand",
-            "quickSpareReferencePrice"
-        );
-        $this->quickSpareCategory = "spare_part";
-        $this->quickSparePartModalOpen = true;
-    }
-
-    public function closeQuickSparePartModal(): void
-    {
-        $this->quickSparePartModalOpen = false;
-        $this->quickSparePartLineIndex = null;
-        $this->reset(
-            "quickSpareCode",
-            "quickSpareDescription",
-            "quickSpareBrand",
-            "quickSpareReferencePrice"
-        );
-        $this->quickSpareCategory = "spare_part";
-    }
-
-    public function saveQuickSparePart(): void
-    {
-        if (! auth()->user()->can("spare_parts.create")) {
-            abort(403);
-        }
-        if ($this->quickSparePartLineIndex === null || ! isset($this->purchaseItems[$this->quickSparePartLineIndex])) {
-            $this->closeQuickSparePartModal();
-
-            return;
-        }
-
-        if ($this->quickSpareReferencePrice === "" || $this->quickSpareReferencePrice === null) {
-            $this->quickSpareReferencePrice = null;
-        } else {
-            $this->quickSpareReferencePrice = (int) $this->quickSpareReferencePrice;
-        }
-
-        $validated = $this->validate(
-            [
-                "quickSpareCode" => ["required", "string", "max:64", "unique:spare_parts,code"],
-                "quickSpareDescription" => ["required", "string", "max:255"],
-                "quickSpareBrand" => ["nullable", "string", "max:255"],
-                "quickSpareCategory" => ["required", "string", Rule::in(array_keys(SparePart::CATEGORIES))],
-                "quickSpareReferencePrice" => ["nullable", "integer", "min:0"],
-            ],
-            [],
-            [
-                "quickSpareCode" => "código",
-                "quickSpareDescription" => "descripción",
-                "quickSpareBrand" => "marca",
-                "quickSpareCategory" => "categoría",
-                "quickSpareReferencePrice" => "precio referencia",
-            ]
-        );
-
-        $refPrice = (int) ($validated["quickSpareReferencePrice"] ?? 0);
-
-        $sparePart = SparePart::create([
-            "code" => $validated["quickSpareCode"],
-            "description" => $validated["quickSpareDescription"],
-            "brand" => $validated["quickSpareBrand"] ?: null,
-            "category" => $validated["quickSpareCategory"],
-            "reference_price" => $refPrice,
-            "has_expiration" => false,
-            "active" => true,
-        ]);
-
-        $idx = $this->quickSparePartLineIndex;
-        $this->purchaseItems[$idx]["spare_part_id"] = $sparePart->id;
-        $this->purchaseItems[$idx]["product_name"] = $sparePart->description ?: $sparePart->code;
-        if ((int) ($this->purchaseItems[$idx]["unit_price"] ?? 0) === 0) {
-            $this->purchaseItems[$idx]["unit_price"] = $refPrice;
-        }
-        $this->recalculateItemLineTotal($idx);
-        $this->recalculatePartsCostFromItems();
-        $this->closeQuickSparePartModal();
     }
 
     private function recalculateItemLineTotal(int $index): void
@@ -682,6 +518,159 @@ new class extends Component
         }
     }
 
+
+    public function openQuickSupplierModal(int $lineIndex): void
+    {
+        if (! auth()->user()->can("suppliers.create")) {
+            abort(403);
+        }
+        if (! isset($this->purchaseItems[$lineIndex])) {
+            return;
+        }
+        $this->quickSupplierLineIndex = $lineIndex;
+        $this->quickSupplierName = "";
+        $this->quickSupplierRut = "";
+        $this->quickSupplierContactName = "";
+        $this->quickSupplierPhone = "";
+        $this->quickSupplierEmail = "";
+        $this->resetValidation([
+            "quickSupplierName",
+            "quickSupplierRut",
+            "quickSupplierContactName",
+            "quickSupplierPhone",
+            "quickSupplierEmail",
+        ]);
+        $this->quickSupplierModalOpen = true;
+    }
+
+    public function closeQuickSupplierModal(): void
+    {
+        $this->quickSupplierModalOpen = false;
+        $this->quickSupplierLineIndex = null;
+    }
+
+    public function saveQuickSupplier(): void
+    {
+        if (! auth()->user()->can("suppliers.create")) {
+            abort(403);
+        }
+        $this->validate(
+            [
+                "quickSupplierName" => ["required", "string", "max:255"],
+                "quickSupplierRut" => ["nullable", "string", "max:32"],
+                "quickSupplierContactName" => ["nullable", "string", "max:255"],
+                "quickSupplierPhone" => ["nullable", "string", "max:64"],
+                "quickSupplierEmail" => ["nullable", "email", "max:255"],
+            ],
+            [],
+            [
+                "quickSupplierName" => "nombre",
+                "quickSupplierRut" => "RUT",
+                "quickSupplierContactName" => "contacto",
+                "quickSupplierPhone" => "teléfono",
+                "quickSupplierEmail" => "correo",
+            ]
+        );
+
+        $supplier = Supplier::create([
+            "name" => $this->quickSupplierName,
+            "rut" => $this->quickSupplierRut !== "" ? $this->quickSupplierRut : null,
+            "contact_name" => $this->quickSupplierContactName !== "" ? $this->quickSupplierContactName : null,
+            "phone" => $this->quickSupplierPhone !== "" ? $this->quickSupplierPhone : null,
+            "email" => $this->quickSupplierEmail !== "" ? $this->quickSupplierEmail : null,
+            "active" => true,
+        ]);
+
+        $idx = $this->quickSupplierLineIndex;
+        if ($idx !== null && isset($this->purchaseItems[$idx])) {
+            $this->purchaseItems[$idx]["supplier_name"] = $supplier->name;
+        }
+
+        $this->closeQuickSupplierModal();
+    }
+
+    public function openQuickSparePartModal(int $lineIndex): void
+    {
+        if (! auth()->user()->can("spare_parts.create")) {
+            abort(403);
+        }
+        if (! isset($this->purchaseItems[$lineIndex])) {
+            return;
+        }
+        $this->quickSparePartLineIndex = $lineIndex;
+        $this->quickSpareCode = "";
+        $this->quickSpareDescription = "";
+        $this->quickSpareBrand = "";
+        $this->quickSpareCategory = "spare_part";
+        $this->quickSpareReferencePrice = null;
+        $this->resetValidation([
+            "quickSpareCode",
+            "quickSpareDescription",
+            "quickSpareBrand",
+            "quickSpareCategory",
+            "quickSpareReferencePrice",
+        ]);
+        $this->quickSparePartModalOpen = true;
+    }
+
+    public function closeQuickSparePartModal(): void
+    {
+        $this->quickSparePartModalOpen = false;
+        $this->quickSparePartLineIndex = null;
+    }
+
+    public function saveQuickSparePart(): void
+    {
+        if (! auth()->user()->can("spare_parts.create")) {
+            abort(403);
+        }
+        $this->validate(
+            [
+                "quickSpareCode" => ["required", "string", "max:64", "unique:spare_parts,code"],
+                "quickSpareDescription" => ["required", "string", "max:255"],
+                "quickSpareBrand" => ["nullable", "string", "max:255"],
+                "quickSpareCategory" => ["required", "string", Rule::in(array_keys(SparePart::CATEGORIES))],
+                "quickSpareReferencePrice" => ["nullable", "integer", "min:0"],
+            ],
+            [],
+            [
+                "quickSpareCode" => "código",
+                "quickSpareDescription" => "descripción",
+                "quickSpareBrand" => "marca",
+                "quickSpareCategory" => "categoría",
+                "quickSpareReferencePrice" => "precio referencia",
+            ]
+        );
+
+        $spare = SparePart::create([
+            "code" => $this->quickSpareCode,
+            "description" => $this->quickSpareDescription,
+            "brand" => $this->quickSpareBrand !== "" ? $this->quickSpareBrand : null,
+            "category" => $this->quickSpareCategory,
+            "reference_price" => (int) ($this->quickSpareReferencePrice ?? 0),
+            "has_expiration" => false,
+            "active" => true,
+        ]);
+
+        Stock::firstOrCreate(
+            ["spare_part_id" => $spare->id],
+            ["quantity" => 0, "min_stock" => null, "location" => null]
+        );
+
+        $idx = $this->quickSparePartLineIndex;
+        if ($idx !== null && isset($this->purchaseItems[$idx])) {
+            $this->purchaseItems[$idx]["spare_part_id"] = $spare->id;
+            $this->purchaseItems[$idx]["product_name"] = $spare->description ?: $spare->code;
+            if (empty($this->purchaseItems[$idx]["unit_price"])) {
+                $this->purchaseItems[$idx]["unit_price"] = (int) ($spare->reference_price ?? 0);
+            }
+            $this->recalculateItemLineTotal($idx);
+            $this->recalculatePartsCostFromItems();
+        }
+
+        $this->closeQuickSparePartModal();
+    }
+
     public function render()
     {
         $vehicles = Vehicle::where("status", "!=", "decommissioned")->orderBy("license_plate")->get();
@@ -703,21 +692,46 @@ new class extends Component
         ]);
     }
 
+    /**
+     * Fila plantilla: quantity=1 por defecto sin otros datos; no debe disparar validación de compra.
+     */
+    private function purchaseItemRowIsMeaningful(array $item): bool
+    {
+        $sparePartId = $item["spare_part_id"] ?? null;
+        $productName = trim((string) ($item["product_name"] ?? ""));
+        $supplierName = trim((string) ($item["supplier_name"] ?? ""));
+        $documentNumber = trim((string) ($item["document_number"] ?? ""));
+        $unitPrice = (int) ($item["unit_price"] ?? 0);
+        $quantity = (int) ($item["quantity"] ?? 0);
+        $hasImage = ! empty($item["document_image"]) || ! empty($item["document_image_path"]);
+
+        if (
+            ! $sparePartId
+            && $productName === ""
+            && $supplierName === ""
+            && $documentNumber === ""
+            && $unitPrice <= 0
+            && ! $hasImage
+            && $quantity === 1
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
     private function validatePurchaseItemsBusinessRules(): void
     {
         foreach ($this->purchaseItems as $idx => $item) {
+            if (! $this->purchaseItemRowIsMeaningful($item)) {
+                continue;
+            }
             $sparePartId = $item["spare_part_id"] ?? null;
             $productName = trim((string) ($item["product_name"] ?? ""));
             $supplierName = trim((string) ($item["supplier_name"] ?? ""));
             $documentNumber = trim((string) ($item["document_number"] ?? ""));
             $unitPrice = (int) ($item["unit_price"] ?? 0);
             $quantity = (int) ($item["quantity"] ?? 0);
-            $hasImage = ! empty($item["document_image"]) || ! empty($item["document_image_path"]);
-            $hasAnyData = $sparePartId || $productName !== "" || $supplierName !== "" || $documentNumber !== "" || $unitPrice > 0 || $quantity > 0 || $hasImage;
-
-            if (! $hasAnyData) {
-                continue;
-            }
             if (! $sparePartId && $productName === "") {
                 $this->addError("purchaseItems.$idx.product_name", "Debe seleccionar repuesto de bodega o indicar un producto manual.");
             }
@@ -733,6 +747,7 @@ new class extends Component
         }
 
         if (! empty($this->getErrorBag()->toArray())) {
+            $this->purchaseItemsModalOpen = true;
             throw \Illuminate\Validation\ValidationException::withMessages($this->getErrorBag()->toArray());
         }
     }
@@ -741,16 +756,7 @@ new class extends Component
     {
         DB::transaction(function () use ($maintenance) {
             $lines = collect($this->purchaseItems)
-                ->filter(function ($item) {
-                    $sparePartId = $item["spare_part_id"] ?? null;
-                    $productName = trim((string) ($item["product_name"] ?? ""));
-                    $supplierName = trim((string) ($item["supplier_name"] ?? ""));
-                    $documentNumber = trim((string) ($item["document_number"] ?? ""));
-                    $unitPrice = (int) ($item["unit_price"] ?? 0);
-                    $quantity = (int) ($item["quantity"] ?? 0);
-                    $hasImage = ! empty($item["document_image"]) || ! empty($item["document_image_path"]);
-                    return $sparePartId || $productName !== "" || $supplierName !== "" || $documentNumber !== "" || $unitPrice > 0 || $quantity > 0 || $hasImage;
-                })
+                ->filter(fn ($item) => $this->purchaseItemRowIsMeaningful($item))
                 ->values()
                 ->all();
 
@@ -770,16 +776,14 @@ new class extends Component
 
             $this->purchaseItems = $lines;
             foreach ($this->purchaseItems as $idx => $line) {
-                $unitPrice = (int) ($line["unit_price"] ?? 0);
-                $quantity = max(1, (int) ($line["quantity"] ?? 1));
-                $lineTotal = $unitPrice * $quantity;
+                $lineTotal = (int) ($line["line_total"] ?? 0);
                 $lineData = [
                     "spare_part_id" => $line["spare_part_id"] ?: null,
                     "product_name" => trim((string) ($line["product_name"] ?? "")),
                     "supplier_name" => trim((string) ($line["supplier_name"] ?? "")),
                     "document_number" => trim((string) ($line["document_number"] ?? "")),
-                    "unit_price" => $unitPrice,
-                    "quantity" => $quantity,
+                    "unit_price" => (int) ($line["unit_price"] ?? 0),
+                    "quantity" => max(1, (int) ($line["quantity"] ?? 1)),
                     "line_total" => $lineTotal,
                 ];
 
