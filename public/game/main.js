@@ -67,6 +67,7 @@ const gameRootEl = document.getElementById('gameRoot');
 // Nombre del jugador actual
 let currentPlayer = 'AAA';
 let gameRunning = false;
+let endGameInProgress = false;
 
 const ACH_STORAGE_KEY = 'dai_melichinkul_ach_v1';
 const PB_STORAGE_KEY = 'dai_melichinkul_pb_v1';
@@ -1201,6 +1202,9 @@ function resetGameState() {
 }
 
 function initGame() {
+    endGameInProgress = false;
+    useOnlineRanking = true;
+
     gameRandom = createDailyRng();
     resetGameState();
 
@@ -1386,6 +1390,15 @@ function setupEventListeners() {
             endGame();
         }
     });
+
+    window.addEventListener('message', (e) => {
+        if (e.origin !== window.location.origin) {
+            return;
+        }
+        if (e.data && e.data.type === 'DAI_PARENT_CLOSING' && gameRunning && !endGameInProgress) {
+            endGame();
+        }
+    });
 }
 
 function collectSessionAchievements() {
@@ -1411,6 +1424,10 @@ function collectSessionAchievements() {
 
 // Función para terminar el juego
 async function endGame() {
+    if (endGameInProgress) {
+        return;
+    }
+    endGameInProgress = true;
     gameRunning = false;
     gameState.paused = false;
     stopAmbientDrone();

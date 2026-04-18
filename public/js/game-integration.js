@@ -18,6 +18,8 @@
         gameContainer: null
     };
 
+    let pauseGameTimer = null;
+
     // Combinaciones de teclas
     const GAME_TOGGLE_KEY = 'g'; // Ctrl + Alt + G
     const BOSS_MODE_KEY = 'x';   // Ctrl + Alt + X (eXit - modo jefe)
@@ -227,8 +229,8 @@
         }
     }
 
-    // Pausar el juego (modo jefe)
-    function pauseGame() {
+    function hideGameOverlay() {
+        pauseGameTimer = null;
         if (!gameState.isActive) {
             return;
         }
@@ -245,15 +247,37 @@
             appShell.style.display = '';
         }
 
-        // Restaurar la última vista
         restoreLastView();
-        
-        // Asegurar que el documento pueda recibir eventos de nuevo
-        // Dar foco al body para que los listeners funcionen
+
         setTimeout(() => {
             document.body.focus();
             window.focus();
         }, 100);
+    }
+
+    /**
+     * Cierra el overlay: pide al iframe guardar puntaje (POST ranking) y espera antes de ocultar.
+     */
+    function pauseGame() {
+        if (!gameState.isActive) {
+            return;
+        }
+
+        try {
+            if (gameState.gameIframe && gameState.gameIframe.contentWindow) {
+                gameState.gameIframe.contentWindow.postMessage(
+                    { type: 'DAI_PARENT_CLOSING' },
+                    window.location.origin
+                );
+            }
+        } catch (err) {
+            /* mismo origen */
+        }
+
+        if (pauseGameTimer) {
+            clearTimeout(pauseGameTimer);
+        }
+        pauseGameTimer = setTimeout(hideGameOverlay, 900);
     }
 
     // Manejar combinación de teclas
