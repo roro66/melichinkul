@@ -19,6 +19,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
+      - LARAVEL_DEPLOY_UID=1000
       - DB_HOST=host.docker.internal
       - DB_PORT=5432
       - DB_DATABASE=melichinkul_db
@@ -90,6 +91,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
+      - LARAVEL_DEPLOY_UID=1000
       - BROADCAST_CONNECTION=reverb
       - REVERB_APP_ID=${REVERB_APP_ID:-melichinkul}
       - REVERB_APP_KEY=${REVERB_APP_KEY:-local-key}
@@ -117,6 +119,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
+      - LARAVEL_DEPLOY_UID=1000
       - DB_HOST=host.docker.internal
       - DB_PORT=5432
       - DB_DATABASE=melichinkul_db
