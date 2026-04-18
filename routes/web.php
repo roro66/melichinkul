@@ -170,4 +170,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/usuarios/{usuario}/edit', [\App\Http\Controllers\UserController::class, 'edit'])->name('usuarios.edit')->middleware('permission:users.manage');
     Route::match(['put', 'patch'], '/usuarios/{usuario}', [\App\Http\Controllers\UserController::class, 'update'])->name('usuarios.update')->middleware('permission:users.manage');
     Route::delete('/usuarios/{usuario}', [\App\Http\Controllers\UserController::class, 'destroy'])->name('usuarios.destroy')->middleware('permission:users.manage');
+
+    // DA-I — ranking (sesión web, CSRF en POST; solo autenticados)
+    Route::prefix('api/game')->group(function () {
+        Route::get('/ranking', [\App\Http\Controllers\Api\GameRankingController::class, 'index'])
+            ->middleware('throttle:game-ranking-read');
+        Route::post('/ranking', [\App\Http\Controllers\Api\GameRankingController::class, 'store'])
+            ->middleware('throttle:game-ranking-write');
+    });
 });

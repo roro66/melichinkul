@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DA-I - Defensa Antiaérea</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Pantalla de inicio -->
+        <div id="startScreen" class="overlay">
+            <h1>DA-I</h1>
+            <h2>Defensa Antiaérea</h2>
+            <div class="input-group">
+                <label for="playerName">Ingresa tu nombre o iniciales:</label>
+                <input type="text" id="playerName" maxlength="10" placeholder="AAA">
+            </div>
+            <button id="startBtn">INICIAR JUEGO</button>
+            <div id="rankingPreview" class="ranking-preview"></div>
+        </div>
+
+        <!-- Pantalla de Game Over -->
+        <div id="gameOverScreen" class="overlay hidden">
+            <h1>GAME OVER</h1>
+            <div id="finalScore"></div>
+            <div id="finalTime"></div>
+            <div id="rankingTable" class="ranking-table"></div>
+            <button id="restartBtn">JUGAR DE NUEVO</button>
+        </div>
+
+        <canvas id="gameCanvas" width="1200" height="800"></canvas>
+        <div class="ui">
+            <div id="playerDisplay"></div>
+            <div id="score">Puntaje: 0</div>
+            <div id="timer">Tiempo: 00:00</div>
+            <button id="rankingBtn" class="ranking-btn">🏆 Ranking</button>
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>

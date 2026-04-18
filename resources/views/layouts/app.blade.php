@@ -402,7 +402,7 @@
     </script>
 </head>
 <body class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-    <div class="flex h-full">
+    <div id="melichinkul-app-shell" class="flex h-full">
         <!-- Sidebar -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0">
             <div class="flex flex-col h-full">
@@ -1024,5 +1024,9 @@
             }
         });
     </script>
+    @auth
+    {{-- DA-I: solo usuarios autenticados; ranking con sesión + CSRF (véase rutas api/game) --}}
+    <script src="{{ asset('js/game-integration.js') }}"></script>
+    @endauth
 </body>
 </html>
