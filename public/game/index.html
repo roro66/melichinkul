@@ -3,39 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DA-I - Defensa Antiaérea</title>
+    <title>DA-I · Melichinkul</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="gameRoot">
+        <div class="scanlines" aria-hidden="true"></div>
         <!-- Pantalla de inicio -->
         <div id="startScreen" class="overlay">
             <h1>DA-I</h1>
-            <h2>Defensa Antiaérea</h2>
-            <div class="input-group">
-                <label for="playerName">Ingresa tu nombre o iniciales:</label>
-                <input type="text" id="playerName" maxlength="10" placeholder="AAA">
+            <h2>Defensa antiaérea · <span class="brand">Melichinkul</span></h2>
+            <p class="tagline">Pausa operativa autorizada</p>
+            <div class="options-row">
+                <label class="chk"><input type="checkbox" id="highContrastToggle"> Alto contraste</label>
+                <label class="chk"><input type="checkbox" id="muteAudioToggle"> Silenciar audio</label>
             </div>
-            <button id="startBtn">INICIAR JUEGO</button>
+            <div class="input-group">
+                <label for="playerName">Nombre o iniciales (ranking):</label>
+                <input type="text" id="playerName" maxlength="10" placeholder="AAA" autocomplete="off">
+            </div>
+            <button type="button" id="startBtn">INICIAR MISIÓN</button>
+            <p class="controls-hint">Teclas <strong>1 · 2 · 3</strong> disparan torres · <strong>P</strong> pausa · <strong>Ctrl+Alt+G</strong> desde la app · OVNI = más puntos</p>
             <div id="rankingPreview" class="ranking-preview"></div>
         </div>
 
         <!-- Pantalla de Game Over -->
         <div id="gameOverScreen" class="overlay hidden">
-            <h1>GAME OVER</h1>
+            <h1>MISIÓN TERMINADA</h1>
             <div id="finalScore"></div>
             <div id="finalTime"></div>
+            <div id="achievementsBox" class="achievements-box"></div>
             <div id="rankingTable" class="ranking-table"></div>
-            <button id="restartBtn">JUGAR DE NUEVO</button>
+            <button type="button" id="restartBtn">NUEVA MISIÓN</button>
         </div>
 
-        <canvas id="gameCanvas" width="1200" height="800"></canvas>
-        <div class="ui">
+        <canvas id="gameCanvas" width="1200" height="800" role="img" aria-label="Campo de juego DA-I"></canvas>
+        <div class="ui hud-bar">
             <div id="playerDisplay"></div>
+            <div id="waveDisplay" class="hud-muted">Oleada: 1</div>
+            <div id="livesDisplay" class="hud-lives">❤❤❤</div>
+            <div id="comboDisplay" class="combo-display">Combo ×1.0</div>
             <div id="score">Puntaje: 0</div>
+            <div id="ammoHud" class="ammo-hud">Munición: 8·8·8</div>
             <div id="timer">Tiempo: 00:00</div>
-            <button id="rankingBtn" class="ranking-btn">🏆 Ranking</button>
+            <button type="button" id="rankingBtn" class="ranking-btn">Ranking</button>
         </div>
+        <p class="daily-seed-hint" id="dailySeedHint"></p>
     </div>
     <script src="main.js"></script>
 </body>

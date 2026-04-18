@@ -27,6 +27,15 @@ const CONFIG = {
     UFO_MIN_SPEED: 1.5,
     UFO_MAX_SPEED: 3.5,
     UFO_ORBIT_RADIUS: 100,
+    /** Por debajo de esta Y el avión viola el espacio aéreo (pérdida de vida). */
+    GROUND_THREAT_Y: 605,
+    LIVES_START: 3,
+    TOWER_AMMO_MAX: 8,
+    TOWER_RELOAD_MS: 1600,
+    COMBO_DECAY_MS: 2600,
+    WAVE_INTERVAL_MS: 40000,
+    PLANE_SPAWN_MIN_MS: 380,
+    UFO_DIVE_CHANCE: 0.18,
 };
 
 // Variables globales
@@ -45,10 +54,156 @@ const rankingPreview = document.getElementById('rankingPreview');
 const rankingTable = document.getElementById('rankingTable');
 const finalScoreElement = document.getElementById('finalScore');
 const finalTimeElement = document.getElementById('finalTime');
+const waveDisplayEl = document.getElementById('waveDisplay');
+const livesDisplayEl = document.getElementById('livesDisplay');
+const comboDisplayEl = document.getElementById('comboDisplay');
+const ammoHudEl = document.getElementById('ammoHud');
+const dailySeedHintEl = document.getElementById('dailySeedHint');
+const achievementsBoxEl = document.getElementById('achievementsBox');
+const highContrastToggle = document.getElementById('highContrastToggle');
+const muteAudioToggle = document.getElementById('muteAudioToggle');
+const gameRootEl = document.getElementById('gameRoot');
 
 // Nombre del jugador actual
 let currentPlayer = 'AAA';
 let gameRunning = false;
+
+const ACH_STORAGE_KEY = 'dai_melichinkul_ach_v1';
+const PB_STORAGE_KEY = 'dai_melichinkul_pb_v1';
+
+/** RNG con semilla diaria (misma secuencia para todos en un día). */
+function createDailyRng() {
+    const d = new Date();
+    const seedStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    let h = 2166136261;
+    for (let i = 0; i < seedStr.length; i++) {
+        h = Math.imul(h ^ seedStr.charCodeAt(i), 16777619);
+    }
+    let state = h >>> 0;
+    return () => {
+        state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+        return (state & 0xffffff) / 0x1000000;
+    };
+}
+
+let gameRandom = Math.random;
+function rng() {
+    return gameRandom();
+}
+
+let soundMuted = false;
+let prefersReducedMotion = false;
+try {
+    prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+} catch (e) {
+    /* noop */
+}
+
+let ambientOscillator = null;
+let ambientGainNode = null;
+
+function stopAmbientDrone() {
+    try {
+        if (ambientOscillator) {
+            ambientOscillator.stop();
+        }
+    } catch (e) {
+        /* noop */
+    }
+    ambientOscillator = null;
+    ambientGainNode = null;
+}
+
+function startAmbientDrone() {
+    if (!audioContext || soundMuted || prefersReducedMotion) return;
+    stopAmbientDrone();
+    ambientOscillator = audioContext.createOscillator();
+    ambientGainNode = audioContext.createGain();
+    ambientOscillator.type = 'triangle';
+    ambientOscillator.frequency.value = 52;
+    ambientGainNode.gain.value = 0.012;
+    ambientOscillator.connect(ambientGainNode);
+    ambientGainNode.connect(audioContext.destination);
+    ambientOscillator.start();
+}
+
+function setMuted(muted) {
+    soundMuted = muted;
+    if (ambientGainNode && audioContext) {
+        const t = audioContext.currentTime;
+        ambientGainNode.gain.cancelScheduledValues(t);
+        ambientGainNode.gain.linearRampToValueAtTime(muted ? 0 : 0.012, t + 0.08);
+    } else if (!muted) {
+        startAmbientDrone();
+    }
+}
+
+function loadAchievements() {
+    try {
+        const raw = localStorage.getItem(ACH_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveAchievements(ids) {
+    try {
+        localStorage.setItem(ACH_STORAGE_KEY, JSON.stringify(ids));
+    } catch (e) {
+        /* noop */
+    }
+}
+
+function unlockAchievement(id) {
+    const a = loadAchievements();
+    if (!a.includes(id)) {
+        a.push(id);
+        saveAchievements(a);
+        return true;
+    }
+    return false;
+}
+
+function getPersonalBestRecord() {
+    try {
+        const raw = localStorage.getItem(PB_STORAGE_KEY);
+        if (!raw) return null;
+        const o = JSON.parse(raw);
+        if (typeof o.score === 'number') return o;
+    } catch (e) {
+        /* noop */
+    }
+    return null;
+}
+
+function savePersonalBestIfBetter(score, name) {
+    const prev = getPersonalBestRecord();
+    const improved = prev ? score > prev.score : score > 0;
+    if (!improved) {
+        return false;
+    }
+    try {
+        localStorage.setItem(PB_STORAGE_KEY, JSON.stringify({
+            score,
+            name: (name || '').toUpperCase().substring(0, 10),
+            at: new Date().toISOString(),
+        }));
+    } catch (e) {
+        /* noop */
+    }
+    return true;
+}
+
+function getDailySeedLabel() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function comboMultiplierFromChain(chain) {
+    return 1 + 0.12 * Math.min(Math.max(0, chain), 14);
+}
 
 // ============================================================================
 // Sistema de Sonidos (Web Audio API)
@@ -66,7 +221,7 @@ function initAudio() {
 
 // Función para crear sonido de disparo (pitido agudo y corto)
 function playShootSound() {
-    if (!audioContext) return;
+    if (soundMuted || !audioContext) return;
     
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -86,7 +241,7 @@ function playShootSound() {
 
 // Función para crear sonido de explosión (ruido con frecuencia descendente)
 function playExplosionSound() {
-    if (!audioContext) return;
+    if (soundMuted || !audioContext) return;
     
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -107,7 +262,7 @@ function playExplosionSound() {
 
 // Función para crear sonido único de explosión de UFO (múltiples tonos)
 function playUFOExplosionSound() {
-    if (!audioContext) return;
+    if (soundMuted || !audioContext) return;
     
     // Primer tono (bajo y resonante)
     const oscillator1 = audioContext.createOscillator();
@@ -158,6 +313,21 @@ function playUFOExplosionSound() {
     oscillator3.stop(audioContext.currentTime + 0.5);
 }
 
+function playBreachSound() {
+    if (soundMuted || !audioContext) return;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(120, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(40, audioContext.currentTime + 0.35);
+    gainNode.gain.setValueAtTime(0.35, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.4);
+}
+
 let gameState = {
     score: 0,
     startTime: null,
@@ -172,6 +342,31 @@ let gameState = {
     projectiles: [],
     explosions: [],
 };
+
+function updateAmmoHud() {
+    if (!ammoHudEl || !gameState.towers) return;
+    const parts = gameState.towers.map(t => t.ammo);
+    ammoHudEl.textContent = `Munición: ${parts.join('·')}`;
+}
+
+function updateLivesHud() {
+    if (!livesDisplayEl) return;
+    const n = Math.max(0, gameState.lives | 0);
+    livesDisplayEl.textContent = '❤'.repeat(n) + (n === 0 ? ' —' : '');
+}
+
+function updateWaveHud() {
+    if (!waveDisplayEl) return;
+    waveDisplayEl.textContent = `Oleada: ${gameState.wave | 0}`;
+}
+
+function updateComboHud() {
+    if (!comboDisplayEl) return;
+    const m = comboMultiplierFromChain(gameState.comboChain);
+    comboDisplayEl.textContent = gameState.comboChain > 0
+        ? `Combo ×${m.toFixed(2)}`
+        : 'Combo ×1.00';
+}
 
 // ============================================================================
 // Sistema de ranking (Laravel: sesión + CSRF; solo usuarios autenticados)
@@ -305,12 +500,22 @@ async function renderRanking(container, highlightIndex = -1) {
         return;
     }
     
+    const pb = getPersonalBestRecord();
+    const pbScore = pb && typeof pb.score === 'number' ? pb.score : -1;
+    const pbName = pb && pb.name ? String(pb.name).toUpperCase() : '';
+
     const modeIndicator = useOnlineRanking ? '🌐' : '💾';
     let html = `<h3>${modeIndicator} Ranking</h3>`;
     ranking.forEach((entry, index) => {
         const isHighlighted = index === highlightIndex;
+        const isPb = pbScore >= 0
+            && entry.score === pbScore
+            && String(entry.name).toUpperCase() === pbName;
+        const classes = ['ranking-entry'];
+        if (isHighlighted) classes.push('current');
+        if (isPb) classes.push('personal-best');
         html += `
-            <div class="ranking-entry ${isHighlighted ? 'current' : ''}">
+            <div class="${classes.join(' ')}">
                 <span class="rank">${index + 1}.</span>
                 <span class="name">${entry.name}</span>
                 <span class="score">${entry.score}</span>
@@ -331,20 +536,38 @@ class Tower {
         this.width = CONFIG.TOWER_WIDTH;
         this.height = CONFIG.TOWER_HEIGHT;
         this.cannonHeight = CONFIG.TOWER_CANNON_HEIGHT;
-        this.color = '#00ffff';
+        this.color = '#22d3ee';
         this.canShoot = true;
         this.shootCooldown = 0;
+        this.ammo = CONFIG.TOWER_AMMO_MAX;
+        this.reloadTimer = 0;
+        this.muzzleFlash = 0;
     }
 
     update(deltaTime) {
+        if (this.reloadTimer > 0) {
+            this.reloadTimer -= deltaTime;
+            if (this.reloadTimer <= 0) {
+                this.ammo = CONFIG.TOWER_AMMO_MAX;
+                this.canShoot = true;
+                this.shootCooldown = 0;
+            }
+            return;
+        }
         if (this.shootCooldown > 0) {
             this.shootCooldown -= deltaTime;
-        } else {
+        } else if (this.ammo > 0) {
             this.canShoot = true;
+        }
+        if (this.muzzleFlash > 0) {
+            this.muzzleFlash -= deltaTime;
         }
     }
 
     shoot() {
+        if (this.reloadTimer > 0 || this.ammo <= 0) {
+            return;
+        }
         if (this.canShoot) {
             const projectile = new Projectile(
                 this.x + this.width / 2,
@@ -352,16 +575,28 @@ class Tower {
                 -CONFIG.PROJECTILE_SPEED
             );
             gameState.projectiles.push(projectile);
-            this.canShoot = false;
-            this.shootCooldown = 300; // 300ms de cooldown
-            
-            // Reproducir sonido de disparo
+            this.ammo -= 1;
+            this.muzzleFlash = 90;
+            if (this.ammo <= 0) {
+                this.reloadTimer = CONFIG.TOWER_RELOAD_MS;
+                this.canShoot = false;
+            } else {
+                this.canShoot = false;
+                this.shootCooldown = 280;
+            }
             playShootSound();
         }
     }
 
     render() {
-        // Base de la torre
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(
+            this.x + 4,
+            this.y + this.height - 14,
+            this.width,
+            22
+        );
+
         ctx.fillStyle = this.color;
         ctx.fillRect(
             this.x,
@@ -370,7 +605,6 @@ class Tower {
             20
         );
 
-        // Cuerpo de la torre
         ctx.fillRect(
             this.x + this.width / 4,
             this.y + this.height - 40,
@@ -378,7 +612,15 @@ class Tower {
             20
         );
 
-        // Cañón
+        if (this.muzzleFlash > 0) {
+            const f = this.muzzleFlash / 90;
+            ctx.fillStyle = `rgba(255, 255, 200, ${0.55 * f})`;
+            ctx.beginPath();
+            ctx.arc(this.x + this.width / 2, this.y - this.cannonHeight + 4, 14 * f, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = '#0369a1';
         ctx.fillRect(
             this.x + this.width / 2 - 3,
             this.y - this.cannonHeight,
@@ -386,14 +628,21 @@ class Tower {
             this.cannonHeight + 5
         );
 
-        // Detalle de la torre
-        ctx.fillStyle = '#0088ff';
+        ctx.fillStyle = '#0ea5e9';
         ctx.fillRect(
             this.x + this.width / 4 + 2,
             this.y + this.height - 38,
             this.width / 2 - 4,
             16
         );
+
+        if (this.reloadTimer > 0) {
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.85)';
+            ctx.font = '10px Share Tech Mono, monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('RECARGA', this.x + this.width / 2, this.y - this.cannonHeight - 6);
+            ctx.textAlign = 'left';
+        }
     }
 }
 
@@ -402,27 +651,51 @@ class Tower {
 // ============================================================================
 class Plane {
     constructor() {
-        this.size = CONFIG.PLANE_MIN_SIZE + Math.random() * (CONFIG.PLANE_MAX_SIZE - CONFIG.PLANE_MIN_SIZE);
-        this.speed = CONFIG.PLANE_MIN_SPEED + Math.random() * (CONFIG.PLANE_MAX_SPEED - CONFIG.PLANE_MIN_SPEED);
-        this.y = CONFIG.PLANE_MIN_Y + Math.random() * (CONFIG.PLANE_MAX_Y - CONFIG.PLANE_MIN_Y);
-        
-        // Determinar dirección y punto de inicio
-        if (Math.random() < 0.5) {
+        const t = rng();
+        if (t < 0.55) {
+            this.planeType = 'scout';
+        } else if (t < 0.82) {
+            this.planeType = 'interceptor';
+        } else {
+            this.planeType = 'bomber';
+        }
+
+        const sizeMul = this.planeType === 'scout' ? 0.85 : this.planeType === 'bomber' ? 1.15 : 1;
+        const speedMul = this.planeType === 'scout' ? 1.25 : this.planeType === 'bomber' ? 0.75 : 1.08;
+
+        this.size = (CONFIG.PLANE_MIN_SIZE + rng() * (CONFIG.PLANE_MAX_SIZE - CONFIG.PLANE_MIN_SIZE)) * sizeMul;
+        this.speed = (CONFIG.PLANE_MIN_SPEED + rng() * (CONFIG.PLANE_MAX_SPEED - CONFIG.PLANE_MIN_SPEED)) * speedMul;
+        this.y = CONFIG.PLANE_MIN_Y + rng() * (CONFIG.PLANE_MAX_Y - CONFIG.PLANE_MIN_Y);
+
+        if (rng() < 0.5) {
             this.x = -this.size;
-            this.direction = 1; // De izquierda a derecha
-            this.color = '#ff6600';
+            this.direction = 1;
+            this.color = this.planeType === 'bomber' ? '#b45309' : '#ea580c';
         } else {
             this.x = CONFIG.CANVAS_WIDTH + this.size;
-            this.direction = -1; // De derecha a izquierda
-            this.color = '#ff0066';
+            this.direction = -1;
+            this.color = this.planeType === 'bomber' ? '#be185d' : '#db2777';
         }
-        
-        // Calcular puntaje basado en velocidad y tamaño
-        this.points = Math.round((this.speed * 10) + ((CONFIG.PLANE_MAX_SIZE - this.size) * 2));
+
+        let basePts = (this.speed * 10) + ((CONFIG.PLANE_MAX_SIZE - this.size) * 2);
+        if (this.planeType === 'interceptor') basePts *= 1.25;
+        if (this.planeType === 'bomber') basePts *= 1.1;
+        this.points = Math.max(5, Math.round(basePts));
+        this.wobblePhase = rng() * Math.PI * 2;
     }
 
     update(deltaTime) {
-        this.x += this.speed * this.direction * (deltaTime / 16.67);
+        const dt = deltaTime / 16.67;
+        this.wobblePhase += 0.04 * dt;
+        let dy = 0;
+        if (this.planeType === 'bomber') {
+            dy = Math.sin(this.wobblePhase) * 0.35 * dt;
+        } else if (this.planeType === 'interceptor') {
+            dy = Math.sin(this.wobblePhase * 1.4) * 0.22 * dt;
+        }
+        this.x += this.speed * this.direction * dt;
+        this.y += dy;
+        this.y = Math.max(CONFIG.PLANE_MIN_Y, Math.min(CONFIG.PLANE_MAX_Y + 30, this.y));
     }
 
     render() {
@@ -504,35 +777,41 @@ class Plane {
 // ============================================================================
 class UFO {
     constructor() {
-        // Tamaño aleatorio
-        this.size = CONFIG.UFO_MIN_SIZE + Math.random() * (CONFIG.UFO_MAX_SIZE - CONFIG.UFO_MIN_SIZE);
-        // Velocidad aleatoria
-        this.speed = CONFIG.UFO_MIN_SPEED + Math.random() * (CONFIG.UFO_MAX_SPEED - CONFIG.UFO_MIN_SPEED);
-        
-        // Aparecer en una posición aleatoria dentro de la pantalla (más centrada para ser visible)
-        // Asegurar que aparezca con suficiente margen para ser visible antes de salir
+        this.ufoClass = rng() < 0.22 ? 'stalker' : rng() < 0.12 ? 'racer' : 'standard';
+
+        let sizeFactor = 1;
+        let speedFactor = 1;
+        if (this.ufoClass === 'racer') {
+            speedFactor = 1.35;
+            sizeFactor = 0.88;
+        } else if (this.ufoClass === 'stalker') {
+            speedFactor = 0.82;
+            sizeFactor = 1.08;
+        }
+
+        this.size = (CONFIG.UFO_MIN_SIZE + rng() * (CONFIG.UFO_MAX_SIZE - CONFIG.UFO_MIN_SIZE)) * sizeFactor;
+        this.speed = (CONFIG.UFO_MIN_SPEED + rng() * (CONFIG.UFO_MAX_SPEED - CONFIG.UFO_MIN_SPEED)) * speedFactor;
+
         const margin = this.size * 4;
-        this.x = margin + Math.random() * (CONFIG.CANVAS_WIDTH - margin * 2);
-        this.y = CONFIG.PLANE_MIN_Y + Math.random() * (CONFIG.PLANE_MAX_Y - CONFIG.PLANE_MIN_Y);
-        
-        // Dirección aleatoria: izquierda o derecha
-        this.directionX = Math.random() < 0.5 ? -1 : 1;
-        
-        // Movimiento vertical
-        this.velocityY = (Math.random() - 0.5) * 1.5; // Velocidad vertical inicial
-        this.verticalMovement = Math.random() < 0.7; // 70% de UFOs se mueven verticalmente
-        
-        // Comportamiento de órbita
-        this.behaviorState = 'forward'; // 'forward', 'orbit'
+        this.x = margin + rng() * (CONFIG.CANVAS_WIDTH - margin * 2);
+        this.y = CONFIG.PLANE_MIN_Y + rng() * (CONFIG.PLANE_MAX_Y - CONFIG.PLANE_MIN_Y);
+
+        this.directionX = rng() < 0.5 ? -1 : 1;
+
+        this.velocityY = (rng() - 0.5) * 1.5;
+        this.verticalMovement = rng() < 0.72;
+
+        this.behaviorState = 'forward';
         this.behaviorTimer = 0;
-        this.orbitTarget = null; // Avión a rodear
+        this.orbitTarget = null;
         this.orbitAngle = 0;
-        
-        // Puntos más altos que los aviones normales (más puntos para UFOs más pequeños y rápidos)
-        this.points = Math.round(100 + (CONFIG.UFO_MAX_SPEED - this.speed) * 10 + (CONFIG.UFO_MAX_SIZE - this.size) * 2);
-        
-        // Sistema de cambio de colores
-        this.colorPhase = Math.random() * Math.PI * 2; // Fase inicial aleatoria
+
+        let pts = 100 + (CONFIG.UFO_MAX_SPEED - this.speed) * 10 + (CONFIG.UFO_MAX_SIZE - this.size) * 2;
+        if (this.ufoClass === 'racer') pts *= 1.2;
+        if (this.ufoClass === 'stalker') pts *= 1.08;
+        this.points = Math.round(pts);
+
+        this.colorPhase = rng() * Math.PI * 2;
         this.pulsePhase = 0;
         
         // Colores base para rotación
@@ -550,51 +829,59 @@ class UFO {
     update(deltaTime) {
         this.pulsePhase += 0.15 * (deltaTime / 16.67); // Para efecto de pulso
         this.colorPhase += 0.05 * (deltaTime / 16.67); // Rotación de colores
-        this.behaviorTimer += deltaTime;
-        
+        if (this.behaviorState !== 'dive') {
+            this.behaviorTimer += deltaTime;
+        }
+
         // Cambiar de color gradualmente
         if (Math.sin(this.colorPhase) > 0.98) {
             this.currentColorIndex = (this.currentColorIndex + 1) % this.colors.length;
         }
 
-        // Cambiar comportamiento cada cierto tiempo (2-5 segundos)
-        if (this.behaviorTimer > 2000 + Math.random() * 3000) {
-            const rand = Math.random();
-            if (rand < 0.3 && gameState.planes.length > 0 && this.behaviorState !== 'orbit') {
-                // 30% chance de rodear un avión si hay aviones disponibles
-                this.behaviorState = 'orbit';
-                const randomPlane = gameState.planes[Math.floor(Math.random() * gameState.planes.length)];
-                this.orbitTarget = randomPlane;
-                this.orbitAngle = Math.atan2(this.y - randomPlane.y, this.x - randomPlane.x);
-            } else if (this.behaviorState === 'orbit') {
-                // Salir de la órbita
+        if (this.behaviorState !== 'dive' && this.behaviorTimer > 2000 + rng() * 3000) {
+            const rand = rng();
+            if (this.behaviorState === 'orbit') {
                 this.behaviorState = 'forward';
                 this.orbitTarget = null;
+            } else if (rand < CONFIG.UFO_DIVE_CHANCE && this.behaviorState !== 'dive') {
+                this.behaviorState = 'dive';
+                this.orbitTarget = null;
+            } else if (rand < 0.3 && gameState.planes.length > 0) {
+                this.behaviorState = 'orbit';
+                const randomPlane = gameState.planes[Math.floor(rng() * gameState.planes.length)];
+                this.orbitTarget = randomPlane;
+                this.orbitAngle = Math.atan2(this.y - randomPlane.y, this.x - randomPlane.x);
             }
             this.behaviorTimer = 0;
         }
 
-        // Ejecutar comportamiento
+        const dt = deltaTime / 16.67;
+
         if (this.behaviorState === 'orbit' && this.orbitTarget && !this.orbitTarget.isOffScreen()) {
-            // Rodear el avión objetivo
             const centerX = this.orbitTarget.x;
             const centerY = this.orbitTarget.y;
-            this.orbitAngle += 0.03 * (deltaTime / 16.67); // Velocidad de órbita
-            
+            this.orbitAngle += 0.03 * dt;
+
             const radius = CONFIG.UFO_ORBIT_RADIUS;
             this.x = centerX + Math.cos(this.orbitAngle) * radius;
             this.y = centerY + Math.sin(this.orbitAngle) * radius;
+        } else if (this.behaviorState === 'dive') {
+            this.x += this.speed * this.directionX * 0.6 * dt;
+            this.y += this.speed * 1.35 * dt;
+            if (this.y > CONFIG.PLANE_MAX_Y + 40) {
+                this.behaviorState = 'forward';
+                this.velocityY = -1.2;
+                this.y = CONFIG.PLANE_MAX_Y + 20;
+                this.behaviorTimer = 0;
+            }
         } else {
-            // Movimiento normal (adelante)
-            this.x += this.speed * this.directionX * (deltaTime / 16.67);
-            
-            // Movimiento vertical oscilante (si está habilitado)
+            this.x += this.speed * this.directionX * dt;
+
             if (this.verticalMovement) {
-                this.velocityY += (Math.random() - 0.5) * 0.1;
-                this.velocityY = Math.max(-2.5, Math.min(2.5, this.velocityY)); // Limitar velocidad vertical
-                this.y += this.velocityY * (deltaTime / 16.67);
-                
-                // Mantener dentro de límites verticales
+                this.velocityY += (rng() - 0.5) * 0.1;
+                this.velocityY = Math.max(-2.5, Math.min(2.5, this.velocityY));
+                this.y += this.velocityY * dt;
+
                 if (this.y < CONFIG.PLANE_MIN_Y) {
                     this.y = CONFIG.PLANE_MIN_Y;
                     this.velocityY *= -0.5;
@@ -748,23 +1035,43 @@ class Projectile {
         this.y = y;
         this.vy = vy;
         this.size = CONFIG.PROJECTILE_SIZE;
-        this.color = '#ffff00';
+        this.color = '#fbbf24';
+        this.trail = [];
+        const trailLen = prefersReducedMotion ? 3 : 6;
+        for (let i = 0; i < trailLen; i++) {
+            this.trail.push({ x: this.x, y: this.y + i * 4 });
+        }
     }
 
     update(deltaTime) {
-        this.y += this.vy * (deltaTime / 16.67);
+        const dt = deltaTime / 16.67;
+        this.y += this.vy * dt;
+        this.trail.unshift({ x: this.x, y: this.y });
+        const maxT = prefersReducedMotion ? 4 : 8;
+        while (this.trail.length > maxT) {
+            this.trail.pop();
+        }
     }
 
     render() {
+        if (!prefersReducedMotion) {
+            for (let i = this.trail.length - 1; i >= 0; i--) {
+                const p = this.trail[i];
+                const a = 0.15 + (i / this.trail.length) * 0.35;
+                ctx.fillStyle = `rgba(251, 191, 36, ${a})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, this.size * (0.5 + i * 0.08), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Efecto de brillo
-        ctx.fillStyle = '#ffffff';
+
+        ctx.fillStyle = '#fffbeb';
         ctx.beginPath();
-        ctx.arc(this.x - 1, this.y - 1, this.size * 0.5, 0, Math.PI * 2);
+        ctx.arc(this.x - 1, this.y - 1, this.size * 0.45, 0, Math.PI * 2);
         ctx.fill();
     }
 
@@ -786,33 +1093,65 @@ class Projectile {
 // Clase Explosión
 // ============================================================================
 class Explosion {
-    constructor(x, y) {
+    constructor(x, y, isUfo = false) {
         this.x = x;
         this.y = y;
         this.size = 10;
-        this.maxSize = 40;
+        this.maxSize = prefersReducedMotion ? 28 : 42;
         this.life = 1.0;
-        this.decay = 0.03;
+        this.decay = prefersReducedMotion ? 0.045 : 0.028;
+        this.isUfo = isUfo;
+        this.particles = [];
+        const n = prefersReducedMotion ? 8 : (isUfo ? 18 : 14);
+        for (let i = 0; i < n; i++) {
+            const a = (Math.PI * 2 * i) / n + rng() * 0.4;
+            const sp = (isUfo ? 2.8 : 2) + rng() * 4;
+            this.particles.push({
+                px: 0,
+                py: 0,
+                vx: Math.cos(a) * sp,
+                vy: Math.sin(a) * sp,
+                life: 0.9 + rng() * 0.4,
+                hue: isUfo ? 270 + rng() * 60 : 15 + rng() * 35,
+            });
+        }
     }
 
     update(deltaTime) {
-        this.life -= this.decay * (deltaTime / 16.67);
-        this.size += 0.5 * (deltaTime / 16.67);
+        const dt = deltaTime / 16.67;
+        this.life -= this.decay * dt;
+        this.size += 0.55 * dt;
+        this.particles.forEach(p => {
+            p.px += p.vx * dt;
+            p.py += p.vy * dt;
+            p.vy += 0.04 * dt;
+            p.life -= 0.035 * dt;
+        });
     }
 
     render() {
         const alpha = Math.min(1, this.life);
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = '#ff4400';
+        ctx.fillStyle = this.isUfo ? 'rgba(168, 85, 247, 0.9)' : 'rgba(234, 88, 12, 0.9)';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
-        
-        ctx.fillStyle = '#ffff00';
+
+        ctx.fillStyle = this.isUfo ? 'rgba(216, 180, 254, 0.75)' : 'rgba(253, 224, 71, 0.75)';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size * 0.6, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.size * 0.55, 0, Math.PI * 2);
         ctx.fill();
-        
+
+        if (!prefersReducedMotion) {
+            this.particles.forEach(p => {
+                if (p.life <= 0) return;
+                ctx.globalAlpha = alpha * Math.min(1, p.life);
+                ctx.fillStyle = `hsla(${p.hue}, 90%, 55%, ${p.life})`;
+                ctx.beginPath();
+                ctx.arc(this.x + p.px, this.y + p.py, 3 + p.life * 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
         ctx.globalAlpha = 1;
     }
 
@@ -848,34 +1187,68 @@ function resetGameState() {
         ufos: [],
         projectiles: [],
         explosions: [],
+        lives: CONFIG.LIVES_START,
+        wave: 1,
+        waveTimerStart: null,
+        paused: false,
+        parallaxX: 0,
+        clouds: [],
+        comboChain: 0,
+        comboTimer: 0,
+        planesDestroyed: 0,
+        ufosDestroyed: 0,
     };
 }
 
 function initGame() {
-    // Resetear estado del juego
+    gameRandom = createDailyRng();
     resetGameState();
-    
-    // Inicializar sistema de audio
+
     initAudio();
-    
-    // Inicializar tiempo de juego
+    try {
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    } catch (e) {
+        /* noop */
+    }
+    stopAmbientDrone();
+    startAmbientDrone();
+
     gameState.startTime = Date.now();
     gameState.lastPlaneSpawn = Date.now();
     gameState.lastUFOSpawn = Date.now();
-    // Intervalo aleatorio para el primer UFO
-    gameState.nextUFOSpawnInterval = CONFIG.UFO_SPAWN_INTERVAL_MIN + Math.random() * (CONFIG.UFO_SPAWN_INTERVAL_MAX - CONFIG.UFO_SPAWN_INTERVAL_MIN);
+    gameState.waveTimerStart = Date.now();
+    gameState.nextUFOSpawnInterval = CONFIG.UFO_SPAWN_INTERVAL_MIN
+        + rng() * (CONFIG.UFO_SPAWN_INTERVAL_MAX - CONFIG.UFO_SPAWN_INTERVAL_MIN);
 
-    // Crear las tres torres
+    for (let c = 0; c < 8; c++) {
+        gameState.clouds.push({
+            x: rng() * CONFIG.CANVAS_WIDTH,
+            y: 30 + rng() * 220,
+            w: 70 + rng() * 120,
+            h: 22 + rng() * 16,
+            speed: 0.03 + rng() * 0.07,
+            layer: rng() < 0.45 ? 0 : 1,
+        });
+    }
+
     CONFIG.TOWER_POSITIONS.forEach(x => {
         const tower = new Tower(x - CONFIG.TOWER_WIDTH / 2, CONFIG.TOWER_Y);
         gameState.towers.push(tower);
     });
-    
-    // Actualizar UI
+
     scoreElement.textContent = 'Puntaje: 0';
     timerElement.textContent = 'Tiempo: 00:00';
     playerDisplayElement.textContent = `Jugador: ${currentPlayer}`;
-    
+    updateLivesHud();
+    updateWaveHud();
+    updateComboHud();
+    updateAmmoHud();
+    if (dailySeedHintEl) {
+        dailySeedHintEl.textContent = `Semilla del día: ${getDailySeedLabel()} · misma oleada para todos`;
+    }
+
     gameRunning = true;
 }
 
@@ -915,19 +1288,28 @@ function setupEventListeners() {
 
     document.addEventListener('keydown', (e) => {
         if (!gameRunning) return;
-        
+
+        if (e.key === 'p' || e.key === 'P') {
+            e.preventDefault();
+            gameState.paused = !gameState.paused;
+            return;
+        }
+
+        if (gameState.paused) return;
+
         gameState.keys[e.key] = true;
-        
-        // Disparar torres con teclas 1, 2, 3
+
         if (e.key === '1' && gameState.towers[0]) {
             gameState.towers[0].shoot();
+            updateAmmoHud();
         } else if (e.key === '2' && gameState.towers[1]) {
             gameState.towers[1].shoot();
+            updateAmmoHud();
         } else if (e.key === '3' && gameState.towers[2]) {
             gameState.towers[2].shoot();
+            updateAmmoHud();
         }
-        
-        // Tecla Escape para terminar juego (debug/prueba)
+
         if (e.key === 'Escape') {
             endGame();
         }
@@ -937,7 +1319,46 @@ function setupEventListeners() {
         gameState.keys[e.key] = false;
     });
     
-    // Botón de inicio
+    if (highContrastToggle) {
+        try {
+            highContrastToggle.checked = sessionStorage.getItem('dai_high_contrast') === '1';
+        } catch (err) {
+            highContrastToggle.checked = false;
+        }
+        document.body.classList.toggle('dai-high-contrast', highContrastToggle.checked);
+        highContrastToggle.addEventListener('change', () => {
+            document.body.classList.toggle('dai-high-contrast', highContrastToggle.checked);
+            try {
+                sessionStorage.setItem('dai_high_contrast', highContrastToggle.checked ? '1' : '0');
+            } catch (err) { /* noop */ }
+        });
+    }
+
+    if (muteAudioToggle) {
+        try {
+            muteAudioToggle.checked = localStorage.getItem('dai_mute') === '1';
+        } catch (err) {
+            muteAudioToggle.checked = false;
+        }
+        setMuted(muteAudioToggle.checked);
+        muteAudioToggle.addEventListener('change', () => {
+            setMuted(muteAudioToggle.checked);
+            try {
+                localStorage.setItem('dai_mute', muteAudioToggle.checked ? '1' : '0');
+            } catch (err) { /* noop */ }
+        });
+    }
+
+    function resizeGameCanvas() {
+        if (!canvas) return;
+        const maxW = Math.min(1200, (window.innerWidth || 1200) - 20);
+        const scale = maxW / CONFIG.CANVAS_WIDTH;
+        canvas.style.width = `${CONFIG.CANVAS_WIDTH * scale}px`;
+        canvas.style.height = `${CONFIG.CANVAS_HEIGHT * scale}px`;
+    }
+    resizeGameCanvas();
+    window.addEventListener('resize', resizeGameCanvas);
+
     startBtn.addEventListener('click', () => {
         const name = playerNameInput.value.trim() || 'AAA';
         currentPlayer = name.toUpperCase().substring(0, 10);
@@ -967,22 +1388,55 @@ function setupEventListeners() {
     });
 }
 
+function collectSessionAchievements() {
+    const earnedTitles = [];
+    const totalKills = gameState.planesDestroyed + gameState.ufosDestroyed;
+    if (totalKills >= 1 && unlockAchievement('dai_first_blood')) {
+        earnedTitles.push('Primera baja');
+    }
+    if (gameState.ufosDestroyed >= 5 && unlockAchievement('dai_ufo_hunter')) {
+        earnedTitles.push('Cazador de OVNIs');
+    }
+    if (gameState.elapsedTime >= 180000 && unlockAchievement('dai_survivor')) {
+        earnedTitles.push('Superviviente (3 min)');
+    }
+    if (gameState.score >= 500 && unlockAchievement('dai_scorer')) {
+        earnedTitles.push('Artillero (500+)');
+    }
+    if (gameState.wave >= 5 && unlockAchievement('dai_wave5')) {
+        earnedTitles.push('Oleada 5');
+    }
+    return earnedTitles;
+}
+
 // Función para terminar el juego
 async function endGame() {
     gameRunning = false;
-    
-    // Mostrar pantalla de Game Over
+    gameState.paused = false;
+    stopAmbientDrone();
+
+    const beatPb = savePersonalBestIfBetter(gameState.score, currentPlayer);
+    const ach = collectSessionAchievements();
+
     finalScoreElement.textContent = `Puntaje: ${gameState.score}`;
     finalTimeElement.textContent = `Tiempo: ${formatTime(gameState.elapsedTime)}`;
+    if (achievementsBoxEl) {
+        let achHtml = '';
+        if (ach.length > 0) {
+            achHtml = '<h4>Logros desbloqueados</h4>' + ach.map(a => `<div>★ ${a}</div>`).join('');
+        }
+        if (beatPb) {
+            achHtml += '<div style="margin-top:8px;color:#fbbf24;">¡Nueva mejor marca personal!</div>';
+        }
+        achievementsBoxEl.innerHTML = achHtml || '<span style="color:#64748b;">Sigue jugando para desbloquear logros locales.</span>';
+    }
+
     gameOverScreen.classList.remove('hidden');
-    
-    // Mostrar "Guardando..." mientras se guarda
+
     rankingTable.innerHTML = '<h3>🏆 Ranking</h3><p style="color: #666; text-align: center;">Guardando...</p>';
-    
-    // Guardar en ranking (puede ser async)
+
     const rankPosition = await addToRanking(currentPlayer, gameState.score, gameState.elapsedTime);
-    
-    // Actualizar tabla con posición resaltada
+
     await renderRanking(rankingTable, rankPosition);
 }
 
@@ -1012,49 +1466,85 @@ function formatTime(milliseconds) {
 // Actualización del juego
 // ============================================================================
 function update(deltaTime) {
-    // Actualizar tiempo de juego
+    if (gameState.paused) return;
+
     if (gameState.startTime) {
         gameState.elapsedTime = Date.now() - gameState.startTime;
         timerElement.textContent = `Tiempo: ${formatTime(gameState.elapsedTime)}`;
     }
 
-    // Actualizar torres
-    gameState.towers.forEach(tower => tower.update(deltaTime));
+    if (gameState.comboTimer > 0) {
+        gameState.comboTimer -= deltaTime;
+        if (gameState.comboTimer <= 0) {
+            gameState.comboChain = 0;
+            updateComboHud();
+        }
+    }
 
-    // Generar aviones
+    if (gameState.waveTimerStart && Date.now() - gameState.waveTimerStart > CONFIG.WAVE_INTERVAL_MS) {
+        gameState.wave += 1;
+        gameState.waveTimerStart = Date.now();
+        updateWaveHud();
+    }
+
+    gameState.parallaxX += deltaTime * 0.014;
+    gameState.clouds.forEach(c => {
+        const mul = c.layer === 0 ? 0.12 : 0.22;
+        c.x += c.speed * deltaTime * mul;
+        if (c.x > CONFIG.CANVAS_WIDTH + c.w) {
+            c.x = -c.w - rng() * 40;
+            c.y = 30 + rng() * 200;
+        }
+    });
+
+    gameState.towers.forEach(tower => tower.update(deltaTime));
+    updateAmmoHud();
+
     const now = Date.now();
-    if (now - gameState.lastPlaneSpawn > CONFIG.PLANE_SPAWN_INTERVAL) {
+    const waveFactor = 1 + (gameState.wave - 1) * 0.14;
+    let planeInterval = CONFIG.PLANE_SPAWN_INTERVAL / waveFactor;
+    planeInterval = Math.max(CONFIG.PLANE_SPAWN_MIN_MS, planeInterval);
+
+    if (now - gameState.lastPlaneSpawn > planeInterval) {
         gameState.planes.push(new Plane());
         gameState.lastPlaneSpawn = now;
     }
 
-    // Generar UFOs automáticamente (intervalo aleatorio)
     if (now - gameState.lastUFOSpawn > gameState.nextUFOSpawnInterval) {
         gameState.ufos.push(new UFO());
         gameState.lastUFOSpawn = now;
-        // Calcular próximo intervalo aleatorio
-        gameState.nextUFOSpawnInterval = CONFIG.UFO_SPAWN_INTERVAL_MIN + Math.random() * (CONFIG.UFO_SPAWN_INTERVAL_MAX - CONFIG.UFO_SPAWN_INTERVAL_MIN);
+        gameState.nextUFOSpawnInterval = CONFIG.UFO_SPAWN_INTERVAL_MIN
+            + rng() * (CONFIG.UFO_SPAWN_INTERVAL_MAX - CONFIG.UFO_SPAWN_INTERVAL_MIN);
     }
 
-    // Actualizar aviones
     gameState.planes.forEach(plane => plane.update(deltaTime));
-    
-    // Eliminar aviones fuera de pantalla
+
+    for (let j = gameState.planes.length - 1; j >= 0; j--) {
+        const plane = gameState.planes[j];
+        if (plane.y > CONFIG.GROUND_THREAT_Y) {
+            gameState.planes.splice(j, 1);
+            gameState.lives -= 1;
+            playBreachSound();
+            gameState.explosions.push(new Explosion(plane.x, CONFIG.GROUND_THREAT_Y - 10, false));
+            updateLivesHud();
+            gameState.comboChain = 0;
+            gameState.comboTimer = 0;
+            updateComboHud();
+            if (gameState.lives <= 0) {
+                endGame();
+                return;
+            }
+        }
+    }
+
     gameState.planes = gameState.planes.filter(plane => !plane.isOffScreen());
 
-    // Actualizar UFOs
     gameState.ufos.forEach(ufo => ufo.update(deltaTime));
-    
-    // Eliminar UFOs fuera de pantalla
     gameState.ufos = gameState.ufos.filter(ufo => !ufo.isOffScreen());
 
-    // Actualizar proyectiles
     gameState.projectiles.forEach(projectile => projectile.update(deltaTime));
-    
-    // Eliminar proyectiles fuera de pantalla
     gameState.projectiles = gameState.projectiles.filter(projectile => !projectile.isOffScreen());
 
-    // Detectar colisiones con aviones
     for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
         const projectile = gameState.projectiles[i];
         const projBounds = projectile.getBounds();
@@ -1064,17 +1554,18 @@ function update(deltaTime) {
             const planeBounds = plane.getBounds();
 
             if (checkCollision(projBounds, planeBounds)) {
-                // Colisión detectada
-                const explosion = new Explosion(plane.x, plane.y);
-                gameState.explosions.push(explosion);
-                
-                // Reproducir sonido de explosión normal
+                gameState.explosions.push(new Explosion(plane.x, plane.y, false));
                 playExplosionSound();
-                
-                gameState.score += plane.points;
-                scoreElement.textContent = `Puntaje: ${gameState.score}`;
 
-                // Eliminar proyectil y avión
+                gameState.comboChain += 1;
+                gameState.comboTimer = CONFIG.COMBO_DECAY_MS;
+                const mult = comboMultiplierFromChain(gameState.comboChain);
+                const gained = Math.max(1, Math.floor(plane.points * mult));
+                gameState.score += gained;
+                gameState.planesDestroyed += 1;
+                scoreElement.textContent = `Puntaje: ${gameState.score}`;
+                updateComboHud();
+
                 gameState.projectiles.splice(i, 1);
                 gameState.planes.splice(j, 1);
                 break;
@@ -1082,7 +1573,6 @@ function update(deltaTime) {
         }
     }
 
-    // Detectar colisiones con UFOs
     for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
         const projectile = gameState.projectiles[i];
         const projBounds = projectile.getBounds();
@@ -1092,17 +1582,18 @@ function update(deltaTime) {
             const ufoBounds = ufo.getBounds();
 
             if (checkCollision(projBounds, ufoBounds)) {
-                // Colisión detectada con UFO
-                const explosion = new Explosion(ufo.x, ufo.y);
-                gameState.explosions.push(explosion);
-                
-                // Reproducir sonido único de explosión de UFO
+                gameState.explosions.push(new Explosion(ufo.x, ufo.y, true));
                 playUFOExplosionSound();
-                
-                gameState.score += ufo.points;
-                scoreElement.textContent = `Puntaje: ${gameState.score}`;
 
-                // Eliminar proyectil y UFO
+                gameState.comboChain += 1;
+                gameState.comboTimer = CONFIG.COMBO_DECAY_MS;
+                const mult = comboMultiplierFromChain(gameState.comboChain);
+                const gained = Math.max(1, Math.floor(ufo.points * mult));
+                gameState.score += gained;
+                gameState.ufosDestroyed += 1;
+                scoreElement.textContent = `Puntaje: ${gameState.score}`;
+                updateComboHud();
+
                 gameState.projectiles.splice(i, 1);
                 gameState.ufos.splice(j, 1);
                 break;
@@ -1110,44 +1601,128 @@ function update(deltaTime) {
         }
     }
 
-    // Actualizar explosiones
     gameState.explosions.forEach(explosion => explosion.update(deltaTime));
-    
-    // Eliminar explosiones muertas
     gameState.explosions = gameState.explosions.filter(explosion => !explosion.isDead());
 }
 
 // ============================================================================
 // Renderizado
 // ============================================================================
-function render() {
-    // Limpiar canvas
-    ctx.fillStyle = '#111';
-    ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+function drawSkyAndBackground() {
+    const w = CONFIG.CANVAS_WIDTH;
+    const h = CONFIG.CANVAS_HEIGHT;
+    const dayPhase = (gameState.elapsedTime || 0) / 140000;
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    const h1 = 230 + Math.sin(dayPhase * Math.PI * 2) * 12;
+    const h2 = 265 + Math.cos(dayPhase * Math.PI * 2) * 8;
+    g.addColorStop(0, `hsla(${h1}, 42%, 14%, 1)`);
+    g.addColorStop(0.45, `hsla(${h2}, 38%, 10%, 1)`);
+    g.addColorStop(1, '#0a0f1a');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
 
-    // Dibujar rejilla sutil de fondo (efecto retro)
-    ctx.strokeStyle = '#222';
+    const px = (gameState.parallaxX || 0) * 0.08;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    for (let i = 0; i <= 14; i++) {
+        const x = (i / 14) * w;
+        const nx = x + Math.sin(i * 0.7 + px * 0.02) * 40;
+        const ny = 520 + Math.sin(i * 0.9 + px * 0.03) * 35;
+        ctx.lineTo(nx, ny);
+    }
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(30, 41, 59, 0.75)';
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    for (let i = 0; i <= 12; i++) {
+        const x = (i / 12) * w;
+        const nx = x + Math.sin(i * 0.55 + px * 0.05) * 55;
+        const ny = 560 + Math.sin(i * 0.65 + px * 0.04) * 28;
+        ctx.lineTo(nx, ny);
+    }
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fill();
+
+    gameState.clouds.forEach(c => {
+        ctx.fillStyle = c.layer === 0 ? 'rgba(148, 163, 184, 0.12)' : 'rgba(148, 163, 184, 0.2)';
+        ctx.beginPath();
+        ctx.ellipse(c.x, c.y, c.w * 0.35, c.h, 0, 0, Math.PI * 2);
+        ctx.ellipse(c.x + c.w * 0.25, c.y + 4, c.w * 0.28, c.h * 0.85, 0, 0, Math.PI * 2);
+        ctx.ellipse(c.x - c.w * 0.22, c.y + 2, c.w * 0.3, c.h * 0.9, 0, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    if (!prefersReducedMotion) {
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.35)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < w; i += 80) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, h);
+            ctx.stroke();
+        }
+        for (let i = 0; i < h; i += 80) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(w, i);
+            ctx.stroke();
+        }
+    }
+}
+
+function drawThreatLineAndRadar() {
+    const y = CONFIG.GROUND_THREAT_Y;
+    ctx.save();
+    ctx.setLineDash([10, 8]);
+    ctx.strokeStyle = 'rgba(248, 113, 113, 0.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(CONFIG.CANVAS_WIDTH, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    const rw = 200;
+    const rh = 44;
+    const rx = CONFIG.CANVAS_WIDTH / 2 - rw / 2;
+    const ry = CONFIG.CANVAS_HEIGHT - rh - 12;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.45)';
     ctx.lineWidth = 1;
-    for (let i = 0; i < CONFIG.CANVAS_WIDTH; i += 60) {
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, CONFIG.CANVAS_HEIGHT);
-        ctx.stroke();
-    }
-    for (let i = 0; i < CONFIG.CANVAS_HEIGHT; i += 60) {
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(CONFIG.CANVAS_WIDTH, i);
-        ctx.stroke();
-    }
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.strokeRect(rx, ry, rw, rh);
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
+    ctx.font = '10px Share Tech Mono, monospace';
+    ctx.fillText('RADAR', rx + 6, ry + 14);
 
-    // Renderizar explosiones (primero para que queden debajo)
+    const plotX = (worldX) => rx + 8 + (worldX / CONFIG.CANVAS_WIDTH) * (rw - 16);
+    gameState.planes.forEach(p => {
+        ctx.fillStyle = '#fb923c';
+        ctx.fillRect(plotX(p.x) - 2, ry + rh / 2 - 2, 4, 4);
+    });
+    gameState.ufos.forEach(u => {
+        ctx.fillStyle = '#a78bfa';
+        ctx.beginPath();
+        ctx.arc(plotX(u.x), ry + rh / 2 + 8, 3, 0, Math.PI * 2);
+        ctx.fill();
+    });
+}
+
+function render() {
+    drawSkyAndBackground();
+
     gameState.explosions.forEach(explosion => explosion.render());
 
-    // Renderizar aviones
     gameState.planes.forEach(plane => plane.render());
 
-    // Renderizar UFOs
     if (gameState.ufos.length > 0) {
         gameState.ufos.forEach(ufo => {
             if (ufo && typeof ufo.render === 'function') {
@@ -1156,11 +1731,24 @@ function render() {
         });
     }
 
-    // Renderizar proyectiles
     gameState.projectiles.forEach(projectile => projectile.render());
 
-    // Renderizar torres
+    drawThreatLineAndRadar();
+
     gameState.towers.forEach(tower => tower.render());
+
+    if (gameState.paused) {
+        ctx.fillStyle = 'rgba(3, 7, 18, 0.55)';
+        ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+        ctx.font = 'bold 32px Orbitron, sans-serif';
+        ctx.fillStyle = '#e2e8f0';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSA', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 - 10);
+        ctx.font = '14px Share Tech Mono, monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Pulsa P para continuar', CONFIG.CANVAS_WIDTH / 2, CONFIG.CANVAS_HEIGHT / 2 + 22);
+        ctx.textAlign = 'left';
+    }
 }
 
 // ============================================================================
@@ -1173,7 +1761,9 @@ function gameLoop(currentTime) {
     lastTime = currentTime;
 
     if (gameRunning) {
-        update(deltaTime);
+        if (!gameState.paused) {
+            update(deltaTime);
+        }
         render();
     }
 
