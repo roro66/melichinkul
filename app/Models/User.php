@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -62,5 +63,21 @@ class User extends Authenticatable
             return $roleNames->first();
         }
         return $this->attributes['role'] ?? 'viewer';
+    }
+
+    /**
+     * Destinatarios del digest de alertas críticas: administradores y supervisores
+     * activos con correo en el dominio sover.cl.
+     *
+     * @return Collection<int, User>
+     */
+    public static function criticalAlertDigestRecipients(): Collection
+    {
+        return static::query()
+            ->role(['administrator', 'supervisor'])
+            ->where('active', true)
+            ->whereNotNull('email')
+            ->whereRaw('LOWER(TRIM(email)) LIKE ?', ['%@sover.cl'])
+            ->get();
     }
 }
