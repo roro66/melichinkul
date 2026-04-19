@@ -69,15 +69,25 @@ class User extends Authenticatable
      * Destinatarios del digest de alertas críticas: administradores y supervisores
      * activos con correo en el dominio sover.cl.
      *
+     * Incluye tanto roles Spatie (`model_has_roles`) como la columna legacy `users.role`,
+     * para no excluir usuarios creados o importados sin `syncRoles()`.
+     *
      * @return Collection<int, User>
      */
     public static function criticalAlertDigestRecipients(): Collection
     {
+        $roles = ['administrator', 'supervisor'];
+
         return static::query()
-            ->role(['administrator', 'supervisor'])
             ->where('active', true)
             ->whereNotNull('email')
             ->whereRaw('LOWER(TRIM(email)) LIKE ?', ['%@sover.cl'])
+            ->where(function ($q) use ($roles) {
+                $q->whereIn('role', $roles)
+                    ->orWhereHas('roles', function ($roleQuery) use ($roles) {
+                        $roleQuery->whereIn('name', $roles);
+                    });
+            })
             ->get();
     }
 }

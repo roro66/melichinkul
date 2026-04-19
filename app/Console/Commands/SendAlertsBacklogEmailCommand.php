@@ -49,6 +49,8 @@ class SendAlertsBacklogEmailCommand extends Command
             return self::FAILURE;
         }
 
+        $this->line('Destinatarios detectados: ' . $recipients->map(fn (User $u) => $u->email . ' (rol efectivo: ' . $u->rol . ')')->implode(', '));
+
         $chunks = $alerts->chunk($chunkSize);
         $partTotal = $chunks->count();
         $mailRecipients = $recipients->filter(fn (User $u) => $u->email_notifications ?? true);
