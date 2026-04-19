@@ -21,7 +21,12 @@ class CriticalAlertsDigestNotification extends Notification implements ShouldQue
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast'];
+        $channels = ['database', 'broadcast'];
+        if ($notifiable->email_notifications ?? true) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toArray(object $notifiable): array

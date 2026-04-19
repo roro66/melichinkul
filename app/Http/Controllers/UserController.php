@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Maintenance;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
@@ -170,18 +172,66 @@ class UserController extends Controller
         }
 
         try {
-            $usuario->syncRoles([]);
-            $usuario->delete();
+            DB::transaction(function () use ($usuario): void {
+                $maintenanceCount = Maintenance::withTrashed()
+                    ->where('responsible_technician_id', $usuario->id)
+                    ->count();
+
+                if ($maintenanceCount > 0) {
+                    $replacementId = $this->replacementUserIdForReassignedMaintenances($usuario);
+                    if ($replacementId === null) {
+                        throw new \RuntimeException(
+                            'Existen mantenimientos vinculados a este usuario como técnico responsable y no hay otro usuario al cual reasignarlos. Cree otro usuario (preferiblemente técnico) o cambie el responsable en los mantenimientos antes de eliminar.'
+                        );
+                    }
+
+                    Maintenance::withTrashed()
+                        ->where('responsible_technician_id', $usuario->id)
+                        ->update(['responsible_technician_id' => $replacementId]);
+                }
+
+                $usuario->syncRoles([]);
+                $usuario->delete();
+            });
+
             return response()->json([
                 'success' => true,
                 'message' => 'Usuario eliminado correctamente.',
             ]);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al eliminar: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Otro técnico si existe; si no, cualquier otro usuario (misma lógica que la migración de técnico obligatorio).
+     */
+    private function replacementUserIdForReassignedMaintenances(User $exclude): ?int
+    {
+        $id = User::query()
+            ->role('technician')
+            ->where('id', '!=', $exclude->id)
+            ->orderBy('id')
+            ->value('id');
+
+        if ($id !== null) {
+            return (int) $id;
+        }
+
+        $fallback = User::query()
+            ->where('id', '!=', $exclude->id)
+            ->orderBy('id')
+            ->value('id');
+
+        return $fallback !== null ? (int) $fallback : null;
     }
 
     private function roleLabel(string $role): string

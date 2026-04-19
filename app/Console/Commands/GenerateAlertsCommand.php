@@ -173,10 +173,7 @@ class GenerateAlertsCommand extends Command
 
         if (! empty($criticalAlertIds)) {
             $alerts = Alert::with(['vehicle', 'sparePart'])->whereIn('id', $criticalAlertIds)->orderBy('due_date')->get();
-            $recipients = User::role(['administrator', 'supervisor'])
-                ->where('active', true)
-                ->whereNotNull('email')
-                ->get();
+            $recipients = $this->criticalAlertDigestRecipients();
             foreach ($recipients as $user) {
                 $user->notify(new CriticalAlertsDigestNotification($alerts->all()));
             }
@@ -185,6 +182,21 @@ class GenerateAlertsCommand extends Command
         $this->info("Generated {$count} alert(s).");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Destinatarios del digest de alertas críticas: administradores y supervisores
+     * activos cuyo correo sea del dominio sover.cl.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    private function criticalAlertDigestRecipients()
+    {
+        return User::role(['administrator', 'supervisor'])
+            ->where('active', true)
+            ->whereNotNull('email')
+            ->whereRaw('LOWER(TRIM(email)) LIKE ?', ['%@sover.cl'])
+            ->get();
     }
 
     /**
