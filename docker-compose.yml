@@ -27,17 +27,8 @@ services:
       - DB_DATABASE=melichinkul_db
       - DB_USERNAME=admin
       - DB_PASSWORD=${DB_PASSWORD:-}
-      # Correo: valores desde .env del proyecto (Compose sustituye ${VAR} con el .env junto a este archivo).
-      # En local sin tocar .env → mailpit. En producción: mismas MAIL_* que Sover3MP (u otro SMTP real).
-      - MAIL_MAILER=${MAIL_MAILER:-smtp}
-      - MAIL_SCHEME=${MAIL_SCHEME:-}
-      - MAIL_HOST=${MAIL_HOST:-mailpit}
-      - MAIL_PORT=${MAIL_PORT:-1025}
-      - MAIL_USERNAME=${MAIL_USERNAME:-}
-      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
-      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@melichinkul.local}
-      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-Melichinkul}
-      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-}
+      # Correo: solo desde .env del proyecto (volumen ./). No inyectar MAIL_* aquí: Docker sobreescribe
+      # getenv sobre Dotenv y forzaba mailpit en servidor si faltaba una variable en el .env de despliegue.
       - REDIS_HOST=redis
       - QUEUE_CONNECTION=redis
       - BROADCAST_CONNECTION=reverb
@@ -130,15 +121,6 @@ services:
       - DB_DATABASE=melichinkul_db
       - DB_USERNAME=admin
       - DB_PASSWORD=${DB_PASSWORD:-}
-      - MAIL_MAILER=${MAIL_MAILER:-smtp}
-      - MAIL_SCHEME=${MAIL_SCHEME:-}
-      - MAIL_HOST=${MAIL_HOST:-mailpit}
-      - MAIL_PORT=${MAIL_PORT:-1025}
-      - MAIL_USERNAME=${MAIL_USERNAME:-}
-      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
-      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@melichinkul.local}
-      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-Melichinkul}
-      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-}
       - REDIS_HOST=redis
       - QUEUE_CONNECTION=redis
       - BROADCAST_CONNECTION=reverb
