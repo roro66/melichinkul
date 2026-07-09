@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/inject-configuracion-entorno.sh",
+        "timeout": 15
+      }
+    ]
+  }
+}

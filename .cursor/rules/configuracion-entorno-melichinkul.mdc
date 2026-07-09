@@ -1,0 +1,40 @@
+---
+description: Entorno Melichinkul — leer docs/CONFIGURACION_ENTORNO.md al inicio de cada sesión
+alwaysApply: true
+---
+
+# Configuración de entorno Melichinkul (obligatorio)
+
+## Al iniciar cada sesión de agente
+
+1. **Leer** `docs/CONFIGURACION_ENTORNO.md` con la herramienta Read **antes** de ejecutar comandos, desplegar, tocar Docker/servidor o asumir rutas, credenciales u horarios.
+2. **Mantener presente** su contenido durante **toda** la sesión (Docker, PostgreSQL, mail, colas, Reverb, rsync, SSH, scheduler, etc.).
+
+El archivo está en `.gitignore` (contiene secretos). No copiar credenciales a commits ni a archivos versionados.
+
+## Stack y comandos habituales
+
+- **Melichinkul:** Laravel 12, Livewire 4, Docker Compose **propio** (no Sail).
+- **Local:** `/home/rodrigo/Projects/laravel/melichinkul`
+- **Comandos PHP/Laravel/Composer/npm:** `docker compose exec app ...` (npm también dentro del contenedor).
+- **Servidor maitepaz:** `100.64.0.7`, directorio `/home/rodrigo/projects/laravel/melichinkul`, app en puerto **8001**.
+- **PostgreSQL:** `host.docker.internal:5432`, BD `melichinkul_db`, usuario `admin`.
+- **Despliegue habitual:** rsync desde local (no `git pull` en servidor). Ver §5 del doc y `RSYNC_DESPLIEGUE.md` (`--exclude='/vendor/'`, no `--exclude='vendor'`).
+
+## Despliegue (commit / push / servidor)
+
+Cuando el usuario pida **commit**, **push**, **desplegar**, **actualizar servidor** o similar, seguir **siempre** `docs/CONFIGURACION_ENTORNO.md` (§5 Acceso y despliegue):
+
+1. **Commit** en `main` — solo archivos del cambio; nunca secretos ni archivos ajenos.
+2. **rsync + sshpass** al servidor — comando completo del doc, con todos los `--exclude`.
+3. **md5sum** — comparar local vs remoto en cada archivo desplegado relevante.
+4. **Post-despliegue** en servidor — según el cambio: `migrate --force`, `config:clear`, `view:clear`, `composer install`, `npm run build`, parche Reverb si aplica (§5.5).
+5. **Push** — `git push origin main` cuando corresponda (rsync no copia `.env`; alinear `MAIL_*` y `APP_TIMEZONE` manualmente en servidor si aplica).
+
+## Referencia rápida
+
+- Alertas email: scheduler `alerts:generate` **09:30** hora Chile (`APP_TIMEZONE=America/Santiago`); cron host con `schedule:run`.
+- Mail: variables solo en `.env` (Compose no inyecta `MAIL_*`).
+- Tras cambios en vistas mail: `view:clear` en servidor.
+
+Detalle completo: `docs/CONFIGURACION_ENTORNO.md`.
