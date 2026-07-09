@@ -8,5 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('alerts:generate')->daily()->at('06:00');
+Schedule::command('alerts:generate')->dailyAt('09:30');
 Schedule::command('reports:send-monthly')->monthlyOn(1, '07:00');
