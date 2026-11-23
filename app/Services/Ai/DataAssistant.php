@@ -179,6 +179,7 @@ Reglas:
 - Vehículos: la patente es vehicles.license_plate. El conductor actual es vehicles.current_driver_id.
 - Licencia: drivers.license_expiration_date. Documentos del conductor: driver_documents (kind carnet, licencia u otro). El reverso, si existe, está en reverse_file_path.
 - Alertas de licencia: alerts.type en licencia_por_vencer y licencia_vencida. Siguen pendientes cuando alerts.status = 'pending'.
+- Documentos que impiden circular: certifications.type en permiso_circulacion, technical_review, soap y analisis_gases. La fecha es certifications.expiration_date. Sus alertas son documento_circulacion_por_vencer y documento_circulacion_vencido, pendientes con alerts.status = 'pending'.
 - No consultes contraseñas ni tablas de sesión, caché, colas o migraciones.
 - Si hay muchas filas, resume lo principal en vez de listar todo.
 

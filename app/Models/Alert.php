@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\LicenseAlertService;
+use App\Services\VehicleCirculationAlertService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -76,5 +77,15 @@ class Alert extends Model
     public function isLicenseAlert(): bool
     {
         return in_array($this->type, LicenseAlertService::TYPES, true);
+    }
+
+    public function isCirculationAlert(): bool
+    {
+        return in_array($this->type, VehicleCirculationAlertService::TYPES, true);
+    }
+
+    public function usesWeekSnooze(): bool
+    {
+        return $this->isLicenseAlert() || $this->isCirculationAlert();
     }
 }

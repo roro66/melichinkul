@@ -9,6 +9,7 @@ use App\Models\Stock;
 use App\Models\User;
 use App\Notifications\CriticalAlertsDigestNotification;
 use App\Services\LicenseAlertService;
+use App\Services\VehicleCirculationAlertService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -33,6 +34,9 @@ class GenerateAlertsCommand extends Command
         foreach ($certifications as $cert) {
             $due = $cert->expiration_date;
             if (! $due) {
+                continue;
+            }
+            if (isset(VehicleCirculationAlertService::DOCUMENT_TYPES[$cert->type])) {
                 continue;
             }
             $daysUntil = $today->diffInDays($due, false);
@@ -67,6 +71,7 @@ class GenerateAlertsCommand extends Command
         }
 
         $count += app(LicenseAlertService::class)->generate($today);
+        $count += app(VehicleCirculationAlertService::class)->generate($today);
 
         // Overdue maintenances (scheduled in the past, not completed)
         $overdue = Maintenance::with('vehicle')

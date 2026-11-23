@@ -113,6 +113,7 @@ Route::middleware(['auth'])->group(function () {
     // Módulo Alertas
     Route::get('/alertas-resumen', [\App\Http\Controllers\AlertController::class, 'summary'])->name('alerts.summary')->middleware('permission:alerts.view');
     Route::get('/alertas/licencias-aviso', [\App\Http\Controllers\AlertController::class, 'licenseScreenAlert'])->name('alerts.license-screen');
+    Route::get('/alertas/documentos-aviso', [\App\Http\Controllers\AlertController::class, 'circulationScreenAlert'])->name('alerts.circulation-screen');
     Route::get('/alertas', [\App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index')->middleware('permission:alerts.view');
     Route::post('/alertas/{id}/cerrar', [\App\Http\Controllers\AlertController::class, 'close'])->name('alerts.close')->middleware('permission:alerts.close');
     Route::post('/alertas/{id}/posponer', [\App\Http\Controllers\AlertController::class, 'snooze'])->name('alerts.snooze')->middleware('permission:alerts.snooze');

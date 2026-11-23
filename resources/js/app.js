@@ -75,11 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const channel = window.Echo.private('App.Models.User.' + userId);
     channel.notification((payload) => {
         const isLicense = payload.reminder_kind === 'license';
+        const isCirculation = payload.reminder_kind === 'circulation';
         if (isLicense) {
             showLicenseReminder(payload);
+        } else if (isCirculation && window.showCirculationReminder) {
+            window.showCirculationReminder(payload);
         }
         bumpNotificationBadge();
-        if (!isLicense && window.Swal && window.Swal.fire) {
+        if (!isLicense && !isCirculation && window.Swal && window.Swal.fire) {
             window.Swal.fire({
                 icon: 'info',
                 title: 'Notificación',

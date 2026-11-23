@@ -120,18 +120,18 @@ function closeAlert(id) {
 
 function snoozeAlert(id, type) {
     snoozeAlertId = id;
-    const license = type === 'licencia_por_vencer' || type === 'licencia_vencida';
-    snoozeUnit = license ? 'days' : 'hours';
+    const week = ['licencia_por_vencer', 'licencia_vencida', 'documento_circulacion_por_vencer', 'documento_circulacion_vencido'].includes(type);
+    snoozeUnit = week ? 'days' : 'hours';
     const label = document.getElementById('snooze-duration-label');
     const input = document.getElementById('snooze-hours');
     const hint = document.getElementById('snooze-hint');
     document.getElementById('snooze-reason').value = '';
-    if (license) {
+    if (week) {
         label.textContent = 'Días (1 a 7)';
         input.min = '1';
         input.max = '7';
         input.value = '7';
-        hint.textContent = 'Máximo una semana. Si la licencia sigue vencida o por vencer, el aviso vuelve solo.';
+        hint.textContent = 'Máximo una semana. Si el documento sigue vencido o por vencer, el aviso vuelve solo.';
         hint.classList.remove('hidden');
     } else {
         label.textContent = 'Horas (48–72)';

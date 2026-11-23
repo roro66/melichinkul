@@ -3,7 +3,7 @@
 @section('title', 'Ficha del Vehículo - ' . $vehicle->license_plate)
 
 @section('content')
-<div class="space-y-6" x-data="{ activeTab: 'resumen', selectedAlertId: null, selectedAlertType: '', showSnoozeModal: false, get isLicenseAlert() { return this.selectedAlertType === 'licencia_por_vencer' || this.selectedAlertType === 'licencia_vencida' } }">
+<div class="space-y-6" x-data="{ activeTab: 'resumen', selectedAlertId: null, selectedAlertType: '', showSnoozeModal: false, get isWeekSnooze() { return ['licencia_por_vencer', 'licencia_vencida', 'documento_circulacion_por_vencer', 'documento_circulacion_vencido'].includes(this.selectedAlertType) } }">
     <!-- Header -->
     <div class="flex justify-between items-center">
         <div>
@@ -534,6 +534,11 @@
                                                 @if($licenseDriverId)
                                                     <a href="{{ route('conductores.edit', $licenseDriverId) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline mr-3" title="Subir licencia vigente">Subir licencia</a>
                                                 @endif
+                                            @elseif($alert->isCirculationAlert())
+                                                @php $certificationId = $alert->metadata['certification_id'] ?? null; @endphp
+                                                @if($certificationId)
+                                                    <a href="{{ route('certificaciones.edit', $certificationId) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline mr-3" title="Actualizar documento vigente">Actualizar documento</a>
+                                                @endif
                                             @else
                                                 @can('alerts.close')
                                                 <form action="{{ route('alerts.close', $alert->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Cerrar esta alerta?');">
@@ -571,14 +576,14 @@
                         <label for="vehicle-snooze-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Motivo (obligatorio)</label>
                         <textarea id="vehicle-snooze-reason" name="reason" rows="3" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Ej.: Trámite en curso"></textarea>
                     </div>
-                    <div x-show="isLicenseAlert" x-cloak>
+                    <div x-show="isWeekSnooze" x-cloak>
                         <label for="vehicle-snooze-days" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Días (1 a 7)</label>
-                        <input type="number" id="vehicle-snooze-days" name="days" value="7" min="1" max="7" :disabled="!isLicenseAlert" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Máximo una semana. Si la licencia sigue vencida o por vencer, el aviso vuelve solo.</p>
+                        <input type="number" id="vehicle-snooze-days" name="days" value="7" min="1" max="7" :disabled="!isWeekSnooze" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Máximo una semana. Si el documento sigue vencido o por vencer, el aviso vuelve solo.</p>
                     </div>
-                    <div x-show="!isLicenseAlert">
+                    <div x-show="!isWeekSnooze">
                         <label for="vehicle-snooze-hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horas (48–72)</label>
-                        <input type="number" id="vehicle-snooze-hours" name="hours" value="48" min="48" max="72" :disabled="isLicenseAlert" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <input type="number" id="vehicle-snooze-hours" name="hours" value="48" min="48" max="72" :disabled="isWeekSnooze" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                     </div>
                 </div>
                 <div class="mt-5 sm:flex sm:flex-row-reverse gap-2">

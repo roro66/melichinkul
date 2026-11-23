@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Certification;
 use App\Models\Vehicle;
+use App\Services\VehicleCirculationAlertService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -64,7 +65,9 @@ class CertificationController extends Controller
             unset($validated['attached_file_2']);
         }
 
-        Certification::create($validated);
+        $certification = Certification::create($validated);
+        $this->refreshCirculationAlerts($certification->vehicle_id);
+
         return redirect()
             ->route('vehiculos.show', $validated['vehicle_id'])
             ->with('success', 'Certificación creada correctamente.');
@@ -117,6 +120,8 @@ class CertificationController extends Controller
         }
 
         $certification->update($validated);
+        $this->refreshCirculationAlerts($certification->vehicle_id);
+
         return redirect()
             ->route('vehiculos.show', $certification->vehicle_id)
             ->with('success', 'Certificación actualizada correctamente.');
@@ -133,6 +138,8 @@ class CertificationController extends Controller
             Storage::disk('public')->delete($certification->attached_file_2);
         }
         $certification->delete();
+        $this->refreshCirculationAlerts($vehicleId);
+
         return redirect()
             ->route('vehiculos.show', $vehicleId)
             ->with('success', 'Certificación eliminada correctamente.');
@@ -164,6 +171,16 @@ class CertificationController extends Controller
         return Storage::disk('public')->response($path, $filename, [
             'Content-Disposition' => 'inline; filename="'.str_replace('"', '%22', $filename).'"',
         ]);
+    }
+
+    private function refreshCirculationAlerts(int $vehicleId): void
+    {
+        $vehicle = Vehicle::query()->find($vehicleId);
+        if (! $vehicle) {
+            return;
+        }
+
+        app(VehicleCirculationAlertService::class)->refreshVehicle($vehicle, null, true);
     }
 
     /**

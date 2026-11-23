@@ -6,6 +6,7 @@ use App\Models\Alert;
 use App\Services\AlertService;
 use App\Services\AuditService;
 use App\Services\LicenseAlertService;
+use App\Services\VehicleCirculationAlertService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -14,7 +15,8 @@ class AlertController extends Controller
     public function __construct(
         protected AlertService $alertService,
         protected AuditService $audit,
-        protected LicenseAlertService $licenseAlerts
+        protected LicenseAlertService $licenseAlerts,
+        protected VehicleCirculationAlertService $circulationAlerts,
     ) {}
 
     /**
@@ -115,7 +117,13 @@ class AlertController extends Controller
                         $viewTitle = 'Subir licencia vigente';
                         $viewIcon = 'fa-upload';
                     }
-                    $closeButton = $alert->isLicenseAlert()
+                    $certificationId = $alert->metadata['certification_id'] ?? null;
+                    if ($alert->isCirculationAlert() && $certificationId) {
+                        $viewLink = route('certificaciones.edit', $certificationId);
+                        $viewTitle = 'Actualizar documento vigente';
+                        $viewIcon = 'fa-upload';
+                    }
+                    $closeButton = $alert->usesWeekSnooze()
                         ? ''
                         : "<button type='button' onclick='closeAlert({$alert->id})' class='text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 cursor-pointer bg-transparent border-none' title='Cerrar'><i class='fas fa-check-circle'></i></button>";
                     return "
@@ -142,6 +150,14 @@ class AlertController extends Controller
         $alert = Alert::findOrFail($id);
         if ($alert->isLicenseAlert()) {
             $message = 'La alerta de licencia se cierra al cargar la licencia vigente en la ficha del conductor.';
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return redirect()->back()->with('error', $message);
+        }
+        if ($alert->isCirculationAlert()) {
+            $message = 'La alerta del documento se cierra al cargar el permiso, la revisión técnica, el SOAP o el análisis de gases vigente, con vencimiento a más de 60 días.';
             if (request()->wantsJson() || request()->ajax()) {
                 return response()->json(['success' => false, 'message' => $message], 422);
             }
@@ -202,22 +218,49 @@ class AlertController extends Controller
         ]);
     }
 
+    public function circulationScreenAlert()
+    {
+        if (! auth()->user()->isAdministrator()) {
+            return response()->json(['show' => false]);
+        }
+
+        $slot = $this->circulationAlerts->currentBusinessSlot();
+        $pending = $slot === null ? collect() : $this->circulationAlerts->pendingReminders();
+        if ($slot === null || $pending->isEmpty()) {
+            return response()->json(['show' => false]);
+        }
+
+        return response()->json([
+            'show' => true,
+            'slot' => $slot,
+            'reminder_kind' => 'circulation',
+            'title' => 'Documentos de circulación por vencer',
+            'message' => 'Hay permisos, revisiones técnicas, SOAP o análisis de gases que requieren atención. Este aviso aparece en horario laboral hasta que un administrador lo aplace (máximo una semana) o se cargue el documento vigente.',
+            'items' => $this->circulationAlerts->reminderItems($pending),
+            'url' => route('alerts.index'),
+        ]);
+    }
+
     public function snooze(Request $request, int $id)
     {
         $alert = Alert::findOrFail($id);
-        $license = $alert->isLicenseAlert();
-        if ($license) {
+        $week = $alert->usesWeekSnooze();
+        if ($week) {
             $data = $request->validate([
                 'reason' => ['required', 'string', 'max:500'],
                 'days' => ['required', 'integer', 'min:1', 'max:7'],
             ], [
-                'days.max' => 'El aplazamiento de una licencia no puede superar una semana.',
+                'days.max' => 'El aplazamiento no puede superar una semana.',
                 'days.min' => 'El aplazamiento debe ser de al menos un día.',
             ]);
             $hours = ((int) $data['days']) * 24;
             $reason = $data['reason'];
-            $driverId = (int) ($alert->metadata['driver_id'] ?? 0);
-            $targets = $this->licenseAlerts->openForDriver($driverId);
+            if ($alert->isCirculationAlert()) {
+                $targets = $this->circulationAlerts->openForKey((string) ($alert->metadata['key'] ?? ''));
+            } else {
+                $driverId = (int) ($alert->metadata['driver_id'] ?? 0);
+                $targets = $this->licenseAlerts->openForDriver($driverId);
+            }
             if ($targets->isEmpty()) {
                 $targets = collect([$alert]);
             }
@@ -233,10 +276,10 @@ class AlertController extends Controller
 
         try {
             foreach ($targets as $target) {
-                $this->alertService->snooze($target, auth()->user(), $reason, $hours, $license);
+                $this->alertService->snooze($target, auth()->user(), $reason, $hours, $week);
             }
-            $message = $license
-                ? 'Alerta pospuesta. Si la licencia sigue vencida o por vencer, el aviso vuelve al terminar el plazo.'
+            $message = $week
+                ? 'Alerta pospuesta. Si el documento sigue vencido o por vencer, el aviso vuelve al terminar el plazo.'
                 : 'Alerta pospuesta correctamente.';
             if (request()->wantsJson() || request()->ajax()) {
                 return response()->json(['success' => true, 'message' => $message]);

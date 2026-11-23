@@ -53,6 +53,24 @@ En pantalla, el administrador que está conectado ve un aviso a las 09:35, a las
 
 En Alertas, la fila de una licencia lleva a la ficha del conductor para subir el documento. No tiene botón de cerrar.
 
+## Documentos de circulación
+
+**Quién puede:** permiso `alerts.view`
+
+El permiso de circulación, la revisión técnica, el SOAP y el análisis de gases siguen el mismo aviso que la licencia. Son los documentos que, vencidos, no dejan circular el móvil, sea camioneta, camión u otro tipo. El extintor, el seguro adicional y los certificados de grúa, carga o transporte no usan este aviso.
+
+Se toma la fecha vigente de cada documento. Si hay más de un registro activo del mismo tipo, manda el que vence más tarde. La alerta aparece cuando faltan 60 días o menos. Si ya venció, queda como documento vencido. No se cierra a mano: se cierra al dejar ese documento con un vencimiento a más de 60 días. Si la fecha nueva sigue dentro de los 60 días, el aviso continúa.
+
+El correo a los administradores y al conductor asignado al móvil sale una vez al día, solo los días que corresponden:
+
+- Entre 31 y 60 días: los lunes.
+- Entre 16 y 30 días: lunes, miércoles y viernes.
+- Con 15 días o menos, o ya vencido: todos los días.
+
+En pantalla, el administrador que está conectado ve un aviso a las 09:35, a las 13:00 y a las 17:00, hora de Chile. Puede aplazarlo de 1 a 7 días. Al cumplirse el plazo, si el documento sigue por vencer o vencido, el aviso vuelve.
+
+En Alertas, la fila lleva a editar ese documento. No tiene botón de cerrar. Un móvil inactivo deja de avisar.
+
 ## Mantenimientos
 
 **Quién puede:** permiso `maintenances.view`

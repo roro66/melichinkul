@@ -403,6 +403,32 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
+    <style>
+        .ia-coin-wrap { perspective: 120px; display: inline-flex; }
+        .ia-coin,
+        html.dark .ia-coin,
+        html.dark a[href] .ia-coin {
+            width: 1.4rem;
+            height: 1.4rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #facc15;
+            color: #000 !important;
+            -webkit-text-fill-color: #000 !important;
+            font-size: 0.62rem;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            transform-style: preserve-3d;
+            animation: ia-spin-y 2.2s linear infinite;
+        }
+        @keyframes ia-spin-y {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(360deg); }
+        }
+    </style>
 </head>
 <body class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
     <div id="melichinkul-app-shell" class="flex h-full">
@@ -520,7 +546,8 @@
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                         </svg>
-                        Asistente
+                        <span>Asistente</span>
+                        <span class="ia-coin-wrap ml-2" aria-hidden="true"><span class="ia-coin">ia</span></span>
                     </a>
                     @endif
 
@@ -1038,6 +1065,45 @@
         });
     </script>
     @auth
+    @if (auth()->user()->isAdministrator())
+    <script>
+        window.showCirculationReminder = function (payload) {
+            if (!payload || !payload.slot || !window.Swal) return;
+            const storageKey = 'melichinkul-circulation-reminder-slot';
+            if (localStorage.getItem(storageKey) === payload.slot) return;
+            localStorage.setItem(storageKey, payload.slot);
+            const escapeHtml = function (value) {
+                return String(value || '').replace(/[&<>"']/g, function (ch) {
+                    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+                });
+            };
+            const items = (payload.items || []).map(function (item) {
+                const href = escapeHtml(item.url || payload.url || '/alertas');
+                return '<li style="margin-top:8px"><a href="' + href + '"><strong>' + escapeHtml(item.title) + '</strong></a><br>' + escapeHtml(item.message) + '</li>';
+            }).join('');
+            window.Swal.fire({
+                icon: 'warning',
+                title: payload.title || 'Documentos de circulación por vencer',
+                html: '<p style="text-align:left">' + escapeHtml(payload.message) + '</p><ul style="text-align:left;margin-top:12px;padding-left:1.1rem">' + items + '</ul>',
+                confirmButtonText: 'Ver alertas',
+                showCancelButton: true,
+                cancelButtonText: 'Entendido',
+            }).then(function (result) {
+                if (result.isConfirmed && payload.url) {
+                    window.location.href = payload.url;
+                }
+            });
+        };
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch('/alertas/documentos-aviso', {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            })
+                .then(function (response) { return response.ok ? response.json() : null; })
+                .then(function (data) { if (data && data.show) window.showCirculationReminder(data); })
+                .catch(function () {});
+        });
+    </script>
+    @endif
     {{-- DA-I: solo usuarios autenticados; ranking con sesión + CSRF (véase rutas api/game) --}}
     <script src="{{ asset('js/game-integration.js') }}"></script>
     @endauth
