@@ -75,8 +75,7 @@
                                     @endif
                                 </span>
                                 <div class="flex gap-3 text-sm">
-                                    <a href="{{ route('conductores.documentos.ver', ['driver' => $driver->id, 'document' => $doc->id]) }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">Ver</a>
-                                    <a href="{{ route('conductores.documentos.descargar', ['driver' => $driver->id, 'document' => $doc->id]) }}" class="text-gray-600 dark:text-gray-400 hover:underline">Descargar</a>
+                                    @include('conductores.partials.document-links', ['doc' => $doc, 'driverId' => $driver->id])
                                 </div>
                             </li>
                         @endforeach

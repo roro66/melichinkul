@@ -1,6 +1,6 @@
 <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Documentos del conductor</h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Sube imágenes o PDFs (carnet, licencia, certificado de antecedentes, etc.) y asigna un nombre legible a cada uno. Si el archivo es la licencia vigente, elige ese tipo e indica el nuevo vencimiento: con más de 60 días se cierra el aviso.</p>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Sube imágenes o PDFs y asigna un nombre legible a cada uno. En el carnet y la licencia, si el escaneo trae las dos caras juntas, basta una imagen. Si van separadas, agrega el reverso. Si el archivo es la licencia vigente, indica el nuevo vencimiento: con más de 60 días se cierra el aviso.</p>
 
     @if (session('documents_success'))
         <div class="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 text-sm">
@@ -15,6 +15,7 @@
                 <select id="doc_kind" wire:model.live="kind"
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
                     <option value="otro">Otro documento</option>
+                    <option value="carnet">Carnet de identidad</option>
                     <option value="licencia">Licencia de conducir vigente</option>
                 </select>
             </div>
@@ -41,19 +42,48 @@
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
-            <div>
-                <label for="doc_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Archivo (imagen o PDF, máx. 10 MB) <span class="text-red-500">*</span>
-                </label>
-                <input type="file" id="doc_file" wire:model="file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf"
-                    class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50 @error('file') border-red-500 @enderror">
-                @error('file')
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                @enderror
-                @if ($file)
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $file->getClientOriginalName() }}</p>
-                @endif
-            </div>
+            @if (\App\Models\DriverDocument::kindCanHaveReverse($kind))
+                <div>
+                    <label for="doc_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Imagen (anverso, o ambas caras juntas) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="file" id="doc_file" wire:model="file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf"
+                        class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50">
+                    @error('file')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    @if ($file)
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $file->getClientOriginalName() }}</p>
+                    @endif
+                </div>
+                <div>
+                    <label for="doc_reverse" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Reverso, si va en otra imagen
+                    </label>
+                    <input type="file" id="doc_reverse" wire:model="reverseFile" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf"
+                        class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50">
+                    @error('reverseFile')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    @if ($reverseFile)
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $reverseFile->getClientOriginalName() }}</p>
+                    @endif
+                </div>
+            @else
+                <div>
+                    <label for="doc_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Archivo (imagen o PDF, máx. 10 MB) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="file" id="doc_file" wire:model="file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf"
+                        class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50">
+                    @error('file')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    @if ($file)
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $file->getClientOriginalName() }}</p>
+                    @endif
+                </div>
+            @endif
         </div>
         <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg transition-colors duration-150 text-sm">
             Subir documento
@@ -71,20 +101,14 @@
                         @if ($doc->kind === 'licencia' && $doc->expiration_date)
                             <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">vence {{ $doc->expiration_date->format('d/m/Y') }}</span>
                         @endif
-                        @if ($doc->original_name)
+                        @if ($doc->hasReverse())
+                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">anverso {{ $doc->original_name }} · reverso {{ $doc->reverse_original_name }}</span>
+                        @elseif ($doc->original_name)
                             <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">({{ $doc->original_name }})</span>
                         @endif
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <a href="{{ route('conductores.documentos.ver', ['driver' => $driverId, 'document' => $doc->id]) }}"
-                            target="_blank"
-                            class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm">
-                            Ver
-                        </a>
-                        <a href="{{ route('conductores.documentos.descargar', ['driver' => $driverId, 'document' => $doc->id]) }}"
-                            class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 text-sm">
-                            Descargar
-                        </a>
+                    <div class="flex items-center gap-2 shrink-0 text-sm">
+                        @include('conductores.partials.document-links', ['doc' => $doc, 'driverId' => $driverId])
                         <button type="button"
                             wire:click="deleteDocument({{ $doc->id }})"
                             wire:confirm="¿Eliminar este documento?"

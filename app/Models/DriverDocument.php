@@ -15,6 +15,8 @@ class DriverDocument extends Model
         'expiration_date',
         'file_path',
         'original_name',
+        'reverse_file_path',
+        'reverse_original_name',
     ];
 
     protected function casts(): array
@@ -42,14 +44,26 @@ class DriverDocument extends Model
         );
     }
 
+    public function hasReverse(): bool
+    {
+        return filled($this->reverse_file_path);
+    }
+
+    public static function kindCanHaveReverse(?string $kind): bool
+    {
+        return in_array($kind, ['carnet', 'licencia'], true);
+    }
+
     /**
      * Elimina el archivo físico al borrar el registro.
      */
     protected static function booted(): void
     {
         static::deleting(function (DriverDocument $document) {
-            if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
-                Storage::disk('public')->delete($document->file_path);
+            foreach ([$document->file_path, $document->reverse_file_path] as $path) {
+                if ($path && Storage::disk('public')->exists($path)) {
+                    Storage::disk('public')->delete($path);
+                }
             }
         });
     }

@@ -99,29 +99,48 @@ class DriverController extends Controller
         return view('conductores.show', compact('driver'));
     }
 
-    public function viewDocument(Driver $driver, DriverDocument $document): BinaryFileResponse
+    public function viewDocument(Request $request, Driver $driver, DriverDocument $document): BinaryFileResponse
     {
-        if ($document->driver_id !== $driver->id) {
-            abort(404);
-        }
-        if (! Storage::disk('public')->exists($document->file_path)) {
-            abort(404);
-        }
-        return response()->file(Storage::disk('public')->path($document->file_path), [
-            'Content-Type' => $document->isPdf() ? 'application/pdf' : 'image/' . pathinfo($document->file_path, PATHINFO_EXTENSION),
+        $path = $this->documentPath($request, $driver, $document);
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mime = match ($extension) {
+            'pdf' => 'application/pdf',
+            'jpg', 'jpeg' => 'image/jpeg',
+            default => 'image/'.$extension,
+        };
+
+        return response()->file(Storage::disk('public')->path($path), [
+            'Content-Type' => $mime,
         ]);
     }
 
-    public function downloadDocument(Driver $driver, DriverDocument $document): StreamedResponse
+    public function downloadDocument(Request $request, Driver $driver, DriverDocument $document): StreamedResponse
+    {
+        $path = $this->documentPath($request, $driver, $document);
+        $side = $request->query('lado') === 'reverso' ? 'reverso' : 'anverso';
+        $suffix = $document->hasReverse() ? '-'.$side : '';
+        $downloadName = \Illuminate\Support\Str::slug($document->name).$suffix.'.'.pathinfo($path, PATHINFO_EXTENSION);
+
+        return Storage::disk('public')->download($path, $downloadName);
+    }
+
+    private function documentPath(Request $request, Driver $driver, DriverDocument $document): string
     {
         if ($document->driver_id !== $driver->id) {
             abort(404);
         }
-        if (! Storage::disk('public')->exists($document->file_path)) {
+
+        $side = $request->query('lado', 'anverso');
+        if (! in_array($side, ['anverso', 'reverso'], true)) {
             abort(404);
         }
-        $downloadName = \Illuminate\Support\Str::slug($document->name) . '.' . pathinfo($document->file_path, PATHINFO_EXTENSION);
-        return Storage::disk('public')->download($document->file_path, $downloadName);
+
+        $path = $side === 'reverso' ? $document->reverse_file_path : $document->file_path;
+        if (! $path || ! Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        return $path;
     }
 
     public function edit(int $id)
