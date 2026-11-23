@@ -1,6 +1,6 @@
 <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Documentos del conductor</h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Sube imágenes o PDFs (carnet, licencia, certificado de antecedentes, etc.) y asigna un nombre legible a cada uno.</p>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Sube imágenes o PDFs (carnet, licencia, certificado de antecedentes, etc.) y asigna un nombre legible a cada uno. Si el archivo es la licencia vigente, elige ese tipo e indica el nuevo vencimiento: con más de 60 días se cierra el aviso.</p>
 
     @if (session('documents_success'))
         <div class="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 text-sm">
@@ -10,6 +10,26 @@
 
     <form wire:submit="save" class="space-y-4 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+            <div>
+                <label for="doc_kind" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+                <select id="doc_kind" wire:model.live="kind"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                    <option value="otro">Otro documento</option>
+                    <option value="licencia">Licencia de conducir vigente</option>
+                </select>
+            </div>
+            @if ($kind === 'licencia')
+                <div>
+                    <label for="doc_expiration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Nuevo vencimiento <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="doc_expiration" wire:model="expiration_date"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 @error('expiration_date') border-red-500 @enderror">
+                    @error('expiration_date')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endif
             <div>
                 <label for="doc_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Nombre del documento <span class="text-red-500">*</span>
@@ -48,6 +68,9 @@
                 <li class="py-3 flex items-center justify-between gap-4">
                     <div class="min-w-0 flex-1">
                         <span class="font-medium text-gray-900 dark:text-white">{{ $doc->name }}</span>
+                        @if ($doc->kind === 'licencia' && $doc->expiration_date)
+                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">vence {{ $doc->expiration_date->format('d/m/Y') }}</span>
+                        @endif
                         @if ($doc->original_name)
                             <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">({{ $doc->original_name }})</span>
                         @endif

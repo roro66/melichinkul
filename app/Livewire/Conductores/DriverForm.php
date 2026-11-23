@@ -3,6 +3,7 @@
 namespace App\Livewire\Conductores;
 
 use App\Models\Driver;
+use App\Services\LicenseAlertService;
 use App\Support\ChileanValidationHelper;
 use Livewire\Component;
 
@@ -110,10 +111,22 @@ class DriverForm extends Component
         ];
 
         if ($this->driverId) {
-            Driver::findOrFail($this->driverId)->update($data);
-            session()->flash('success', 'Conductor actualizado correctamente.');
+            $driver = Driver::findOrFail($this->driverId);
+            $previous = $driver->license_expiration_date?->toDateString();
+            $driver->update($data);
+            $driver->refresh();
+            $changed = $previous !== $driver->license_expiration_date?->toDateString();
+            $result = app(LicenseAlertService::class)->refreshDriver($driver, null, $changed);
+            $message = 'Conductor actualizado correctamente.';
+            if ($changed && $result['state'] === 'clear') {
+                $message = 'Conductor actualizado. La licencia queda fuera del plazo de aviso y se cerraron las alertas.';
+            } elseif ($changed && $result['state'] === 'ongoing') {
+                $message = 'Conductor actualizado. La licencia sigue dentro de los 60 días, así que el aviso continúa.';
+            }
+            session()->flash('success', $message);
         } else {
-            Driver::create($data);
+            $driver = Driver::create($data);
+            app(LicenseAlertService::class)->refreshDriver($driver);
             session()->flash('success', 'Conductor creado correctamente.');
         }
 

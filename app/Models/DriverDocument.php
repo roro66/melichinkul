@@ -11,9 +11,18 @@ class DriverDocument extends Model
     protected $fillable = [
         'driver_id',
         'name',
+        'kind',
+        'expiration_date',
         'file_path',
         'original_name',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'expiration_date' => 'date',
+        ];
+    }
 
     public function driver(): BelongsTo
     {

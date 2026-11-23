@@ -3,7 +3,7 @@
 @section('title', 'Ficha del Vehículo - ' . $vehicle->license_plate)
 
 @section('content')
-<div class="space-y-6" x-data="{ activeTab: 'resumen', selectedAlertId: null, showSnoozeModal: false }">
+<div class="space-y-6" x-data="{ activeTab: 'resumen', selectedAlertId: null, selectedAlertType: '', showSnoozeModal: false, get isLicenseAlert() { return this.selectedAlertType === 'licencia_por_vencer' || this.selectedAlertType === 'licencia_vencida' } }">
     <!-- Header -->
     <div class="flex justify-between items-center">
         <div>
@@ -529,14 +529,21 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 text-right">
-                                            @can('alerts.close')
-                                            <form action="{{ route('alerts.close', $alert->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Cerrar esta alerta?');">
-                                                @csrf
-                                                <button type="submit" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:underline mr-3" title="Cerrar"><i class="fas fa-check"></i> Cerrar</button>
-                                            </form>
-                                            @endcan
+                                            @if($alert->isLicenseAlert())
+                                                @php $licenseDriverId = $alert->metadata['driver_id'] ?? null; @endphp
+                                                @if($licenseDriverId)
+                                                    <a href="{{ route('conductores.edit', $licenseDriverId) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline mr-3" title="Subir licencia vigente">Subir licencia</a>
+                                                @endif
+                                            @else
+                                                @can('alerts.close')
+                                                <form action="{{ route('alerts.close', $alert->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Cerrar esta alerta?');">
+                                                    @csrf
+                                                    <button type="submit" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:underline mr-3" title="Cerrar"><i class="fas fa-check"></i> Cerrar</button>
+                                                </form>
+                                                @endcan
+                                            @endif
                                             @can('alerts.snooze')
-                                            <button type="button" @click="selectedAlertId = {{ $alert->id }}; showSnoozeModal = true" class="text-amber-600 dark:text-amber-300 hover:underline" title="Posponer"><i class="fas fa-clock"></i> Posponer</button>
+                                            <button type="button" @click="selectedAlertId = {{ $alert->id }}; selectedAlertType = '{{ $alert->type }}'; showSnoozeModal = true" class="text-amber-600 dark:text-amber-300 hover:underline" title="Posponer"><i class="fas fa-clock"></i> Posponer</button>
                                             @endcan
                                         </td>
                                     </tr>
@@ -548,7 +555,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <!-- Modal posponer alerta (desde ficha vehículo) -->
 <div x-show="showSnoozeModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true"
@@ -565,9 +571,14 @@
                         <label for="vehicle-snooze-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Motivo (obligatorio)</label>
                         <textarea id="vehicle-snooze-reason" name="reason" rows="3" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Ej.: Trámite en curso"></textarea>
                     </div>
-                    <div>
+                    <div x-show="isLicenseAlert" x-cloak>
+                        <label for="vehicle-snooze-days" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Días (1 a 7)</label>
+                        <input type="number" id="vehicle-snooze-days" name="days" value="7" min="1" max="7" :disabled="!isLicenseAlert" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Máximo una semana. Si la licencia sigue vencida o por vencer, el aviso vuelve solo.</p>
+                    </div>
+                    <div x-show="!isLicenseAlert">
                         <label for="vehicle-snooze-hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horas (48–72)</label>
-                        <input type="number" id="vehicle-snooze-hours" name="hours" value="48" min="48" max="72" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <input type="number" id="vehicle-snooze-hours" name="hours" value="48" min="48" max="72" :disabled="isLicenseAlert" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                     </div>
                 </div>
                 <div class="mt-5 sm:flex sm:flex-row-reverse gap-2">
@@ -580,4 +591,5 @@
 </div>
 
 {{-- Alpine ya viene incluido con Livewire; no cargar de nuevo para evitar "multiple instances" --}}
+</div>
 @endsection

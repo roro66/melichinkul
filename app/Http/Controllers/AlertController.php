@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Alert;
 use App\Services\AlertService;
 use App\Services\AuditService;
+use App\Services\LicenseAlertService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -12,7 +13,8 @@ class AlertController extends Controller
 {
     public function __construct(
         protected AlertService $alertService,
-        protected AuditService $audit
+        protected AuditService $audit,
+        protected LicenseAlertService $licenseAlerts
     ) {}
 
     /**
@@ -75,6 +77,11 @@ class AlertController extends Controller
                     if ($alert->sparePart) {
                         return '<span class="text-indigo-600 dark:text-indigo-400">' . e($alert->sparePart->code) . '</span><br><span class="text-xs text-gray-500 dark:text-gray-400">' . e($alert->sparePart->description) . '</span>';
                     }
+                    if ($alert->isLicenseAlert()) {
+                        $name = e($alert->metadata['driver_name'] ?? 'Conductor');
+
+                        return $name . '<br><span class="text-xs text-gray-500 dark:text-gray-400">Sin móvil asignado</span>';
+                    }
                     return '<span class="text-gray-500 dark:text-gray-400 italic">—</span>';
                 })
                 ->addColumn('severity_badge', function (Alert $alert) {
@@ -100,19 +107,26 @@ class AlertController extends Controller
                     $viewLink = $alert->vehicle_id
                         ? route('vehiculos.show', $alert->vehicle_id)
                         : ($alert->spare_part_id ? route('repuestos.show', $alert->spare_part_id) : '#');
-                    $viewTitle = $alert->vehicle_id ? 'Ver vehículo' : 'Ver repuesto';
-                    $viewIcon = $alert->vehicle_id ? 'fa-car' : 'fa-box';
+                    $viewTitle = $alert->vehicle_id ? 'Ver vehículo' : ($alert->isLicenseAlert() ? 'Licencia de conductor' : 'Ver repuesto');
+                    $viewIcon = $alert->vehicle_id ? 'fa-car' : ($alert->isLicenseAlert() ? 'fa-id-card' : 'fa-box');
+                    $driverId = $alert->metadata['driver_id'] ?? null;
+                    if ($alert->isLicenseAlert() && $driverId) {
+                        $viewLink = route('conductores.edit', $driverId);
+                        $viewTitle = 'Subir licencia vigente';
+                        $viewIcon = 'fa-upload';
+                    }
+                    $closeButton = $alert->isLicenseAlert()
+                        ? ''
+                        : "<button type='button' onclick='closeAlert({$alert->id})' class='text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 cursor-pointer bg-transparent border-none' title='Cerrar'><i class='fas fa-check-circle'></i></button>";
                     return "
                         <div class='flex justify-end items-center gap-2'>
                             <a href='{$viewLink}' class='text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300' title='{$viewTitle}'>
                                 <i class='fas {$viewIcon}'></i>
                             </a>
-                            <button type='button' onclick='snoozeAlert({$alert->id})' class='text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 cursor-pointer bg-transparent border-none' title='Posponer'>
+                            <button type='button' onclick='snoozeAlert({$alert->id}, \"{$alert->type}\")' class='text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 cursor-pointer bg-transparent border-none' title='Posponer'>
                                 <i class='fas fa-clock'></i>
                             </button>
-                            <button type='button' onclick='closeAlert({$alert->id})' class='text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 cursor-pointer bg-transparent border-none' title='Cerrar'>
-                                <i class='fas fa-check-circle'></i>
-                            </button>
+                            {$closeButton}
                         </div>
                     ";
                 })
@@ -126,6 +140,14 @@ class AlertController extends Controller
     public function close(int $id)
     {
         $alert = Alert::findOrFail($id);
+        if ($alert->isLicenseAlert()) {
+            $message = 'La alerta de licencia se cierra al cargar la licencia vigente en la ficha del conductor.';
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return redirect()->back()->with('error', $message);
+        }
         if ($alert->status === 'closed') {
             if (request()->wantsJson() || request()->ajax()) {
                 return response()->json(['success' => false, 'message' => __('alerta.snooze_cerrada')], 422);
@@ -157,24 +179,69 @@ class AlertController extends Controller
         return redirect()->back()->with('success', 'Alerta cerrada correctamente.');
     }
 
+    public function licenseScreenAlert()
+    {
+        if (! auth()->user()->isAdministrator()) {
+            return response()->json(['show' => false]);
+        }
+
+        $slot = $this->licenseAlerts->currentBusinessSlot();
+        $pending = $slot === null ? collect() : $this->licenseAlerts->pendingReminders();
+        if ($slot === null || $pending->isEmpty()) {
+            return response()->json(['show' => false]);
+        }
+
+        return response()->json([
+            'show' => true,
+            'slot' => $slot,
+            'reminder_kind' => 'license',
+            'title' => 'Licencias de conducir por vencer',
+            'message' => 'Hay licencias que requieren atención. Este aviso aparece en horario laboral hasta que un administrador lo aplace (máximo una semana) o se suba la licencia vigente.',
+            'items' => $this->licenseAlerts->reminderItems($pending),
+            'url' => route('alerts.index'),
+        ]);
+    }
+
     public function snooze(Request $request, int $id)
     {
-        $request->validate([
-            'reason' => 'required|string|max:500',
-            'hours' => 'nullable|integer|min:48|max:72',
-        ]);
         $alert = Alert::findOrFail($id);
-        try {
-            $this->alertService->snooze(
-                $alert,
-                auth()->user(),
-                $request->input('reason'),
-                (int) ($request->input('hours', AlertService::SNOOZE_MIN_HOURS))
-            );
-            if (request()->wantsJson() || request()->ajax()) {
-                return response()->json(['success' => true, 'message' => 'Alerta pospuesta correctamente.']);
+        $license = $alert->isLicenseAlert();
+        if ($license) {
+            $data = $request->validate([
+                'reason' => ['required', 'string', 'max:500'],
+                'days' => ['required', 'integer', 'min:1', 'max:7'],
+            ], [
+                'days.max' => 'El aplazamiento de una licencia no puede superar una semana.',
+                'days.min' => 'El aplazamiento debe ser de al menos un día.',
+            ]);
+            $hours = ((int) $data['days']) * 24;
+            $reason = $data['reason'];
+            $driverId = (int) ($alert->metadata['driver_id'] ?? 0);
+            $targets = $this->licenseAlerts->openForDriver($driverId);
+            if ($targets->isEmpty()) {
+                $targets = collect([$alert]);
             }
-            return redirect()->back()->with('success', 'Alerta pospuesta correctamente.');
+        } else {
+            $data = $request->validate([
+                'reason' => ['required', 'string', 'max:500'],
+                'hours' => ['nullable', 'integer', 'min:48', 'max:72'],
+            ]);
+            $hours = (int) ($data['hours'] ?? AlertService::SNOOZE_MIN_HOURS);
+            $reason = $data['reason'];
+            $targets = collect([$alert]);
+        }
+
+        try {
+            foreach ($targets as $target) {
+                $this->alertService->snooze($target, auth()->user(), $reason, $hours, $license);
+            }
+            $message = $license
+                ? 'Alerta pospuesta. Si la licencia sigue vencida o por vencer, el aviso vuelve al terminar el plazo.'
+                : 'Alerta pospuesta correctamente.';
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => true, 'message' => $message]);
+            }
+            return redirect()->back()->with('success', $message);
         } catch (\InvalidArgumentException $e) {
             if (request()->wantsJson() || request()->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 422);

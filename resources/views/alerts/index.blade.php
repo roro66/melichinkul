@@ -46,8 +46,9 @@
                         <textarea id="snooze-reason" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="Ej.: Trámite en curso"></textarea>
                     </div>
                     <div>
-                        <label for="snooze-hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horas (48–72)</label>
+                        <label id="snooze-duration-label" for="snooze-hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horas (48–72)</label>
                         <input type="number" id="snooze-hours" value="48" min="48" max="72" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <p id="snooze-hint" class="hidden mt-1 text-xs text-gray-500 dark:text-gray-400"></p>
                     </div>
                 </div>
             </div>
@@ -89,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 let snoozeAlertId = null;
+let snoozeUnit = 'hours';
 
 function closeAlert(id) {
     swalConfirmDelete('¿Cerrar esta alerta?', 'Se marcará como resuelta.', 'Sí, cerrar')
@@ -116,10 +118,29 @@ function closeAlert(id) {
         });
 }
 
-function snoozeAlert(id) {
+function snoozeAlert(id, type) {
     snoozeAlertId = id;
+    const license = type === 'licencia_por_vencer' || type === 'licencia_vencida';
+    snoozeUnit = license ? 'days' : 'hours';
+    const label = document.getElementById('snooze-duration-label');
+    const input = document.getElementById('snooze-hours');
+    const hint = document.getElementById('snooze-hint');
     document.getElementById('snooze-reason').value = '';
-    document.getElementById('snooze-hours').value = '48';
+    if (license) {
+        label.textContent = 'Días (1 a 7)';
+        input.min = '1';
+        input.max = '7';
+        input.value = '7';
+        hint.textContent = 'Máximo una semana. Si la licencia sigue vencida o por vencer, el aviso vuelve solo.';
+        hint.classList.remove('hidden');
+    } else {
+        label.textContent = 'Horas (48–72)';
+        input.min = '48';
+        input.max = '72';
+        input.value = '48';
+        hint.textContent = '';
+        hint.classList.add('hidden');
+    }
     document.getElementById('snooze-modal').classList.remove('hidden');
 }
 
@@ -130,12 +151,18 @@ function closeSnoozeModal() {
 
 document.getElementById('snooze-confirm').addEventListener('click', function() {
     const reason = document.getElementById('snooze-reason').value.trim();
-    const hours = parseInt(document.getElementById('snooze-hours').value, 10) || 48;
+    const duration = parseInt(document.getElementById('snooze-hours').value, 10);
     if (!reason) {
         swalError('El motivo es obligatorio.');
         return;
     }
     if (snoozeAlertId === null) return;
+    const payload = { reason: reason };
+    if (snoozeUnit === 'days') {
+        payload.days = duration || 7;
+    } else {
+        payload.hours = duration || 48;
+    }
     fetch("{{ url('alertas') }}/" + snoozeAlertId + "/posponer", {
         method: 'POST',
         headers: {
@@ -143,7 +170,7 @@ document.getElementById('snooze-confirm').addEventListener('click', function() {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
-        body: JSON.stringify({ reason: reason, hours: hours })
+        body: JSON.stringify(payload)
     })
     .then(r => r.json())
     .then(data => {

@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @auth
     <meta name="auth-user-id" content="{{ auth()->id() }}">
+    @if(auth()->user()->isAdministrator())
+    <meta name="auth-is-administrator" content="1">
+    @endif
     @endauth
     <title>@yield('title', config('app.name', 'Melichinkul'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])

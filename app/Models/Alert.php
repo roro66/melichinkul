@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\LicenseAlertService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -70,5 +71,10 @@ class Alert extends Model
     public function scopeSnoozed($query)
     {
         return $query->whereNotNull('snoozed_until')->where('snoozed_until', '>', now());
+    }
+
+    public function isLicenseAlert(): bool
+    {
+        return in_array($this->type, LicenseAlertService::TYPES, true);
     }
 }

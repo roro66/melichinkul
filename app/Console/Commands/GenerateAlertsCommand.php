@@ -4,13 +4,11 @@ namespace App\Console\Commands;
 
 use App\Models\Alert;
 use App\Models\Certification;
-use App\Models\Driver;
 use App\Models\Maintenance;
-use App\Models\SparePart;
 use App\Models\Stock;
 use App\Models\User;
-use App\Models\Vehicle;
 use App\Notifications\CriticalAlertsDigestNotification;
+use App\Services\LicenseAlertService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -68,45 +66,7 @@ class GenerateAlertsCommand extends Command
             }
         }
 
-        // Driver licenses expiring or expired (per vehicle assigned to that driver)
-        $drivers = Driver::where('active', true)->get();
-        foreach ($drivers as $driver) {
-            $exp = $driver->license_expiration_date;
-            if (! $exp) {
-                continue;
-            }
-            $daysUntil = $today->diffInDays($exp, false);
-            $driverName = $driver->full_name ?? 'Conductor';
-
-            $key = 'driver_' . $driver->id;
-            $vehicles = Vehicle::where('current_driver_id', $driver->id)->get();
-            foreach ($vehicles as $vehicle) {
-                if ($daysUntil < 0) {
-                    [$n, $id] = $this->createAlertOnce($vehicle->id, 'licencia_vencida', 'critica',
-                        "Licencia vencida: {$driverName}",
-                        "La licencia del conductor {$driverName} venció el " . $exp->format('d/m/Y') . ".",
-                        $exp, ['key' => $key, 'driver_id' => $driver->id], null);
-                    $count += $n;
-                    if ($id !== null) {
-                        $criticalAlertIds[] = $id;
-                    }
-                } elseif ($daysUntil <= 15) {
-                    [$n, $id] = $this->createAlertOnce($vehicle->id, 'licencia_por_vencer', 'critica',
-                        "Licencia por vencer: {$driverName}",
-                        "La licencia del conductor {$driverName} vence el " . $exp->format('d/m/Y') . " (" . $daysUntil . " días).",
-                        $exp, ['key' => $key, 'driver_id' => $driver->id], null);
-                    $count += $n;
-                    if ($id !== null) {
-                        $criticalAlertIds[] = $id;
-                    }
-                } elseif ($daysUntil <= 60) {
-                    $count += $this->createAlertOnce($vehicle->id, 'licencia_por_vencer', 'advertencia',
-                        "Licencia por vencer: {$driverName}",
-                        "La licencia del conductor {$driverName} vence el " . $exp->format('d/m/Y') . " (" . $daysUntil . " días).",
-                        $exp, ['key' => $key, 'driver_id' => $driver->id], null)[0];
-                }
-            }
-        }
+        $count += app(LicenseAlertService::class)->generate($today);
 
         // Overdue maintenances (scheduled in the past, not completed)
         $overdue = Maintenance::with('vehicle')

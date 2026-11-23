@@ -90,4 +90,31 @@ class User extends Authenticatable
             })
             ->get();
     }
+
+    public function isAdministrator(): bool
+    {
+        if ($this->hasRole('administrator')) {
+            return true;
+        }
+
+        return ($this->attributes['role'] ?? null) === 'administrator';
+    }
+
+    /**
+     * Administradores activos que reciben el aviso repetido de licencias.
+     *
+     * @return Collection<int, User>
+     */
+    public static function licenseReminderRecipients(): Collection
+    {
+        return static::query()
+            ->where('active', true)
+            ->where(function ($q) {
+                $q->where('role', 'administrator')
+                    ->orWhereHas('roles', function ($roleQuery) {
+                        $roleQuery->where('name', 'administrator');
+                    });
+            })
+            ->get();
+    }
 }

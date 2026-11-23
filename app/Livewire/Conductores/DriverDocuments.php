@@ -4,6 +4,7 @@ namespace App\Livewire\Conductores;
 
 use App\Models\Driver;
 use App\Models\DriverDocument;
+use App\Services\LicenseAlertService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Str;
@@ -16,12 +17,20 @@ class DriverDocuments extends Component
 
     public string $name = '';
 
+    public string $kind = 'otro';
+
+    public string $expiration_date = '';
+
     public $file = null;
 
     protected function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:100'],
+            'kind' => ['required', 'in:otro,licencia'],
+            'expiration_date' => $this->kind === 'licencia'
+                ? ['required', 'date', 'after_or_equal:today']
+                : ['nullable', 'date'],
             'file' => [
                 'required',
                 'file',
@@ -33,6 +42,8 @@ class DriverDocuments extends Component
 
     protected $messages = [
         'name.required' => 'Indica de qué se trata el documento (ej. Carnet, Licencia, Certificado de antecedentes).',
+        'expiration_date.required' => 'Indica la fecha de vencimiento de la licencia vigente.',
+        'expiration_date.after_or_equal' => 'La licencia vigente debe vencer hoy o más adelante.',
         'file.required' => 'Selecciona un archivo.',
         'file.mimes' => 'Solo se permiten imágenes (JPG, PNG, GIF, WebP) o PDF.',
         'file.max' => 'El archivo no puede superar 10 MB.',
@@ -55,14 +66,28 @@ class DriverDocuments extends Component
 
         $path = $this->file->storeAs($directory, $filename, 'public');
 
+        $isLicense = $this->kind === 'licencia';
+
         $driver->documents()->create([
             'name' => trim($this->name),
+            'kind' => $this->kind,
+            'expiration_date' => $isLicense ? $this->expiration_date : null,
             'file_path' => $path,
             'original_name' => $this->file->getClientOriginalName(),
         ]);
 
-        $this->reset(['name', 'file']);
-        session()->flash('documents_success', 'Documento subido correctamente.');
+        $message = 'Documento subido correctamente.';
+        if ($isLicense) {
+            $driver->update(['license_expiration_date' => $this->expiration_date]);
+            $result = app(LicenseAlertService::class)->refreshDriver($driver->fresh(), null, true);
+            $message = $result['state'] === 'clear'
+                ? 'Licencia vigente cargada. El vencimiento supera los 60 días y se cerró la alerta.'
+                : 'Licencia cargada. El vencimiento sigue dentro de los 60 días, así que el aviso continúa.';
+        }
+
+        $this->reset(['name', 'kind', 'expiration_date', 'file']);
+        $this->kind = 'otro';
+        session()->flash('documents_success', $message);
     }
 
     public function deleteDocument(int $id): void
