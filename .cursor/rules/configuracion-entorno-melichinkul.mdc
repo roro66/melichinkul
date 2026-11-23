@@ -26,7 +26,7 @@ El archivo está en `.gitignore` (contiene secretos). No copiar credenciales a c
 Cuando el usuario pida **commit**, **push**, **desplegar**, **actualizar servidor** o similar, seguir **siempre** `docs/CONFIGURACION_ENTORNO.md` (§5 Acceso y despliegue):
 
 1. **Commit** en `main` — solo archivos del cambio; nunca secretos ni archivos ajenos.
-2. **rsync + sshpass** al servidor — comando completo del doc, con todos los `--exclude`.
+2. **rsync + sshpass** al servidor — comando completo del doc, con todos los `--exclude`. La contraseña SSH es la misma de Coteso, Oxígeno y Sover3MP, y se lee con `sshpass -f /home/rodrigo/.config/maitepaz/ssh.pass`. Nunca usar `sshpass -p` ni escribir la contraseña en el comando o en el chat.
 3. **md5sum** — comparar local vs remoto en cada archivo desplegado relevante.
 4. **Post-despliegue** en servidor — según el cambio: `migrate --force`, `config:clear`, `view:clear`, `composer install`, `npm run build`, parche Reverb si aplica (§5.5).
 5. **Push** — `git push origin main` cuando corresponda (rsync no copia `.env`; alinear `MAIL_*` y `APP_TIMEZONE` manualmente en servidor si aplica).

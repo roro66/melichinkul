@@ -1,0 +1,13 @@
+---
+description: Contraseña SSH de maitepaz en un archivo compartido, nunca en el comando
+alwaysApply: true
+---
+
+# Acceso SSH a maitepaz
+
+Coteso, Oxígeno, Sover3MP y Melichinkul comparten el servidor y la misma contraseña SSH.
+
+- Archivo: `/home/rodrigo/.config/maitepaz/ssh.pass` (modo 600, una sola línea).
+- Comando: `sshpass -f /home/rodrigo/.config/maitepaz/ssh.pass` delante de `ssh` o `rsync`.
+- No usar `sshpass -p`. No escribir la contraseña en el comando, en el chat ni en archivos del repositorio.
+- Si un documento local todavía trae la contraseña inline, no copiarla: usar el archivo.

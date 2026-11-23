@@ -98,6 +98,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/conductores/{id}', [\App\Http\Controllers\DriverController::class, 'show'])->name('conductores.show')->middleware('permission:drivers.view');
     Route::delete('/conductores/{id}', [\App\Http\Controllers\DriverController::class, 'destroy'])->name('conductores.destroy')->middleware('permission:drivers.delete');
 
+    Route::get('/asistente', function () {
+        abort_unless(auth()->user()?->isAdministrator(), 403);
+        abort_unless(config('ai.enabled'), 404);
+
+        return view('assistant.index');
+    })->name('assistant');
+
     // Reportes avanzados
     Route::get('/reportes', [\App\Http\Controllers\ReportController::class, 'index'])->name('reportes.index')->middleware('permission:reports.view');
     Route::get('/reportes/estado-flota-pdf', [\App\Http\Controllers\ReportController::class, 'estadoFlotaPdf'])->name('reportes.estado-flota-pdf')->middleware('permission:reports.view');
