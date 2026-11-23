@@ -1,7 +1,12 @@
 *.log
 .DS_Store
 .env
+.env.*
+!.env.example
 .env.backup
+.env.backup*
+.env.bak*
+.env.old*
 .env.production
 .phpactor.json
 .phpunit.result.cache
@@ -25,3 +30,17 @@ Thumbs.db
 
 # Documentación interna y sensible (PAT, contraseñas, etc.): no subir
 docs/
+
+# Volcados y respaldos (mismo criterio que Sover3MP, Coteso y Oxígeno)
+*.sql
+*.sql.gz
+*.sql.backup
+*.dump
+*.sqlite
+backups/
+database/backups/
+database/restore_points/
+docker-compose.override.yml
+docker-compose.override.yml.old
+docker-compose.yml.old*
+cookies.txt
