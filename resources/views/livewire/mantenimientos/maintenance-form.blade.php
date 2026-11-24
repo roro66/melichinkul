@@ -13,6 +13,17 @@
             <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Al guardar, se copiarán el tipo, descripción y repuestos de la plantilla al mantenimiento.</p>
         </div>
         @endif
+        <div class="max-w-md">
+            <label for="created_by_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Creado por
+            </label>
+            <input type="text" id="created_by_name" value="{{ $createdByName }}" readonly
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white">
+            @unless($maintenanceId)
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Se registra automáticamente con el usuario que crea el mantenimiento.</p>
+            @endunless
+        </div>
+
         <!-- Información Básica -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>

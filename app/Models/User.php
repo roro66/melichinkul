@@ -91,6 +91,16 @@ class User extends Authenticatable
             ->get();
     }
 
+    public function displayName(): string
+    {
+        $full = trim((string) ($this->full_name ?? ''));
+        if ($full !== '') {
+            return $full;
+        }
+
+        return trim((string) ($this->name ?? ''));
+    }
+
     public function isAdministrator(): bool
     {
         if ($this->hasRole('administrator')) {

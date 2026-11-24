@@ -46,6 +46,8 @@ new class extends Component
     public $responsible_technician_id = "";
     public $assigned_driver_id = "";
     public $observations = "";
+
+    public string $createdByName = "";
     public $evidence_invoice = null;
     public $evidence_photo = null;
     public array $purchaseItems = [];
@@ -159,6 +161,9 @@ new class extends Component
             $this->responsible_technician_id = $maintenance->responsible_technician_id;
             $this->assigned_driver_id = $maintenance->assigned_driver_id;
             $this->observations = $maintenance->observations;
+            $this->createdByName = $this->hasCreatedByColumn()
+                ? ($maintenance->createdBy?->displayName() ?: "No registrado")
+                : "No registrado";
             if ($this->hasPurchaseItemsTable()) {
                 $this->purchaseItems = $maintenance->purchaseItems()
                     ->orderBy("id")
@@ -178,6 +183,10 @@ new class extends Component
             }
         } elseif ($vehicleId) {
             $this->vehicle_id = $vehicleId;
+        }
+
+        if (! $this->maintenanceId) {
+            $this->createdByName = auth()->user()?->displayName() ?: "No registrado";
         }
         if (empty($this->purchaseItems)) {
             $this->addPurchaseItemRow();
@@ -347,6 +356,10 @@ new class extends Component
             "observations" => $this->observations ?: null,
         ];
 
+        if (! $this->maintenanceId && $this->hasCreatedByColumn()) {
+            $data["created_by"] = auth()->id();
+        }
+
         if ($this->maintenanceId) {
             $maintenance = Maintenance::findOrFail($this->maintenanceId);
             $maintenance->update($data);
@@ -422,7 +435,7 @@ new class extends Component
             "vehicle_id", "type", "status", "scheduled_date", "start_date", "end_date",
             "mileage_at_maintenance", "hours_at_maintenance", "entry_reason", "work_description",
             "work_performed", "parts_cost", "labor_cost", "total_cost", "hours_worked",
-            "workshop_supplier", "responsible_technician_id", "assigned_driver_id", "observations",
+            "workshop_supplier", "responsible_technician_id", "assigned_driver_id", "created_by", "observations",
             "evidence_invoice_path", "evidence_photo_path",
         ];
     }
@@ -859,6 +872,15 @@ new class extends Component
                 "notes" => "Uso registrado en edición de mantenimiento #" . $maintenance->id,
                 "movement_date" => now()->toDateString(),
             ]);
+        }
+    }
+
+    private function hasCreatedByColumn(): bool
+    {
+        try {
+            return Schema::hasColumn("maintenances", "created_by");
+        } catch (\Throwable) {
+            return false;
         }
     }
 

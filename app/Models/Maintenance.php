@@ -32,6 +32,7 @@ class Maintenance extends Model
         'workshop_supplier',
         'responsible_technician_id',
         'assigned_driver_id',
+        'created_by',
         'observations',
         'evidence_invoice_path',
         'evidence_photo_path',
@@ -73,6 +74,11 @@ class Maintenance extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by_id');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function spareParts(): BelongsToMany

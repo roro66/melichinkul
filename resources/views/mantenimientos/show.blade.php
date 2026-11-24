@@ -6,11 +6,14 @@
 <div class="space-y-6">
     @php
         $hasPurchaseItemsTable = \Illuminate\Support\Facades\Schema::hasTable('maintenance_purchase_items');
-        $with = ['vehicle', 'responsibleTechnician', 'assignedDriver', 'approvedBy', 'maintenanceSpareParts.sparePart', 'checklistCompletions.completedBy'];
+        $with = ['vehicle', 'responsibleTechnician', 'assignedDriver', 'approvedBy', 'createdBy', 'maintenanceSpareParts.sparePart', 'checklistCompletions.completedBy'];
         if ($hasPurchaseItemsTable) {
             $with[] = 'purchaseItems.sparePart';
         }
         $maintenance = \App\Models\Maintenance::with($with)->findOrFail($id);
+        $createdByName = \Illuminate\Support\Facades\Schema::hasColumn('maintenances', 'created_by')
+            ? ($maintenance->createdBy?->displayName() ?: 'No registrado')
+            : 'No registrado';
         $purchaseItems = $hasPurchaseItemsTable ? $maintenance->purchaseItems : collect();
         $spareParts = \App\Models\SparePart::where('active', true)->orderBy('code')->get();
         $checklistItems = $maintenance->getChecklistItemsForMaintenance();
@@ -295,6 +298,10 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Información Adicional</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Creado por:</span>
+                <p class="text-sm text-gray-900 dark:text-white">{{ $createdByName }}</p>
+            </div>
             <div>
                 <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Técnico Responsable:</span>
                 <p class="text-sm text-gray-900 dark:text-white">{{ $maintenance->responsibleTechnician->name ?? 'Sin asignar' }}</p>
